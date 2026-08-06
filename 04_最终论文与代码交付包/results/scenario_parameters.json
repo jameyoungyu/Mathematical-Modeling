@@ -1,0 +1,68 @@
+{
+  "status": "SCENARIO_ASSUMPTIONS_NOT_IDENTIFIED_FROM_C_OUT",
+  "central_outlet_scale": 0.1,
+  "structural_outlet_scales": [
+    0.08,
+    0.09,
+    0.1,
+    0.11,
+    0.12
+  ],
+  "voltage_weight_profiles": {
+    "equal": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "weak_front": [
+      1.08,
+      1.04,
+      0.98,
+      0.9
+    ],
+    "central_front": [
+      1.15,
+      1.1,
+      0.95,
+      0.8
+    ]
+  },
+  "peak_exponents": [
+    1.1,
+    1.35,
+    1.6
+  ],
+  "rapping_phase_scales": [
+    0.65,
+    0.8,
+    1.0
+  ],
+  "tstar_load_exponents": [
+    -0.3,
+    -0.18,
+    -0.1
+  ],
+  "rapping_loss_coefficients": [
+    0.3,
+    0.27,
+    0.2,
+    0.17
+  ],
+  "peak_field_shares": [
+    0.3,
+    0.3,
+    0.22,
+    0.18
+  ],
+  "support_rule": "cluster-specific P05-P95 plus empirical 97.5th percentile Mahalanobis d2 and engineering ordering",
+  "base_candidate_count_per_condition_seed": 220000,
+  "local_candidate_count_per_preliminary_solution": 30000,
+  "random_seeds": [
+    20260805,
+    20260806,
+    20260807,
+    20260808,
+    20260809
+  ]
+}
