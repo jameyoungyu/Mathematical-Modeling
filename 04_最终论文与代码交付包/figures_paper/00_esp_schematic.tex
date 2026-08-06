@@ -1,0 +1,124 @@
+% 四电场电除尘器结构与变量定义示意图
+% 独立编译：xelatex 00_esp_schematic.tex
+\documentclass[tikz,border=6pt]{standalone}
+\usepackage[UTF8]{ctex}
+\usepackage{amsmath}
+\usetikzlibrary{arrows.meta,positioning}
+
+\begin{document}
+\begin{tikzpicture}[
+  line cap=round, line join=round,
+  wall/.style   ={line width=1.0pt},
+  wire/.style   ={line width=0.7pt},
+  drift/.style  ={-{Stealth[length=4pt]}, dashed, dash pattern=on 2.2pt off 1.6pt, line width=0.5pt},
+  plate/.style  ={line width=0.9pt},
+  lbl/.style    ={font=\small},
+]
+
+% ---------- geometry ----------
+\def\ytop{5.40}     % 壳体顶
+\def\ybot{0.60}     % 壳体底（灰斗上沿）
+\def\yhop{-0.95}    % 灰斗底
+\def\yduL{1.75}     % 进出口烟道下沿
+\def\yduU{3.95}     % 进出口烟道上沿
+\def\cw{3.45}       % 单电场节距
+\def\gp{0.14}       % 电场间隔
+\def\yeT{4.62}      % 极线顶
+\def\yeB{2.30}      % 极线底
+\pgfmathsetmacro{\xend}{4*\cw-\gp}
+
+% ---------- 四个电场室 ----------
+\foreach \i in {1,2,3,4}{
+  \pgfmathsetmacro{\x}{(\i-1)*\cw}
+  \pgfmathsetmacro{\xr}{\x+\cw-\gp}
+  \pgfmathsetmacro{\xc}{\x+(\cw-\gp)/2}
+  % 室体与灰斗
+  \draw[wall] (\x,\ybot) -- (\x,\ytop) -- (\xr,\ytop) -- (\xr,\ybot);
+  \draw[wall] (\x,\ybot) -- (\x+1.00,\yhop) -- (\xr-1.00,\yhop) -- (\xr,\ybot);
+  \draw[wall] (\xc-0.15,\yhop) -- (\xc-0.15,\yhop-0.42)
+              (\xc+0.15,\yhop) -- (\xc+0.15,\yhop-0.42);
+  \draw[-{Stealth[length=6pt,width=5pt]},line width=1.1pt]
+        (\xc,\yhop-0.42) -- (\xc,\yhop-1.02);
+  % 灰斗积灰（确定性排布）
+  \foreach \r in {0,1,2}{
+    \pgfmathtruncatemacro{\nn}{9-2*\r}
+    \foreach \k in {1,...,\nn}{
+      \pgfmathsetmacro{\rx}{\xc-(\nn-1)*0.105+(\k-1)*0.21}
+      \fill (\rx,\yhop+0.11+0.17*\r) circle (0.048);}}
+  \node[lbl] at (\xc,\ytop-0.40) {电场 \i};
+
+  % 电晕线（放电极）
+  \draw[plate] (\x+0.62,\yeB) -- (\x+0.62,\yeT);
+  \draw[-{Stealth[length=4.5pt]},line width=0.7pt] (\x+0.62,\yeT-0.30) -- (\x+0.62,\yeT-0.62);
+  \draw[-{Stealth[length=4.5pt]},line width=0.7pt] (\x+0.62,\yeB+0.62) -- (\x+0.62,\yeB+0.30);
+  % 收尘极板
+  \foreach \m in {0,1,2}{
+    \draw[plate] (\x+2.24+0.17*\m,\yeB) -- (\x+2.24+0.17*\m,\yeT);}
+
+  % 荷电粒子迁移（密度随电场序号递减）
+  \pgfmathtruncatemacro{\np}{max(6-\i,2)}
+  \foreach \j in {1,...,\np}{
+    \pgfmathsetmacro{\yy}{\yeB+0.34+(\j-1)*((\yeT-\yeB-0.68)/max(\np-1,1))}
+    \node[circle,draw,line width=0.45pt,inner sep=0.9pt,font=\tiny] at (\x+1.06,\yy) {$-$};
+    \draw[drift] (\x+1.30,\yy) -- (\x+2.10,\yy);}
+  % 未荷电粉尘（进入侧）
+  \pgfmathtruncatemacro{\nd}{max(6-2*\i,0)}
+  \ifnum\nd>0
+    \foreach \j in {1,...,\nd}{
+      \pgfmathsetmacro{\dy}{\yeB+0.30+(\j-1)*((\yeT-\yeB-0.6)/max(\nd-1,1))}
+      \pgfmathsetmacro{\dxs}{\x+0.26+0.14*mod(\j,2)}
+      \fill (\dxs,\dy) circle (0.058);}
+  \fi
+
+  % 振打装置（置于极组下方，避免遮挡）
+  \pgfmathsetmacro{\rx}{\x+0.60}
+  \draw[wire] (\rx,\ybot+0.42) rectangle (\rx+0.44,\ybot+0.92);
+  \draw[wire] (\rx+0.44,\ybot+0.55) -- (\rx+1.00,\ybot+0.30);
+  \draw[wire,fill=white] (\rx+1.00,\ybot+0.30) circle (0.105);
+  \draw[drift] (\rx+1.12,\ybot+0.44) to[bend left=20] (\rx+1.78,\ybot+1.00);
+  \foreach \k in {1,2,3}{\fill (\rx+1.88+0.18*\k,\ybot+1.04+0.11*\k) circle (0.048);}
+  \node[lbl] at (\rx+0.86,\ybot-0.26) {$T_{\i}$\,(s)};
+
+  % 高压电源与接地
+  \pgfmathsetmacro{\px}{\x+1.20}
+  \draw[wire] (\px,\ytop) -- (\px,\ytop+0.92) -- (\px+0.34,\ytop+0.92);
+  \draw[wire,fill=white] (\px+0.60,\ytop+0.92) circle (0.26);
+  \node[font=\small] at (\px+0.60,\ytop+0.92) {$-$};
+  \node[font=\scriptsize] at (\px+0.92,\ytop+1.20) {$+$};
+  \draw[wire] (\px+0.86,\ytop+0.92) -- (\px+1.34,\ytop+0.92) -- (\px+1.34,\ytop+0.62);
+  \foreach \g/\w in {0/0.30,1/0.19,2/0.09}{
+    \draw[wire] (\px+1.34-\w,\ytop+0.62-0.115*\g) -- (\px+1.34+\w,\ytop+0.62-0.115*\g);}
+  \node[lbl] at (\px+0.60,\ytop+1.82) {$U_{\i}$\,(kV)};
+}
+
+% ---------- 进出口烟道 ----------
+\draw[wall] (-4.60,\yduU) -- (-1.15,\yduU) -- (0,\ytop);
+\draw[wall] (-4.60,\yduL) -- (-1.15,\yduL) -- (0,\ybot);
+\draw[wall] (\xend,\ytop) -- (\xend+1.15,\yduU) -- (\xend+4.60,\yduU);
+\draw[wall] (\xend,\ybot) -- (\xend+1.15,\yduL) -- (\xend+4.60,\yduL);
+
+% 入口含尘烟气
+\foreach \j in {1,...,10}{
+  \pgfmathsetmacro{\dx}{-3.95+1.05*mod(\j,4)+0.22*\j}
+  \pgfmathsetmacro{\dy}{\yduL+0.42+0.52*mod(\j+1,4)+0.14*mod(\j,3)}
+  \fill (\dx,\dy) circle (0.058);}
+% 出口净化烟气
+\foreach \j in {1,...,5}{
+  \pgfmathsetmacro{\dx}{\xend+0.55+0.62*\j}
+  \pgfmathsetmacro{\dy}{\yduL+0.70+0.60*mod(\j,3)}
+  \fill (\dx,\dy) circle (0.058);}
+
+% ---------- 变量标注（全部置于烟道之外，避免压线） ----------
+\draw[-{Stealth[length=10pt,width=8pt]},line width=1.8pt] (-4.55,\yduL-0.72) -- (-3.30,\yduL-0.72);
+\node[lbl,anchor=west] at (-4.60,\yduL-0.20) {含尘烟气流向};
+\node[lbl,anchor=west] at (-4.60,\yduL-1.42) {入口温度 $H$};
+\node[lbl,anchor=west] at (-4.60,\yduL-2.02) {入口粉尘浓度 $C_{\mathrm{in}}$};
+\node[lbl,anchor=west] at (-4.60,\yduL-2.62) {烟气流量 $Q$};
+
+\draw[-{Stealth[length=10pt,width=8pt]},line width=1.8pt]
+      (\xend+3.30,\yduL-0.72) -- (\xend+4.55,\yduL-0.72);
+\node[lbl,anchor=west] at (\xend+0.55,\yduL-1.42) {出口粉尘浓度 $C_{\mathrm{out}}$ (mg/Nm$^{3}$)};
+\node[lbl,anchor=west] at (\xend+0.55,\yduL-2.12) {总功率 $P$ (kW)};
+
+\end{tikzpicture}
+\end{document}

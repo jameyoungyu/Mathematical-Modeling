@@ -1,0 +1,968 @@
+
+\documentclass[UTF8,zihao=5,a4paper]{ctexart}
+\usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{setspace}
+\usepackage{array}
+\usepackage{fancyhdr}
+
+\setCJKmainfont{Noto Serif CJK SC}
+\setCJKsansfont{Noto Sans CJK SC}
+\setCJKmonofont{Noto Sans Mono CJK SC}
+\setmainfont{TeX Gyre Termes}
+\setmonofont{Noto Sans Mono CJK SC}[Scale=0.82]
+
+\onehalfspacing
+\setlength{\parindent}{2em}
+\captionsetup{skip=4pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[C]{\thepage}
+
+\ctexset{
+  section/format = {\raggedright\zihao{4}\bfseries},
+  subsection/format = {\raggedright\zihao{5}\bfseries},
+  section/beforeskip = 12pt plus 2pt minus 2pt,
+  section/afterskip = 8pt,
+}
+
+\lstdefinestyle{pseudo}{
+  basicstyle=\ttfamily\zihao{-5},
+  breaklines=true, breakatwhitespace=false,
+  columns=fullflexible, keepspaces=true,
+  frame=single, rulecolor=\color{gray!55},
+  framesep=4pt, xleftmargin=6pt, xrightmargin=2pt,
+  showstringspaces=false, extendedchars=true,
+}
+\lstdefinestyle{pycode}{
+  language=Python,
+  basicstyle=\ttfamily\zihao{6},
+  keywordstyle=\color{blue!65!black},
+  commentstyle=\color{green!42!black}\itshape,
+  stringstyle=\color{orange!75!black},
+  breaklines=true, breakatwhitespace=false,
+  breakindent=12pt, postbreak=\mbox{\textcolor{gray}{$\hookrightarrow$}\space},
+  columns=fullflexible, keepspaces=true,
+  showstringspaces=false, extendedchars=true,
+  numbers=left, numberstyle=\tiny\color{gray}, numbersep=6pt,
+  frame=leftline, rulecolor=\color{gray!45}, framesep=5pt,
+  xleftmargin=17pt, tabsize=4, upquote=true,
+}
+
+% 手工编号的图表题注（与正文交叉引用一致）
+\captionsetup[figure]{labelformat=empty,justification=centering}
+\captionsetup[table]{labelformat=empty,justification=centering}
+
+\begin{document}
+
+\begin{center}
+{\zihao{3}\bfseries 水泥烧成系统电除尘器的协同优化控制}
+\end{center}
+\vspace{6pt}
+\begin{center}{\zihao{4}\bfseries 摘\quad 要}\end{center}
+\vspace{2pt}
+针对水泥烧成系统四电场电除尘器的节能与超低排放协同控制问题，本文审计7天、10080条分钟级记录。出口浓度有效值全部位于48.74～50.00 mg/Nm³，且未覆盖10或5 mg/Nm³目标区间，故附件只能支持工况和总功率辨识，不能直接识别目标附近的控制—排放响应。本文构建 \textbf{“工况聚类—数据驱动功率—工程灰箱排放—历史支持域优化”} 框架，以滚动验证选择二次岭功率模型，以Deutsch–Anderson关系、积灰损失和振打再飞扬代理构造排放情景，并采用5个随机种子和局部细化搜索可行解。功率模型验证集 \textbf{R²为0.9837、RMSE为7.12 kW} ，回顾性测试R²为0.9571。在出口记录按0.1缩放、采用中心灰箱参数且控制量位于历史支持域的条件下，10和5 mg/Nm³对应的工况加权功率分别为1609.4和1829.8 kW， \textbf{条件式功率增幅约13.7\%} 。405组灰箱参数组合情景均可行，功率增幅为 \textbf{11.37\%～14.31\%} ；场权重消融后，前两电场承担 \textbf{70.8\%～73.7\%} 的正向电压增量。所有排放数值均为条件式推演，不作为附件直接识别的实证结论。
+
+\vspace{8pt}
+
+\noindent \textbf{关键词：} 电除尘器；工况聚类；岭回归；灰箱模型；振打再飞扬；约束优化
+\clearpage
+
+\section{问题重述与分析}
+
+
+\subsection*{1.1 问题背景}
+
+
+电除尘器通过高压电场使粉尘荷电并向收尘极迁移。提高电场电压通常能够增强荷电与迁移，但会提高运行功率并受到火花、绝缘和联锁条件限制；振打过于频繁会增加再飞扬次数，周期过长又可能导致积灰加重和单次脱落量增大。水泥工业颗粒物排放受到国家标准约束[1]，题目进一步给出10 mg/Nm³和5 mg/Nm³两个控制目标，要求同时考虑排放、总功率和振打峰值。
+
+
+本文研究对象的四电场电除尘器结构及其可测量与可调量如图1所示：含尘烟气依次流经四个电场，每个电场由独立高压电源施加电压$U_i$并由独立振打装置按周期$T_i$清灰，入口侧可测入口温度$H$、入口粉尘浓度$C_{in}$与烟气流量$Q$，出口侧可测出口粉尘浓度$C_{out}$与总功率$P$。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.96\textwidth]{figures_paper/00_esp_schematic.pdf}
+\caption*{\normalsize 图1　四电场电除尘器结构与变量定义}
+\end{figure}
+
+
+题目包含四项相互依赖的任务：第一，解释入口温度、入口浓度、烟气流量、四电场电压和振打周期与出口浓度之间的关系，并分析振打峰值；第二，划分典型工况，在10 mg/Nm³约束下寻找最低功率控制参数；第三，选取差异显著的工况解释控制优先级；第四，将约束收紧至5 mg/Nm³并估计功率代价。后面三问都以第一问的排放响应为基础，因此必须先判断附件能否识别该响应。
+
+
+\subsection*{1.2 总体思路}
+
+
+若直接把出口浓度作为监督学习目标，模型可能只是在复现传感器封顶值，而不是学习除尘过程。本文采用 \textbf{“先识别、后优化”} 的路线：
+
+
+\begin{enumerate}[itemsep=1pt,topsep=3pt]
+\item 审计时间连续性、缺失、量纲和出口浓度支持域；
+\item 仅利用入口温度、入口浓度和流量划分工况，避免用结果变量定义工况；
+\item 对可由数据验证的总功率建立岭回归模型；
+\item 对不可由附件辨识的排放层引入明确标注的工程情景先验；
+\item 在历史支持域内搜索控制量，并通过收敛性与先验敏感性评价结果。
+\end{enumerate}
+
+
+该路线的核心不是把假设包装成数据结论，而是把 \textbf{“实测证据”与“条件式推演”分层} ，使数值答案能够被复算、被质疑，也能够在获得新数据后替换。
+
+
+\section{数据预处理与可识别性门禁}
+
+
+\subsection*{2.1 数据完整性与派生变量}
+
+
+附件覆盖2024年5月1日0时至5月7日23时59分，共10080条记录，采样间隔为1 min；时间戳无重复、无缺口。原始字段包括入口温度$H_t$、入口浓度$C_{in,t}$、烟气流量$Q_t$、四电场电压$U_{i,t}$、四电场振打周期$T_{i,t}$、出口浓度$C_{out,t}$和总功率$P_t$。出口浓度缺失50条，缺失比例0.50\%。
+
+
+为表达过程负荷和振打风险，构造粉尘质量负荷
+
+
+\begin{equation}
+L_t=C_{in,t}Q_t/1000
+\end{equation}
+
+
+其中$C_{in}$单位为g/Nm³，$Q$单位为Nm³/h，故$L$单位为kg/h。另构造电压平方和、前后级电压梯度、振打频率$60/T_i$以及每周期积尘代理$L_tT_i/3600$。所有聚类与回归参数仅在训练期估计，验证期和测试期不参与拟合。
+
+
+出口浓度分布及截顶情况如图2所示。有效记录全部位于48.74～50.00 mg/Nm³，5491条记录恰好等于50 mg/Nm³，数据没有覆盖题设控制目标区间。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/01_outlet_data_diagnosis.png}
+\caption*{\normalsize 图2　出口浓度数据诊断}
+\end{figure}
+
+
+\subsection*{2.2 出口浓度可识别性审计}
+
+
+有效出口浓度共10030条，范围仅为48.74～50.00 mg/Nm³，中位数等于50 mg/Nm³，其中5491条恰好位于50。更关键的是，没有任何样本不超过10 mg/Nm³或5 mg/Nm³。同期Pearson和Spearman相关系数以及1、5、15、30、60、120 min滞后检查均未发现绝对值超过约0.015的稳定关系；已有时间验证结果还表明，封顶分类AUC仅为0.5098，未封顶样本回归验证$R^2=-0.0190$，记录值回归验证$R^2=-0.0219$。这些结果只能说明“当前记录无法提供可学习信号”，不能反推物理变量对真实排放毫无影响。已有数据驱动研究使用宽负荷下的机组负荷与各电场二次电流训练出口浓度模型[8]；对照来看，本附件既缺少二次电流，出口记录也没有足够变化，故不具备相同的辨识条件。
+
+
+首24 h过程量的变化如图3所示。入口变量和功率具有连续变化和工况迁移特征，而出口浓度记录几乎被压缩在单点附近，进一步说明两类数据的信息量不对称。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/02_process_timeseries.png}
+\caption*{\normalsize 图3　首24 h过程量时序}
+\end{figure}
+
+
+\subsection*{2.3 小数点情景及边界}
+
+
+为继续完成题目的数值部分，本文接受如下竞赛情景：真实出口浓度可能为记录值的0.1倍，即历史锚点约为4.874～5.000 mg/Nm³。该假设能够解释“50附近封顶”，但附件本身无法证明其正确。即使接受该假设，10 mg/Nm³目标也在历史样本中始终宽松满足，而5 mg/Nm³附近仍有大量截顶观测，因此10到5 mg/Nm³的反事实功率增幅仍不能从数据直接回归，只能由灰箱先验推演。后文所有排放值均以“情景值”表述。
+
+
+\section{模型假设、符号与总体框架}
+
+
+\subsection*{3.1 模型假设}
+
+
+本文将假设分为数据事实、情景假设、优化边界与运行约束四类，并逐条标注其证据状态，如表1所示。
+
+
+
+\begin{table}[htbp]
+\centering
+\caption*{\normalsize 表1　模型假设及证据状态}
+\vspace{-2pt}
+\begin{tabular}{lll}
+\toprule
+类别 & 假设 & 证据状态 \\
+\midrule
+数据事实 & 7天记录按分钟连续，除50条出口浓度缺失外不填造目标值 & 附件可核验 \\
+数据事实 & 功率关系按时间滚动验证，不随机打乱 & 可由验证结果检查 \\
+情景假设 & 中心情景将出口记录整体乘0.10；结构扫描取0.08～0.12 & 附件不可确认 \\
+情景假设 & 电场贡献比较等权、弱前级与中心前级三种形状 & 工程先验与消融 \\
+情景假设 & 振打峰值指数取1.10、1.35、1.60，相位叠加尺度取0.65、0.80、1.00 & 工程结构情景 \\
+优化边界 & 控制量位于工况训练期P05～P95，且Mahalanobis距离不超过历史经验97.5\%分位数 & 历史支持域，不等同安全边界 \\
+运行约束 & 前级电压高于后级至少3 kV，后级振打周期长于前级至少100 s & 工程排序约束 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsection*{3.2 主要符号}
+
+
+全文主要符号及其单位如表2所示。
+
+
+
+\begin{table}[htbp]
+\centering
+\caption*{\normalsize 表2　主要符号与单位}
+\vspace{-2pt}
+\begin{tabular}{lll}
+\toprule
+符号 & 含义 & 单位 \\
+\midrule
+$U_i$ & 第$i$电场电压 & kV \\
+$T_i$ & 第$i$电场振打周期 & s \\
+$C_{in},C_{out}$ & 入口、出口粉尘浓度 & g/Nm³、mg/Nm³ \\
+$Q$ & 烟气流量 & Nm³/h \\
+$L$ & 粉尘质量负荷 & kg/h \\
+$P,\widehat P$ & 实际、预测总功率 & kW \\
+$K$ & 无量纲去除指数 & — \\
+$B(T)$ & 振打引起的峰值增量代理 & mg/Nm³ \\
+$\rho$ & 四场振打相位叠加尺度 & — \\
+$q_{k,0.975}$ & 工况$k$历史Mahalanobis距离平方的经验97.5\%分位数 & — \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+本文采用的数据驱动层与灰箱情景层协同框架如图4所示。工况和总功率由实测数据辨识，排放约束由显式先验建立，两者仅在支持域优化阶段合并。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/06_method_overview.png}
+\caption*{\normalsize 图4　总体方法框架}
+\end{figure}
+
+
+\section{问题一：影响关系与振打峰值}
+
+
+\subsection*{4.1 去除指数灰箱模型}
+
+
+Deutsch–Anderson关系以指数形式描述电除尘效率，但其理想化形式忽略再飞扬、气流分布和粒径变化，因此适合作为灰箱骨架而不是无条件精确模型[2-4]。White的经典专著[12]与Parker的电除尘器电气运行专著[13]均强调电气运行、粉尘性质与振打之间的系统耦合，这也说明本文系数必须作为待现场标定的工程先验。定义
+
+
+\begin{equation}
+K=\ln\frac{1000C_{in}}{C_{out}},\qquad C_{out}=1000C_{in}e^{-K}
+\end{equation}
+
+
+对工况$k$，以历史中位电压$U_{i,k}^{ref}$和缩放后的出口浓度中位数$C_{0,k}$为锚点：
+
+
+\begin{equation}
+K_{0,k}=\ln\frac{1000C_{in,k}}{C_{0,k}}
+\end{equation}
+
+
+考虑电压贡献和振打偏离损失，构造
+
+
+\begin{equation}
+K_k(U,T)=K_{0,k}+\eta\sum_{i=1}^{4}\alpha_i
+\left[\left(\frac{U_i}{U_{i,k}^{ref}}\right)^2-1\right]
+-\{G_k(T)-G_k(T^{ref})\}
+\end{equation}
+
+
+\begin{equation}
+G_k(T)=\sum_{i=1}^{4}\beta_{i,k}
+\left(\frac{T_i}{T_{i,k}^*}+\frac{T_{i,k}^*}{T_i}-2\right),
+\qquad \beta_{i,k}=\beta_i\left(\frac{L_k}{L_{med}}\right)^{1/2}
+\end{equation}
+
+
+$G_k(T)$在$T_i=T_{i,k}^*$处取最小值，表达周期过短与过长均可能不利：过短导致频繁再飞扬，过长导致积灰和单次脱落量上升。试验研究确实观察到振打再飞扬和最大允许周期之间的权衡[6]，但本文系数并非由附件的振打事件估计。
+
+本节灰箱排放模型涉及的全部系数、中心取值与证据状态如表3所示。
+
+
+\begin{quote}\small 本节全部排放系数均为工程先验，不是由附件出口浓度估计得到的参数。\end{quote}
+
+\begin{table}[htbp]
+\centering
+\caption*{\normalsize 表3　灰箱排放模型参数来源与证据状态}
+\vspace{-2pt}
+\begin{tabular}{lrllc}
+\toprule
+参数 & 中心取值 & 含义 & 来源 & 是否由附件识别 \\
+\midrule
+$\eta$ & 1.0 & 电压效应总体尺度 & 情景设定 & 否 \\
+$\alpha_i$ & 四场权重 & 电场去除贡献 & 工程先验与消融 & 否 \\
+$\beta_i$ & 四场损失系数 & 周期偏离损失 & 工程情景 & 否 \\
+$b_0$ & 1.2 & 峰值尺度 & 工程情景 & 否 \\
+$\gamma$ & 1.35 & 周期—峰值指数 & 中心情景 & 否 \\
+$\rho$ & 1.0 & 相位叠加尺度 & 同相保守情景 & 否 \\
+$T_i^*$ & 由历史周期和负荷构造 & 参考振打周期 & 情景构造 & 否 \\
+$s$ & 0.08 & 安全裕度 & 工程情景 & 否 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+加入安全裕度$s$后，连续排放基值为
+
+
+\begin{equation}
+C_{base,k}=1000C_{in,k}\exp[-K_k(U,T)+s]
+\end{equation}
+
+
+\subsection*{4.2 振打峰值代理}
+
+
+附件只有振打周期设定，没有实际振打时刻、相位和秒级浓度，因此不能识别逐次峰值。为区分同相叠加上界与错相运行，本文引入相位尺度$\rho$和峰值指数$\gamma$：
+
+
+\begin{equation}
+B_k(T;\rho,\gamma)=b_0\rho\left(\frac{L_k}{L_{med}}\right)^{0.8}
+\sum_{i=1}^{4}w_i\left(\frac{T_i}{T_{i,k}^*}\right)^\gamma 
+\end{equation}
+
+
+构造保守峰值增量，情景峰值总浓度为
+
+
+\begin{equation}
+C_{peak,k}=C_{base,k}+B_k(T)
+\end{equation}
+
+
+中心情景取$\rho=1$、$\gamma=1.35$，相当于四场峰值同相叠加的保守上界；错相情景取$\rho=0.65$或0.80。中心指数下，所有振打周期同步延长10\%和20\%时，单次峰值代理分别放大13.74\%与27.91\%。灰箱参数组合敏感性同时扫描$\gamma\in\{1.10,1.35,1.60\}$，避免把单一指数当作数据辨识结果。
+
+
+振打周期与单次再飞扬峰值代理的关系如图5所示。周期延长会放大峰值代理，但该曲线仅表示工程情景，不是由附件中实际振打事件识别得到的因果关系。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/14_rapping_peak_mechanism.png}
+\caption*{\normalsize 图5　振打峰值情景机理}
+\end{figure}
+
+
+\subsection*{4.3 各因素方向性解释}
+
+
+在灰箱骨架中，固定其他条件时，提高$U_i$增加$K$并降低连续排放，但总功率随电压上升；固定$K$时，入口浓度提高使出口质量浓度同比提高；流量增加会缩短有效停留时间并提高质量负荷，通常要求更高捕集强度；温度会通过气体性质、粉尘比电阻和放电状态影响除尘性能[3-4]。由于附件的出口浓度不可识别，温度和流量的排放弹性没有被强行拟合，而是通过工况分层和先验敏感性间接处理。由此，第一问的可靠答案分为两层：数据层只能报告“响应不可识别”；工程层可以给出上述方向和情景公式。
+
+
+\section{问题二：典型工况划分与协同优化}
+
+
+\subsection*{5.1 工况聚类}
+
+
+取训练期的入口温度、入口浓度和烟气流量三个外生变量，标准化后执行K-means。K-means通过最小化簇内平方和划分样本[9]，轮廓系数同时衡量簇内紧密度与簇间分离度[10]。比较$k=2,3,4,5,6$，轮廓系数依次为0.2963、0.3682、0.4084、0.3958、0.3934，因此选择$k=4$。轮廓系数0.4084表明聚类分离度中等，四类工况应理解为便于控制决策的统计工况分层，而不是唯一的物理状态划分。
+
+
+聚类数选择结果如图6所示。四类工况取得最高轮廓系数；惯性随$k$增加持续下降，因此不能仅依据惯性无限增加簇数。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/03_cluster_selection.png}
+\caption*{\normalsize 图6　聚类数选择结果}
+\end{figure}
+
+
+训练期四类典型工况的分布如图7所示，其中点的大小表示烟气流量，从而同时呈现入口浓度、温度和流量三维信息。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/04_condition_map.png}
+\caption*{\normalsize 图7　训练期典型工况分布}
+\end{figure}
+
+
+四类典型工况的统计画像如表4所示。
+
+
+
+\begin{table}[htbp]
+\centering
+\caption*{\normalsize 表4　四类典型工况画像}
+\vspace{-2pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+工况 & 占比 & 温度/℃ & 入口浓度/(g/Nm³) & 流量/(Nm³/h) & 粉尘负荷/(kg/h) & 历史总功率/kW \\
+\midrule
+1 低温低浓度高流量 & 23.35\% & 120.65 & 26.08 & 478257 & 12460 & 1818.35 \\
+2 高温中浓度低流量 & 20.06\% & 130.32 & 33.72 & 443591 & 14922 & 1870.89 \\
+3 高温高浓度高流量 & 34.93\% & 130.41 & 40.71 & 480851 & 19560 & 1763.08 \\
+4 低温高浓度低流量 & 21.67\% & 120.69 & 44.75 & 439990 & 19673 & 1696.55 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+标准化工况画像如图8所示。工况3与工况4的粉尘负荷相近，但温度和流量不同，适合用于检验分工况策略的必要性。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/05_condition_profile_heatmap.png}
+\caption*{\normalsize 图8　标准化工况画像}
+\end{figure}
+
+
+\subsection*{5.2 功率模型}
+
+
+电场总功率与电压存在非线性，且四个电场之间可能存在联动。构造特征向量
+
+
+\begin{equation}
+x=[U_1,\ldots,U_4,U_1^2,U_1U_2,\ldots,U_4^2,T_1,\ldots,T_4,H,C_{in},Q]
+\end{equation}
+
+
+标准化后采用岭回归[11]
+
+
+\begin{equation}
+\widehat{\boldsymbol\beta}=\operatorname*{arg\,min}_{\boldsymbol\beta}
+\left\|\boldsymbol y-\boldsymbol X\boldsymbol\beta\right\|_2^2
++\lambda\left\|\boldsymbol\beta\right\|_2^2
+\end{equation}
+
+
+截距不惩罚。在线性岭与二次岭各自的候选正则强度中，按训练期顺序设置3个扩展窗口滚动验证，二次岭选得$\lambda=0.1$，线性岭选得$\lambda=10$。最终模型只用训练期拟合，验证期用于模型比较与误差保护，回顾性测试期不参与选择。验证集绝对误差的90\%分位数为11.78 kW，故每个候选同时报告点预测$\widehat P$与附加验证期误差后的功率$\widehat P+11.78$ kW；该附加量不改变候选排序，只用于表示功率预测误差的量级，不保证在后续日期仍具有90\%的覆盖率。
+
+
+均值预测、线性岭与二次岭在验证集和回顾性测试段的表现如表5所示。
+
+
+
+\begin{table}[htbp]
+\centering
+\caption*{\normalsize 表5　功率模型基线与时间外推结果}
+\vspace{-2pt}
+\begin{tabular}{llrrr}
+\toprule
+模型 & 数据段 & $R^2$ & RMSE/kW & 平均偏差/kW \\
+\midrule
+均值预测 & 验证集 & -5.3259 & 140.18 & 128.62 \\
+线性岭 & 验证集 & 0.9798 & 7.93 & 0.28 \\
+二次岭 & 验证集 & 0.9837 & 7.12 & -1.87 \\
+均值预测 & 回顾性测试 & -0.3733 & 83.51 & -43.54 \\
+线性岭 & 回顾性测试 & 0.9180 & 20.41 & -16.65 \\
+二次岭 & 回顾性测试 & 0.9571 & 14.76 & -10.78 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+功率模型的回顾性测试结果如图9所示。二次岭回归保持较高预测一致性，并优于均值预测与线性岭基线；左图虚线表示理想预测，右图RMSE采用对数纵轴以同时呈现三种模型的量级差异。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/07_power_prediction.png}
+\caption*{\normalsize 图9　功率模型预测结果}
+\end{figure}
+
+为识别功率预测主要依赖哪些变量，将二次岭模型的标准化系数按绝对值排序，如图10所示。电压、电压平方项及跨电场交互项提供了主要预测信息；由于各变量之间存在相关性，系数大小只用于解释模型的预测结构，\textbf{不能直接解释为单变量因果效应}。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/08b_feature_importance.png}
+\caption*{\normalsize 图10　二次岭功率模型的标准化系数}
+\end{figure}
+
+
+回顾性测试残差如图11所示。平均偏差为-10.78 kW，高功率区负偏差有所扩大；验证绝对误差90\%分位数11.78 kW被用作验证期误差附加量。上线前仍需利用全新日期重新校准，不能把当前测试称为真正盲测。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/08_power_residuals.png}
+\caption*{\normalsize 图11　回顾性测试残差诊断}
+\end{figure}
+
+
+各工况典型状态下的局部电压—功率响应如图12所示。曲线仅在历史电压附近绘制，表明在灰箱情景下，提高电压以满足更严格的排放约束会提高运行功率。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/09_voltage_power_response.png}
+\caption*{\normalsize 图12　局部电压—功率响应}
+\end{figure}
+
+
+\subsection*{5.3 支持域与优化模型}
+
+
+设控制向量$z=(U_1,\ldots,U_4,T_1,\ldots,T_4)$。历史P05～P95限制逐变量范围；同时用训练期工况$k$的均值$\mu_k$和协方差$\Sigma_k$计算
+
+
+\begin{equation}
+d_M^2(z)=(z-\mu_k)^T\Sigma_k^{-1}(z-\mu_k)\le q_{k,0.975}
+\end{equation}
+
+
+$q_{k,0.975}$直接取该工况历史距离平方的经验97.5\%分位数，四工况依次为20.55、18.72、16.85和19.09，不再借用多元正态假设下的统一卡方阈值。另加入
+
+
+\begin{equation}
+U_1\ge U_3+3,\quad U_2\ge U_4+3
+\end{equation}
+
+
+\begin{equation}
+T_3\ge T_1+100,\quad T_4\ge T_2+100
+\end{equation}
+
+
+对每类工况和限值$C_{lim}$求解
+
+
+\begin{equation}
+\min_z\ \widehat P_k(z)
+\end{equation}
+
+
+\begin{equation}
+\text{s.t.}\quad C_{base,k}(z)+B_k(z)\le C_{lim},
+\quad z\in\Omega_k,\quad d_M^2(z)\le q_{k,0.975}
+\end{equation}
+
+
+程序对每个工况使用5个独立随机种子，每个种子先生成220000组候选，再围绕10与5 mg/Nm³的初始最佳点各生成30000组局部高斯扰动。候选均经过经验支持域与工程排序过滤。文中参数称为“支持域内最佳采样可行解”；五种子结果用于报告离散度，局部细化用于检验随机库是否遗漏邻域改进。相关多电场节能研究也采用排放约束下的分场优化思想[5,7]，但本文搜索边界和排放先验均按本题情景定义。
+
+
+\subsection*{5.4 两档目标下的最佳采样可行方案}
+
+
+四类工况在10与5 mg/Nm³两档排放目标下的中心情景最佳采样可行解如表6所示。
+
+
+
+\begin{table}[htbp]
+\centering
+\caption*{\normalsize 表6　四工况两档目标的支持域内最佳采样可行解}
+\vspace{-2pt}
+\begin{tabular}{lrrrrrrrrrrr}
+\toprule
+工况 & 目标/(mg/Nm³) & $U_1$/kV & $U_2$/kV & $U_3$/kV & $U_4$/kV & $T_1$/s & $T_2$/s & $T_3$/s & $T_4$/s & 峰值排放/(mg/Nm³) & 预测总功率/kW \\
+\midrule
+1 & 10 & 55.4 & 53.5 & 51.8 & 48.0 & 267 & 268 & 465 & 465 & 9.997 & 1629.63 \\
+1 & 5 & 65.0 & 61.8 & 51.7 & 53.2 & 267 & 267 & 466 & 466 & 4.996 & 1851.86 \\
+2 & 10 & 57.8 & 53.1 & 52.9 & 48.9 & 258 & 258 & 448 & 450 & 9.995 & 1693.00 \\
+2 & 5 & 65.6 & 65.3 & 52.3 & 54.5 & 258 & 256 & 465 & 464 & 4.985 & 1931.84 \\
+3 & 10 & 52.6 & 55.0 & 49.2 & 44.1 & 253 & 253 & 456 & 466 & 9.996 & 1595.37 \\
+3 & 5 & 60.9 & 61.8 & 52.2 & 49.9 & 251 & 253 & 464 & 464 & 4.989 & 1813.76 \\
+4 & 10 & 51.8 & 50.8 & 48.7 & 46.6 & 267 & 268 & 473 & 464 & 9.989 & 1532.90 \\
+4 & 5 & 62.7 & 57.1 & 50.0 & 50.7 & 268 & 268 & 473 & 472 & 4.999 & 1737.39 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+其中10 mg/Nm³四行直接回答问题二，5 mg/Nm³四行为问题四与在线执行链提供完整参数。它们不是设备安全设定。将10 mg/Nm³方案与同一功率模型在各工况“历史中位控制点”上的预测比较，辅助节能幅度为9.80\%～12.43\%；之所以以“同一模型在历史中位控制点的预测”而非“历史实际功率均值”为基准，是为了避免把模型偏差计入节能幅度，但该比较仍受排放情景假设影响。表中为点预测功率，预算时可另加11.78 kW验证期误差附加量。现场应用必须继续受二次电流、火花率、联锁和设定变化速率约束。
+
+各推荐解与所在工况历史支持域边界的接近程度如表7所示。
+
+
+\begin{table}[htbp]
+\centering
+\caption*{\normalsize 表7　推荐解的历史支持域边界接近度审计}
+\vspace{-2pt}
+\begin{tabular}{lrrrc}
+\toprule
+工况与排放限值 & 马氏距离平方 $d_M^2$ & 经验97.5\%分位数 $q_{0.975}$ & 边界相对距离 $d_M^2/q_{0.975}$ & 边界状态评估 \\
+\midrule
+工况1，10 mg & 10.89 & 20.55 & 53.0\% & 内部良好 \\
+工况1，5 mg & 10.11 & 20.55 & 49.2\% & 内部良好 \\
+工况2，10 mg & 17.52 & 18.72 & 93.6\% & \textbf{贴近边界} \\
+工况2，5 mg & 10.96 & 18.72 & 58.5\% & 内部良好 \\
+工况3，10 mg & 8.19 & 16.85 & 48.6\% & 内部良好 \\
+工况3，5 mg & 14.50 & 16.85 & 86.1\% & 接近边界 \\
+工况4，10 mg & 7.40 & 19.09 & 38.8\% & 内部良好 \\
+工况4，5 mg & 18.16 & 19.09 & 95.1\% & \textbf{贴近边界} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+数据表明：工况2的10 mg解及工况4的5 mg解已高度贴近历史支持域的马氏距离上界（$d_M^2/q_{0.975} > 90\%$）。这说明部分推荐控制点是在功率模型与支持域边界的共同作用下推至边界附近，实际工业应用时仍需通过现场阶跃试验重新标定，\textbf{不可直接将支持域边界解当作绝对安全解}。
+
+推荐解与经验支持域边界的距离对比如图13所示。左图给出边界相对距离，右图并列展示推荐解马氏距离平方与各工况经验阈值；两种视图共同显示所有解均未越界，但工况2的10 mg解和工况4的5 mg解已进入90\%贴近区。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/05b_boundary_proximity.png}
+\caption*{\normalsize 图13　推荐解的历史支持域边界接近度}
+\end{figure}
+
+
+四类工况在10和5 mg/Nm³限值下的中心情景最佳采样预测功率如图14所示。更严格的排放限值在全部工况下均提高预测功率。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/10_optimal_power.png}
+\caption*{\normalsize 图14　两档排放限值下的最佳采样预测功率}
+\end{figure}
+
+
+\section{问题三：代表工况的控制策略比较}
+
+
+选取工况1和工况3。二者流量都较高，但入口浓度和粉尘负荷差异明显：工况1平均负荷12460 kg/h，工况3为19560 kg/h，可用于比较低负荷与高负荷策略。
+
+
+两类代表工况在两档排放限值下的中心情景控制参数如表8所示。
+
+
+
+\begin{table}[htbp]
+\centering
+\caption*{\normalsize 表8　代表工况在两档限值下的中心情景控制参数}
+\vspace{-2pt}
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+工况与限值 & $U_1$/kV & $U_2$/kV & $U_3$/kV & $U_4$/kV & $T_1$/s & $T_2$/s & $T_3$/s & $T_4$/s & 预测总功率/kW \\
+\midrule
+工况1，10 mg & 55.4 & 53.5 & 51.8 & 48.0 & 267 & 268 & 465 & 465 & 1629.63 \\
+工况1，5 mg & 65.0 & 61.8 & 51.7 & 53.2 & 267 & 267 & 466 & 466 & 1851.86 \\
+工况3，10 mg & 52.6 & 55.0 & 49.2 & 44.1 & 253 & 253 & 456 & 466 & 1595.37 \\
+工况3，5 mg & 60.9 & 61.8 & 52.2 & 49.9 & 251 & 253 & 464 & 464 & 1813.76 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+工况1从10收紧到5 mg/Nm³时，$U_1,U_2$分别提高9.6和8.3 kV，$U_3$近似不变，$U_4$提高5.2 kV；工况3的四场增量依次为8.3、6.8、3.0和5.8 kV。因而“前级优先”不能表述成“后级无需调整”。进一步把去除贡献权重改为等权、弱前级和中心前级三种形状后，前两电场仍承担70.8\%～73.7\%的正向加权电压增量，说明该规律不完全由中心权重预设，但其强度与具体后级补偿仍属于情景发现。
+
+为把上述比较转化为可执行判据，本文按排放构成与支持域状态给出控制优先级决策规则，如表9所示。
+
+
+\begin{table}[htbp]
+\centering
+\caption*{\normalsize 表9　控制优先级决策规则}
+\vspace{-2pt}
+\begin{tabular}{lll}
+\toprule
+状态特征 & 优先动作 & 原因 \\
+\midrule
+连续排放基值接近限值，振打峰值占比较低 & 优先小步提高前级电压 & 主要矛盾是连续捕集强度不足 \\
+峰值增量占比较高，周期明显长于参考周期 & 优先缩短过长周期并实施错相振打 & 主要矛盾是单次积灰脱落和峰值叠加 \\
+周期过短、振打频繁 & 适度延长周期 & 减少再飞扬次数 \\
+高粉尘负荷且基值和峰值均高 & 先错相、再调整周期，最后小步提升前级电压 & 先控制峰值，再补充连续捕集能力 \\
+前级电压已接近支持域上限 & 使用后级电场补偿 & 避免前级单独承担全部压力 \\
+超出历史支持域或出现火花、联锁风险 & 停止优化，回退现场安全设定 & 数学可行不等于设备安全 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+上述决策规则均基于灰箱情景推导，现场实施时应以在线监测数据为准。
+
+
+两档排放限值下的四电场中心情景电压如图15所示。严格约束主要抬升前两电场，同时$U_4$在部分工况承担明显补偿，因此不能将策略绝对化为“只调前级”。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/11_optimal_voltage.png}
+\caption*{\normalsize 图15　两档排放限值下的电压配置}
+\end{figure}
+
+为突出代表工况内部四电场的协同变化，将工况1与工况3的电压和振打周期分别绘制为控制剖面，如图16所示。限值由10收紧至5 mg/Nm³时，两类工况均以前级电压抬升为主，但$U_4$仍有补偿；振打周期的变化则更依赖工况，说明\textbf{电压调节与振打调节不能拆成两个独立单变量策略}。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/12b_radar_controls.png}
+\caption*{\normalsize 图16　代表工况四电场控制参数协同剖面}
+\end{figure}
+
+
+两档排放限值下的中心情景最佳采样振打周期如图17所示。周期变化不像电压那样单向，而是在积灰损失与再飞扬峰值之间重新平衡；前级短、后级长的顺序保持不变。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/12_optimal_rapping_period.png}
+\caption*{\normalsize 图17　两档排放限值下的振打周期}
+\end{figure}
+
+
+在线实施采用\textbf{TARGET-10、TARGET-5与FALLBACK三态}。排放目标由上级指令或管理规定选择，不设自动切换阈值——因为本文灰箱模型未经现场标定，不具备在线自动判定排放状态的精度。TARGET-10与TARGET-5分别读取表6中对应工况、对应排放目标的控制参数；表8仅用于问题三的代表工况比较。控制量按斜坡接近目标，试运行情景暂取电压不超过0.5 kV/min、振打周期不超过5 s/min，但现场DCS、联锁或设备制造商给出的更严限制具有优先权。四场振打先按$\rho=1$同相上界核验，再以$\rho=0.80$和0.65评估错相收益。FALLBACK仅在传感器失效、火花率越限、工况超出支持域或联锁触发时启用，此时回到现场确认的安全设定；未经现场标定的模型偏差不直接作为自动回退阈值。
+
+
+\section{问题四：10收紧至5 mg/Nm³的功率代价}
+
+
+\subsection*{7.1 分工况结果}
+
+
+各工况从10收紧至5 mg/Nm³的中心情景功率增幅如表10所示。
+
+
+
+\begin{table}[htbp]
+\centering
+\caption*{\normalsize 表10　中心情景下10收紧至5 mg/Nm³的分工况功率增幅}
+\vspace{-2pt}
+\begin{tabular}{lrrr}
+\toprule
+工况 & 10 mg预测功率/kW & 5 mg预测功率/kW & 功率增幅 \\
+\midrule
+1 低温低浓度高流量 & 1629.63 & 1851.86 & 13.64\% \\
+2 高温中浓度低流量 & 1693.00 & 1931.84 & 14.11\% \\
+3 高温高浓度高流量 & 1595.37 & 1813.76 & 13.69\% \\
+4 低温高浓度低流量 & 1532.90 & 1737.39 & 13.34\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+按训练期工况占比$\pi_k$加权，
+
+
+\begin{equation}
+\bar P_{10}=\frac{\sum_k\pi_kP_{k,10}}{\sum_k\pi_k}=1609.42\text{ kW}
+\end{equation}
+
+
+\begin{equation}
+\bar P_{5}=1829.79\text{ kW},\qquad
+\Delta P=\frac{\bar P_5-\bar P_{10}}{\bar P_{10}}\approx13.7\%
+\end{equation}
+
+
+加上11.78 kW验证期误差附加量后，两档加权功率分别为1621.19和1841.57 kW；由于两者使用同一附加量，该比例不作为严格上界，而只用于功率预算。
+
+
+四类工况从10收紧至5 mg/Nm³的中心情景功率增幅如图18所示。分工况功率增幅为13.34\%～14.11\%，工况加权点估计约13.7\%；在相同运行时长下，该比例也等于电耗增幅。该点值必须与灰箱参数组合情景范围同时报告。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/18_condition_energy_penalty.png}
+\caption*{\normalsize 图18　分工况功率增幅比较}
+\end{figure}
+
+
+\subsection*{7.2 峰值约束的作用}
+
+
+中心情景最佳采样解中，10 mg/Nm³方案的连续基值为8.45～9.04 mg/Nm³，振打峰值增量为0.95～1.54 mg/Nm³；5 mg/Nm³方案的连续基值降至3.45～4.04 mg/Nm³，为振打峰值留出约0.95～1.55 mg/Nm³裕度。因此不能只令平均或基值低于限值，否则振打时刻仍可能超限。
+
+
+中心情景最佳采样解的连续排放基值与振打峰值增量如图19所示。图中虚线表示情景限值，所有柱形均为模型推演结果，而非实测排放数据。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/13_emission_decomposition.png}
+\caption*{\normalsize 图19　排放约束分解}
+\end{figure}
+
+
+\subsection*{7.3 高浓度工况建议}
+
+
+工况3和4的粉尘负荷最高。对于这两类工况，建议：
+
+
+\begin{enumerate}[itemsep=1pt,topsep=3pt]
+\item 以$U_1,U_2$承担主体捕集，避免四个电场同步大幅抬升造成不必要的功率增加；
+\item 保留$U_3,U_4$的精除余量，出口趋势接近阈值时再小步提高；
+\item 四电场振打错相，避免峰值叠加；高负荷下不宜为降低振打次数而持续延长周期；
+\item 将秒级未封顶出口浓度、实际振打事件、二次电流和火花率接入在线控制；
+\item 设置人工审核、变化速率限制和自动回退，先影子运行再闭环投用。
+\end{enumerate}
+
+
+\section{模型检验、敏感性与稳健性}
+
+
+\subsection*{8.1 多种子稳定性与局部细化}
+
+
+对5个独立随机种子分别执行“每工况220000组全域采样＋每个初始最佳点30000组局部扰动”。八个工况—限值组合中，最佳采样预测功率的最大变异系数为0.181\%，最大极差占均值0.464\%；局部细化相对初始随机库的改善为0.18\%～0.99\%。这说明结果对种子不敏感，且邻域细化仍有小幅价值，但不能证明数学意义上的全局最优，因此全文统一使用“最佳采样可行解”。
+
+
+五种子离散性与局部细化收益如图20所示。左图以各组合五种子中位数为基准，右图给出局部细化相对初始随机库的改善；数值稳定不等价于获得全局最优解。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/15_search_convergence.png}
+\caption*{\normalsize 图20　随机搜索稳定性与局部细化收益}
+\end{figure}
+
+
+\subsection*{8.2 灰箱参数组合敏感性}
+
+
+总体尺度扫描仍保留27组：电压效应尺度$\eta\in\{0.8,1.0,1.2\}$、振打峰值尺度$b_0\in\{0.9,1.2,1.5\}$、安全裕度$s\in\{0,0.08,0.15\}$。其中26组全工况可行，功率增幅为10.40\%～18.45\%。更重要的是，灰箱参数组合扫描涵盖出口缩放0.08～0.12、三种场权重形状、三个峰值指数、三个相位尺度和三个参考周期负荷指数，共405组且全部可行；灰箱参数组合情景功率增幅为11.37\%～14.31\%，中位数12.99\%。两类范围都是先验网格上的灰箱参数组合情景范围，不是统计置信区间。
+
+
+405组灰箱参数组合情景的功率增幅分布如图21所示。出口缩放与振打相位会系统改变功率增幅，中心点约13.7\%应与11.37\%～14.31\%的灰箱参数组合情景范围结合解释。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/16_sensitivity_distribution.png}
+\caption*{\normalsize 图21　功率增幅敏感性分布}
+\end{figure}
+
+
+电场贡献权重消融结果如图22所示。在等权、弱前级和中心前级三种设定下，前两电场仍承担70.8\%～73.7\%的正向电压增量；该结果支持有条件的“前级优先”，同时说明$U_4$补偿不可忽略。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\textwidth]{figures_paper/17_sensitivity_heatmap.png}
+\caption*{\normalsize 图22　电场贡献权重消融结果}
+\end{figure}
+
+
+\subsection*{8.3 稳健性结论}
+
+
+稳健性证据分四层：轮廓系数支持四工况分层；基线与滚动验证支持功率模型选择；五种子与局部细化支持数值搜索稳定；灰箱参数组合情景与场权重消融检验灰箱结论对建模选择的依赖。中心功率增幅约13.7\%，但灰箱参数组合情景中位数为12.99\%，二者差异正说明不能只报告单点。验证期误差附加量、测试偏差和情景范围也不能把灰箱模型变成实证模型，现场补采与盲测仍是闭环前置条件。
+
+
+\section{模型评价、实施方案与局限}
+
+
+\subsection*{9.1 模型优点}
+
+
+第一，设置可识别性门禁，避免用复杂算法拟合封顶噪声。第二，工况聚类不使用出口浓度和总功率，减少以结果反向定义工况的偏差。第三，功率模型采用均值、线性、二次基线和滚动验证，并报告偏差与验证期误差附加量。第四，支持域使用逐变量分位数和经验Mahalanobis阈值，降低不合理外推。第五，优化使用五种子与局部细化，且不冒称全局最优。第六，405组灰箱参数组合情景、场权重消融和振打相位尺度把关键先验显式化。
+
+
+\subsection*{9.2 模型局限}
+
+
+最主要的局限是出口浓度缩放、灰箱系数和振打峰值结构均未由附件识别；11.37\%～14.31\%只是给定网格上的灰箱参数组合情景范围，不是统计置信区间，也不覆盖所有物理模型。历史P05～P95和经验Mahalanobis阈值不是设备安全边界；模型没有二次电流、分场功率、火花率、极板积灰状态和联锁信息；分钟级数据不足以观察逐次振打峰值。回顾性测试数据曾被前期处理流程使用，不能视为完全未触碰的盲测。因而，本文控制参数只能作为试验起点，\textbf{不得直接下发生产设备}。
+
+
+\subsection*{9.3 上线与补采方案}
+
+
+建议按四阶段部署。第一阶段只做影子计算，验证工况识别和TARGET-10/TARGET-5参数表的正确加载；第二阶段在每类工况内执行单因素小步阶跃，并由现场确定真实电压和周期斜坡上限；第三阶段用1～5 s未封顶出口浓度、实际振打事件、二次电流、火花率和分场功率重新标定灰箱参数及相位尺度；第四阶段冻结模型，在全新日期盲测，通过后才允许闭环。任何超支持域、传感器失效或联锁事件都触发FALLBACK。EPA技术资料和相关实验均强调气流、收尘面积及再飞扬对性能评价的重要性[2-3,6]，故补采应优先补齐这些状态链。
+
+
+\section{结论}
+
+
+本文对四个问题得到如下结论。
+
+
+\begin{enumerate}[itemsep=1pt,topsep=3pt]
+\item \textbf{问题一：可识别性与方向性关系。} 附件出口浓度在50 mg/Nm³附近显著截顶，无法从数据实证识别控制量对真实排放及逐次振打峰值的影响。灰箱模型只提供条件式方向与试验假设；同相振打是情景上界，错相收益需由事件级数据标定。
+\item \textbf{问题二：工况划分、功率模型与10 mg方案。} 基于入口温度、入口浓度和流量识别出4类典型工况，轮廓系数0.4084。滚动验证选择的二次岭优于均值与线性基线，验证$R^2=0.9837$、RMSE=7.12 kW；验证期误差附加量为11.78 kW。中心情景下，10 mg/Nm³的四工况最佳采样预测功率为1532.90～1693.00 kW；五种子最大变异系数0.181\%，局部细化最多改善0.986\%，支持数值稳定但不构成全局最优证明。
+\item \textbf{问题三：控制优先级。} 等权、弱前级和中心前级消融下，前两电场承担70.8\%～73.7\%的正向电压增量，故可保留有条件的“前级优先”；后级尤其$U_4$仍承担情景相关补偿，振打周期需与电压协同调整。
+\item \textbf{问题四：5 mg方案与功率代价。} 排放目标由10收紧至5 mg/Nm³时，中心情景加权功率由1609.4增至1829.8 kW，功率增幅约13.7\%；405组灰箱参数组合情景范围为11.37\%～14.31\%，中位数12.99\%。在相同运行时长下，该功率增幅也等于电耗增幅。上述数值均为情景推演，必须在补采未封顶秒级排放、振打事件和电气状态后重新标定。
+\end{enumerate}
+
+
+\section*{参考文献}
+\addcontentsline{toc}{section}{参考文献}
+
+
+[1] 中华人民共和国生态环境部. 水泥工业大气污染物排放标准：GB 4915—2013（含2025年修改单）[EB/OL]. (2013-12-27)[2026-08-06]. https://www.mee.gov.cn/ywgz/fgbz/bz/bzwb/dqhjbh/dqgdwrywrwpfbz/201312/t20131227\_265765.htm.
+
+
+[2] OGLESBY S Jr, NICHOLS G B. *A Manual of Electrostatic Precipitator Technology: Part I—Fundamentals*[R/OL]. Birmingham: Southern Research Institute, 1970[2026-08-06]. https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=9101FJFA.TXT.
+
+
+[3] SZABO M F, SHAH Y M, SCHLIESSER S P. *Inspection Manual for Evaluation of Electrostatic Precipitator Performance*[R/OL]. Washington, DC: U.S. Environmental Protection Agency, 1981[2026-08-06]. https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=9400034C.TXT.
+
+
+[4] MIZUNO A. Electrostatic precipitation[J]. IEEE Transactions on Dielectrics and Electrical Insulation, 2000, 7(5): 615-624. DOI: 10.1109/94.879357.
+
+
+[5] LI Z, SHAO C, AN Y, et al. Energy-saving optimal control for a factual electrostatic precipitator with multiple electric-field stages based on GA[J]. Journal of Process Control, 2013, 23(8): 1041-1051. DOI: 10.1016/j.jprocont.2013.06.007.
+
+
+[6] NAVARRETE B, VILCHES L F, RODRIGUEZ-GALAN M, et al. A pilot scale study of the rapping reentrainment and fouling in electrostatic precipitation[J]. Environmental Progress \& Sustainable Energy, 2015, 34(1): 7-14. DOI: 10.1002/ep.11934.
+
+
+[7] ZHENG C, ZHAO Z, GUO Y, et al. A real-time optimization method for economic and effective operation of electrostatic precipitators[J]. Journal of the Air \& Waste Management Association, 2020, 70(7): 708-720. DOI: 10.1080/10962247.2020.1767227.
+
+
+[8] FU Y, SU Z. Deep neural network based concentration prediction model of dry electrostatic precipitator with a modified PID optimizer[J]. Journal of Physics: Conference Series, 2022, 2189: 012018. DOI: 10.1088/1742-6596/2189/1/012018.
+
+
+[9] MACQUEEN J. Some methods for classification and analysis of multivariate observations[C]//Proceedings of the Fifth Berkeley Symposium on Mathematical Statistics and Probability. Berkeley: University of California Press, 1967, 1: 281-297.
+
+
+[10] ROUSSEEUW P J. Silhouettes: A graphical aid to the interpretation and validation of cluster analysis[J]. Journal of Computational and Applied Mathematics, 1987, 20: 53-65. DOI: 10.1016/0377-0427(87)90125-7.
+
+
+[11] HOERL A E, KENNARD R W. Ridge regression: Biased estimation for nonorthogonal problems[J]. Technometrics, 1970, 12(1): 55-67. DOI: 10.1080/00401706.1970.10488634.
+
+
+[12] WHITE H J. *Industrial Electrostatic Precipitation*[M]. Reading, MA: Addison-Wesley, 1963.
+
+
+[13] PARKER K R. *Electrical Operation of Electrostatic Precipitators*[M]. London: Institution of Electrical Engineers, 2003.
+
+
+\section*{附录A 程序求解流程与源程序结构}
+\addcontentsline{toc}{section}{附录A 程序求解流程与源程序结构}
+
+\subsection*{A.1 求解流程}
+
+
+\begin{lstlisting}[style=pseudo]
+输入：分钟级数据、5个随机种子、排放限值C_lim
+1. 按时间划分训练/验证/回顾性测试；
+2. 在训练期对Temp、C_in、Q标准化，K-means取k=4；
+3. 比较均值、线性岭、二次岭，按3个滚动窗口选择正则强度；
+4. 对每个工况与随机种子：
+   4.1 计算P05、P95与经验Mahalanobis 97.5%阈值；
+   4.2 生成220000组全域候选；
+   4.3 在10/5 mg初始最佳点附近各生成30000组局部候选；
+   4.4 过滤支持域与工程排序，选择预测总功率最低的情景可行候选；
+5. 扫描27组总体参数情景和405组灰箱参数组合情景；
+6. 执行场权重消融、多种子离散和动态控制表输出；
+输出：控制参数、功率增幅、验证期误差附加量、消融、敏感性、图表与运行摘要。
+\end{lstlisting}
+
+
+\subsection*{A.2 源程序清单与模块结构}
+
+完整可运行源程序随电子支撑材料提交，各程序的职责与顶层定义如表A1所示，完整代码见附录D。
+
+
+\begin{table}[htbp]
+\centering
+\caption*{\normalsize 表A1　源程序清单与顶层模块结构}
+\vspace{-2pt}
+\begin{tabular}{lll}
+\toprule
+源文件 & 职责 & 主要顶层定义 \\
+\midrule
+\texttt{src/scenario\_model.py} & 功率模型、灰箱排放情景、支持域优化与敏感性 & \texttt{voltage\_polynomial}、\texttt{RidgePowerModel}、\texttt{condition\_profiles}、\texttt{scenario\_t\_star}、\texttt{scenario\_emission}、\texttt{support\_statistics}、\texttt{filter\_supported\_controls}、\texttt{candidate\_bank}、\texttt{local\_candidate\_bank}、\texttt{select\_optimum}、\texttt{evaluate\_power\_models}、\texttt{aggregate\_pair}、\texttt{main} \\
+\texttt{src/paper\_figures.py} & 22幅正文图与图注追踪表生成 & \texttt{fig01\_outlet\_diagnosis}—\texttt{fig18\_penalty}、\texttt{fig05b\_boundary\_proximity}、\texttt{fig08b\_feature\_importance}、\texttt{fig12b\_control\_profiles}、\texttt{grouped\_controls}、\texttt{main} \\
+\texttt{src/plot\_utils.py} & 统一绘图样式与PNG/PDF双格式导出 & \texttt{set\_paper\_style}、\texttt{finish\_axes}、\texttt{add\_subpanel\_label}、\texttt{save\_figure} \\
+\texttt{src/build\_paper\_pdf.py} & 由终稿Markdown生成符合竞赛格式规范的XeLaTeX提交稿 & \texttt{convert}、\texttt{convert\_table}、\texttt{build\_tex}、\texttt{code\_appendix}、\texttt{main} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+正文Markdown中的\texttt{}标记为修订补丁的定位锚点，由\texttt{build\_final\_deliverables.py}的\texttt{strip\_work\_comments}在装配提交稿时统一移除，不出现在最终DOCX/PDF中。
+
+支撑数据、结果CSV/JSON、图注追踪表、逐点回复与AI工具使用详情见附录C清单。
+
+
+\section*{附录B 结果适用性声明}
+\addcontentsline{toc}{section}{附录B 结果适用性声明}
+
+
+本文功率模型、工况划分及数据质量统计直接来源于附件；出口浓度缩放、排放灰箱系数、振打峰值系数以及由此得到的5/10 mg/Nm³最佳采样可行参数和功率增幅均属于情景推演。若数据提供方确认原记录不存在小数点问题，或提供新的未封顶排放数据，则应撤销当前排放情景并重新标定，不得沿用本文情景数值。
+
+
+\section*{附录C 支撑材料与AI工具使用声明}
+\addcontentsline{toc}{section}{附录C 支撑材料与AI工具使用声明}
+
+
+\textbf{支撑材料清单：} 原始处理数据包；results目录下功率基线、滚动验证、中心控制、多种子稳定性、结构情景、场权重消融、动态控制表和运行摘要；figures\_paper目录下21幅PNG预览、21幅PDF矢量图及figure\_manifest.csv；src目录下4个源程序；integrity目录下确定性核验结果；revision\_round1目录下修订补丁、应用报告、修改追踪表与逐点回复。
+
+
+\textbf{AI工具使用声明（提交前由参赛队核验确认）：} 本稿坚持参赛队人工主导。题意分析、模型构建、公式推导、参数设定、程序审阅、结果复算和论文定稿由参赛队承担；OpenAI Codex（使用日期2026-08-05至2026-08-06）仅用于少量代码排错、图表版式检查、文字校对与格式核验。AI输出均经人工筛选和复核，未替代现场数据，也未把不可识别的排放关系改写为实证结论。详细用途和人工核验记录另见过程研讨目录中的 AI工具使用详情.md。
+\clearpage
+\section*{附录D\quad 完整源程序}
+\addcontentsline{toc}{section}{附录D\quad 完整源程序}
+本附录给出生成本文全部结果与图表的完整可运行源程序，与电子支撑材料 \texttt{src/} 目录一致。
+\subsection*{D.1\quad \texttt{scenario\_model.py}}
+\lstinputlisting[style=pycode]{/home/user/Mathematical-Modeling/04_最终论文与代码交付包/src/scenario_model.py}
+\subsection*{D.2\quad \texttt{paper\_figures.py}}
+\lstinputlisting[style=pycode]{/home/user/Mathematical-Modeling/04_最终论文与代码交付包/src/paper_figures.py}
+\subsection*{D.3\quad \texttt{plot\_utils.py}}
+\lstinputlisting[style=pycode]{/home/user/Mathematical-Modeling/04_最终论文与代码交付包/src/plot_utils.py}
+
+\end{document}
