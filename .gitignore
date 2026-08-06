@@ -5,10 +5,10 @@
 # Temporary & QA render cache
 tmp/
 .lo_profile_*
-终稿/qa_*
-终稿/qa2_*
-终稿/qa3_*
-终稿/qa_final*
-终稿/qa_format*
-终稿/manual_lo/
-终稿/.lo_profile_*
+**/qa_*
+**/qa2_*
+**/qa3_*
+**/qa_final*
+**/qa_format*
+**/manual_lo/
+**/.lo_profile_*
