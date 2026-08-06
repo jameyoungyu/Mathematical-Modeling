@@ -943,6 +943,7 @@ T_3\ge T_1+100,\quad T_4\ge T_2+100
 \texttt{src/scenario\_model.py} & 功率模型、灰箱排放情景、支持域优化与敏感性 & \texttt{voltage\_polynomial}、\texttt{RidgePowerModel}、\texttt{condition\_profiles}、\texttt{scenario\_t\_star}、\texttt{scenario\_emission}、\texttt{support\_statistics}、\texttt{filter\_supported\_controls}、\texttt{candidate\_bank}、\texttt{local\_candidate\_bank}、\texttt{select\_optimum}、\texttt{evaluate\_power\_models}、\texttt{aggregate\_pair}、\texttt{main} \\
 \texttt{src/paper\_figures.py} & 19幅数据图与图注追踪表生成（图1、图4为TikZ矢量图，另行编译） & \texttt{fig01\_outlet\_diagnosis}—\texttt{fig18\_penalty}、\texttt{fig05b\_boundary\_proximity}、\texttt{fig08b\_feature\_importance}、\texttt{fig12b\_control\_profiles}、\texttt{grouped\_controls}、\texttt{main} \\
 \texttt{src/plot\_utils.py} & 统一绘图样式与PNG/PDF双格式导出 & \texttt{set\_paper\_style}、\texttt{finish\_axes}、\texttt{add\_subpanel\_label}、\texttt{save\_figure} \\
+\texttt{src/integrity\_check.py} & 数据、结果、引用、图表与修订稿的确定性核验，输出\texttt{integrity/deterministic\_integrity\_results.json} & 逐项核验例程与汇总入口 \\
 \texttt{src/compute\_frontier.py} & 在5—10 mg/Nm³各档限值上重复支持域搜索，输出排放—功率权衡前沿 & \texttt{main} \\
 \texttt{src/build\_paper\_pdf.py} & 由终稿Markdown生成符合竞赛格式规范的XeLaTeX提交稿 & \texttt{convert}、\texttt{convert\_table}、\texttt{build\_tex}、\texttt{code\_appendix}、\texttt{main} \\
 \bottomrule
@@ -965,7 +966,7 @@ T_3\ge T_1+100,\quad T_4\ge T_2+100
 \addcontentsline{toc}{section}{附录C 支撑材料与AI工具使用声明}
 
 
-\textbf{支撑材料清单：} 原始处理数据包；results目录下功率基线、滚动验证、中心控制、多种子稳定性、结构情景、场权重消融、动态控制表和运行摘要；figures\_paper目录下21幅正文图（19幅PNG/PDF由绘图程序生成，图1与图4为TikZ源文件独立编译）及figure\_manifest.csv；src目录下5个源程序；integrity目录下确定性核验结果；revision\_round1目录下修订补丁、应用报告、修改追踪表与逐点回复。
+\textbf{支撑材料清单：} 原始处理数据包；results目录下功率基线、滚动验证、中心控制、多种子稳定性、结构情景、场权重消融、动态控制表和运行摘要；figures\_paper目录下21幅正文图（19幅PNG/PDF由绘图程序生成，图1与图4为TikZ源文件独立编译）及figure\_manifest.csv；src目录下6个源程序；integrity目录下确定性核验结果；revision\_round1目录下修订补丁、应用报告、修改追踪表与逐点回复。
 
 
 \textbf{AI工具使用声明（提交前由参赛队核验确认）：} 本稿坚持参赛队人工主导。题意分析、模型构建、公式推导、参数设定、程序审阅、结果复算和论文定稿由参赛队承担；OpenAI Codex（使用日期2026-08-05至2026-08-06）仅用于少量代码排错、图表版式检查、文字校对与格式核验。AI输出均经人工筛选和复核，未替代现场数据，也未把不可识别的排放关系改写为实证结论。详细用途和人工核验记录另见过程研讨目录中的 AI工具使用详情.md。
@@ -979,5 +980,11 @@ T_3\ge T_1+100,\quad T_4\ge T_2+100
 \lstinputlisting[style=pycode]{/home/user/Mathematical-Modeling/04_最终论文与代码交付包/src/paper_figures.py}
 \subsection*{D.3\quad \texttt{plot\_utils.py}}
 \lstinputlisting[style=pycode]{/home/user/Mathematical-Modeling/04_最终论文与代码交付包/src/plot_utils.py}
+\subsection*{D.4\quad \texttt{compute\_frontier.py}}
+\lstinputlisting[style=pycode]{/home/user/Mathematical-Modeling/04_最终论文与代码交付包/src/compute_frontier.py}
+\subsection*{D.5\quad \texttt{integrity\_check.py}}
+\lstinputlisting[style=pycode]{/home/user/Mathematical-Modeling/04_最终论文与代码交付包/src/integrity_check.py}
+\subsection*{D.6\quad \texttt{build\_paper\_pdf.py}}
+\lstinputlisting[style=pycode]{/home/user/Mathematical-Modeling/04_最终论文与代码交付包/src/build_paper_pdf.py}
 
 \end{document}
