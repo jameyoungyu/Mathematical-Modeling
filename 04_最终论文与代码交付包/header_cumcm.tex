@@ -1,0 +1,72 @@
+\usepackage{xeCJK}
+\usepackage{fontspec}
+\usepackage{geometry}
+\usepackage{indentfirst}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{setspace}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{amsmath,amssymb}
+
+% 1. 页面边距规范 (参照标准学术论文排版规范)
+\geometry{a4paper, top=2.54cm, bottom=2.54cm, left=2.8cm, right=2.8cm}
+
+% 2. 字体精细配置：正文宋体，标题黑体，英文/数字 Times New Roman
+\setCJKmainfont{Songti SC}[AutoFakeBold=2.5, AutoFakeItalic=true]
+\setCJKsansfont{Heiti SC}[AutoFakeBold=2.5, AutoFakeItalic=true]
+\setCJKmonofont{STFangsong}
+
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont{Menlo}[Scale=0.85]
+
+% 3. 图表前缀规范 (统一为中文“图”和“表”)
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+
+% 4. 段落与行距规范 (舒展不紧凑：小四号字，1.55倍行距，段前段后间距4pt，首行缩进2字符)
+\setlength{\parindent}{2em}
+\setstretch{1.42}
+\setlength{\parskip}{4pt plus 1.5pt minus 1pt}
+
+% 5. 页眉页脚规范 (参照参考PDF：无顶线纯净页眉，页脚居中阿拉伯数字页码)
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+}
+
+% 6. 标题排版规范 (参照参考PDF：论文主标题与所有一级章节标题全量居中，舒展留白)
+% 论文主标题 (Markdown 中的 # 标题)：黑体小二/三号(20pt)，居中，段前24pt，段后18pt
+\titleformat{\section}[block]{\centering\fontsize{20pt}{24pt}\selectfont\bfseries\sffamily}{\thesection}{1em}{}
+\titlespacing*{\section}{0pt}{24pt}{18pt}
+
+% 一级章节标题 (Markdown 中的 ## 标题：如 ## 摘要, ## 1 问题重述...): 黑体小三号(15pt)，居中，段前18pt，段后12pt
+\titleformat{\subsection}[block]{\centering\fontsize{15pt}{18pt}\selectfont\bfseries\sffamily}{\thesubsection}{1em}{}
+\titlespacing*{\subsection}{0pt}{18pt}{12pt}
+
+% 二级章节标题 (Markdown 中的 ### 标题：如 ### 1.1 问题背景): 黑体四号(14pt)，左对齐，段前14pt，段后8pt
+\titleformat{\subsubsection}[block]{\fontsize{14pt}{17pt}\selectfont\bfseries\sffamily}{\thesubsubsection}{1em}{}
+\titlespacing*{\subsubsection}{0pt}{14pt}{8pt}
+
+% 三级章节标题 (Markdown 中的 #### 标题): 黑体小四号(12pt)，左对齐，段前10pt，段后4pt
+\titleformat{\paragraph}[block]{\fontsize{12pt}{15pt}\selectfont\bfseries\sffamily}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}{0pt}{10pt}{4pt}
+
+% 7. 图表标题规范 (小四号/五号加粗，居中，适当留白)
+\captionsetup{justification=centering, font={small,bf}, labelfont=bf, skip=8pt}
+
+% 8. 数学公式排版与编号右对齐规范
+\makeatletter
+\def\tagform@#1{\maketag@{(#1\@@italiccorr)}}
+\makeatother
