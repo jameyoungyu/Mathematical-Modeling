@@ -39,20 +39,18 @@ COND_SHORT = {
 }
 
 CAPTIONS = {
+    "19_emission_power_frontier": "情景排放限值由5放宽至10 mg/Nm³时，四类工况的最佳采样预测功率单调下降，工况加权功率由1827.2降至1610.3 kW。由于0.1缩放情景下的历史锚点已约为5 mg/Nm³，该下降是沿排放—功率权衡曲线移动的结果，而非同一排放水平下的节能。",
+    "20_eta_sensitivity": "10→5 mg/Nm³的加权功率增幅近似反比于电压效应尺度η：η=0.8、1.0、1.2分别对应约16.7%、13.7%和11.3%，与解析近似13.7%×(1/η)相差不到2%。η属未由附件标定的工程先验，是该结论最主要的不确定性来源。",
     "01_outlet_data_diagnosis": "出口浓度记录存在显著截顶且不覆盖目标区间。有效记录全部位于48.74～50.00 mg/Nm³，其中大量观测等于50 mg/Nm³，因而不能从该列直接辨识5或10 mg/Nm³附近的控制—排放关系。",
     "02_process_timeseries": "原始过程量具有连续时序变化和多工况切换特征。图中展示首24小时入口温度、入口浓度、烟气流量及总功率的分钟级变化。",
     "03_cluster_selection": "四类工况在轮廓系数与解释复杂度之间取得较好平衡。k=4的轮廓系数达到0.408，且避免继续增加聚类数带来的解释负担。",
     "04_condition_map": "四类工况在入口浓度—温度平面上形成清晰分区，并由烟气流量大小补充刻画负荷差异。",
-    "05_condition_profile_heatmap": "标准化工况画像揭示温度、浓度、流量、粉尘负荷与历史总功率之间的结构差异，为分工况控制提供依据。",
-    "06_method_overview": "本文采用数据驱动功率模型与工程灰箱排放模型协同的分层优化框架。实测数据负责功率与工况辨识，排放约束仅在显式先验情景下推演。",
     "07_power_prediction": "滚动验证选择的二次岭回归优于均值与线性基线；回顾性测试R²为0.957、RMSE为14.76 kW。左图虚线表示理想预测，右图比较两时段RMSE。",
     "08_power_residuals": "回顾性测试残差均值为−10.78 kW，且在高功率区负偏差有所扩大；验证集绝对误差90%分位数11.78 kW作为验证期误差附加量。",
     "08b_feature_importance": "二次岭功率模型的标准化系数显示，电压及其二次交互项是主要预测信息来源。系数反映相关性和预测贡献，不解释为单变量因果效应。",
     "09_voltage_power_response": "在各工况典型状态下，模型给出的总功率随四电场电压同步提高而上升。曲线仅在各工况历史电压支持区间附近绘制。",
-    "10_optimal_power": "更严格的5 mg/Nm³情景约束在四类工况下均要求更高预测功率；中心情景工况加权平均功率由1609.42 kW升至1829.79 kW。",
     "11_optimal_voltage": "5 mg/Nm³情景主要通过提高前级电场电压并适度调整后级电压实现更高捕集强度。各柱为随机候选搜索得到的支持域内最优解。",
     "12_optimal_rapping_period": "最优振打周期在不同工况和排放限值间发生协同调整，前两电场周期较短、后两电场周期较长的工程顺序约束始终得到保持。",
-    "12b_radar_controls": "代表工况的电压和振打周期剖面表明，限值收紧时前级电压增量更突出，但后级补偿与周期协同仍不可忽略。",
     "13_emission_decomposition": "最优方案的约束值由连续排放基值和振打峰值增量共同构成。柱顶虚线分别表示10和5 mg/Nm³情景限值。",
     "14_rapping_peak_mechanism": "灰箱情景表明，振打周期相对参考最优周期延长会放大单次再飞扬峰值；高粉尘负荷工况的峰值增幅更显著。",
     "15_search_convergence": "五个独立随机种子与局部细化得到的最低预测功率高度稳定；八个工况—限值组合的最大变异系数为0.181%，局部细化相对初始随机库最多改善0.986%。",
@@ -63,51 +61,47 @@ CAPTIONS = {
 }
 
 TRACE_META = {
-    "01_outlet_data_diagnosis": (str(DATA_FILE), "fig01_outlet_diagnosis", "§2.2；图2", "出口记录可能为量程截顶；不代表真实排放分布"),
-    "02_process_timeseries": (str(DATA_FILE), "fig02_timeseries", "§2.1—2.2；图3", "只展示首24 h，不代表全周期分布"),
+    "19_emission_power_frontier": (str(RESULTS / "emission_power_frontier.csv"), "fig19_frontier", "§5.4；图13", "各限值下均为支持域内最佳采样解，前沿形状依赖灰箱先验"),
+    "20_eta_sensitivity": (str(RESULTS / "question4_sensitivity.csv"), "fig20_eta_sensitivity", "§8.2；图20", "η的取值范围本身没有数据支撑，仅为先验网格"),
+    "01_outlet_data_diagnosis": (str(DATA_FILE), "fig01_outlet_diagnosis", "§2.1—2.2；图2", "出口记录可能为量程截顶；不代表真实排放分布"),
+    "02_process_timeseries": (str(DATA_FILE), "fig02_timeseries", "§2.2；图3", "只展示首24 h，不代表全周期分布"),
     "03_cluster_selection": (str(RESULTS / "cluster_selection_metrics.csv"), "fig03_cluster_selection", "§5.1；图6", "聚类指标只评价统计分离度，不等于物理工况唯一性"),
     "04_condition_map": (str(DATA_FILE), "fig04_condition_map", "§5.1；图7", "为可视化抽样点；聚类实际使用全部训练样本"),
-    "05_condition_profile_heatmap": (str(RESULTS / "condition_profiles.csv"), "fig05_profile_heatmap", "§5.1；图8", "列内标准化仅用于相对比较"),
-    "06_method_overview": (str(ROOT / "10_修订后完整论文_终稿.md"), "fig06_method_overview", "§3；图4", "概念流程图，不含新的经验数据"),
-    "07_power_prediction": (str(RESULTS / "power_model_baselines.csv"), "fig07_power_prediction + RidgePowerModel", "§5.2；图9", "回顾性测试并非真正未触碰盲测"),
-    "08_power_residuals": (str(DATA_FILE), "fig08_residuals + RidgePowerModel", "§5.2；图11", "存在−10.78 kW平均偏差和高功率区低估"),
-    "08b_feature_importance": (str(DATA_FILE), "fig08b_feature_importance + RidgePowerModel", "§5.2；图10", "标准化系数用于预测解释，不代表单变量因果效应"),
-    "09_voltage_power_response": (str(DATA_FILE), "fig09_voltage_response + RidgePowerModel", "§5.2；图12", "局部情景曲线，仅在历史电压附近解释"),
-    "10_optimal_power": (str(RESULTS / "optimal_controls_central_scenario.csv"), "fig10_power", "§5.4；图14", "功率来自数据模型；可行性来自未辨识灰箱情景"),
-    "11_optimal_voltage": (str(RESULTS / "optimal_controls_central_scenario.csv"), "grouped_controls(U_COLS)", "§6；图15", "最优电压是情景试验起点，不是设备安全设定"),
-    "12_optimal_rapping_period": (str(RESULTS / "optimal_controls_central_scenario.csv"), "grouped_controls(T_COLS)", "§6；图17", "无实际振打事件，周期结果依赖峰值先验"),
-    "12b_radar_controls": (str(RESULTS / "optimal_controls_central_scenario.csv"), "fig12b_control_profiles", "§6；图16", "控制剖面来自中心灰箱情景，不是设备安全设定"),
-    "13_emission_decomposition": (str(RESULTS / "optimal_controls_central_scenario.csv"), "fig13_emission", "§7.2；图19", "全部排放值为情景推演，不是实测"),
+    "07_power_prediction": (str(RESULTS / "power_model_baselines.csv"), "fig07_power_prediction + RidgePowerModel", "§5.2；图8", "回顾性测试并非真正未触碰盲测"),
+    "08_power_residuals": (str(DATA_FILE), "fig08_residuals + RidgePowerModel", "§5.2；图10", "存在−10.78 kW平均偏差和高功率区低估"),
+    "08b_feature_importance": (str(DATA_FILE), "fig08b_feature_importance + RidgePowerModel", "§5.2；图9", "标准化系数用于预测解释，不代表单变量因果效应"),
+    "09_voltage_power_response": (str(DATA_FILE), "fig09_voltage_response + RidgePowerModel", "§5.2；图11", "局部情景曲线，仅在历史电压附近解释"),
+    "11_optimal_voltage": (str(RESULTS / "optimal_controls_central_scenario.csv"), "grouped_controls(U_COLS)", "§6；图14", "最优电压是情景试验起点，不是设备安全设定"),
+    "12_optimal_rapping_period": (str(RESULTS / "optimal_controls_central_scenario.csv"), "grouped_controls(T_COLS)", "§6；图15", "无实际振打事件，周期结果依赖峰值先验"),
+    "13_emission_decomposition": (str(RESULTS / "optimal_controls_central_scenario.csv"), "fig13_emission", "§7.2；图17", "全部排放值为情景推演，不是实测"),
     "14_rapping_peak_mechanism": (str(RESULTS / "condition_profiles.csv"), "fig14_peak", "§4.2；图5", "峰值指数1.35与尺度1.2属于工程先验"),
-    "15_search_convergence": (str(RESULTS / "optimization_seed_stability.csv"), "fig15_seed_stability", "§8.1；图20", "随机种子稳定不等价于全局最优证明"),
-    "16_sensitivity_distribution": (str(RESULTS / "structural_sensitivity.csv"), "fig16_structural_sensitivity", "§8.2；图21", "扫描范围仍由显式情景网格决定"),
-    "17_sensitivity_heatmap": (str(RESULTS / "field_priority_ablation_summary.csv"), "fig17_field_ablation", "§8.3；图22", "消融仍依赖同一灰箱结构与支持域"),
-    "18_condition_energy_penalty": (str(RESULTS / "question4_by_condition.csv"), "fig18_penalty", "§7.1；图18", "13.69%为单一种子中心情景点估计"),
-    "05b_boundary_proximity": (str(RESULTS / "optimal_controls_central_scenario.csv"), "fig05b_boundary_proximity", "§5.4；图13", "经验支持域不是设备安全边界，贴边解仍需现场复核"),
+    "15_search_convergence": (str(RESULTS / "optimization_seed_stability.csv"), "fig15_seed_stability", "§8.1；图18", "随机种子稳定不等价于全局最优证明"),
+    "16_sensitivity_distribution": (str(RESULTS / "structural_sensitivity.csv"), "fig16_structural_sensitivity", "§8.2；图19", "扫描范围仍由显式情景网格决定"),
+    "17_sensitivity_heatmap": (str(RESULTS / "field_priority_ablation_summary.csv"), "fig17_field_ablation", "§8.2；图21", "消融仍依赖同一灰箱结构与支持域"),
+    "18_condition_energy_penalty": (str(RESULTS / "question4_by_condition.csv"), "fig18_penalty", "§7.1；图16", "13.69%为单一种子中心情景点估计"),
+    "05b_boundary_proximity": (str(RESULTS / "optimal_controls_central_scenario.csv"), "fig05b_boundary_proximity", "§5.4；图12", "经验支持域不是设备安全边界，贴边解仍需现场复核"),
 }
 
 MANUSCRIPT_FIGURE = {
     "01_outlet_data_diagnosis": 2,
     "02_process_timeseries": 3,
-    "06_method_overview": 4,
     "14_rapping_peak_mechanism": 5,
     "03_cluster_selection": 6,
     "04_condition_map": 7,
-    "05_condition_profile_heatmap": 8,
-    "07_power_prediction": 9,
-    "08b_feature_importance": 10,
-    "08_power_residuals": 11,
-    "09_voltage_power_response": 12,
-    "05b_boundary_proximity": 13,
-    "10_optimal_power": 14,
-    "11_optimal_voltage": 15,
-    "12b_radar_controls": 16,
-    "12_optimal_rapping_period": 17,
-    "18_condition_energy_penalty": 18,
-    "13_emission_decomposition": 19,
-    "15_search_convergence": 20,
-    "16_sensitivity_distribution": 21,
-    "17_sensitivity_heatmap": 22,
+    "07_power_prediction": 8,
+    "08b_feature_importance": 9,
+    "08_power_residuals": 10,
+    "09_voltage_power_response": 11,
+    "05b_boundary_proximity": 12,
+    "19_emission_power_frontier": 13,
+    "11_optimal_voltage": 14,
+    "12_optimal_rapping_period": 15,
+    "18_condition_energy_penalty": 16,
+    "13_emission_decomposition": 17,
+    "15_search_convergence": 18,
+    "16_sensitivity_distribution": 19,
+    "20_eta_sensitivity": 20,
+    "17_sensitivity_heatmap": 21,
 }
 
 
@@ -213,24 +207,6 @@ def fig04_condition_map(df: pd.DataFrame) -> None:
     save_figure(fig, OUT, "04_condition_map")
 
 
-def fig05_profile_heatmap(profiles: pd.DataFrame) -> None:
-    cols = ["Temp_C", "C_in_gNm3", "Q_Nm3h", "dust_load_kg_h", "historical_power_kW"]
-    labels = ["温度", "入口浓度", "烟气流量", "粉尘负荷", "历史总功率"]
-    values = profiles[cols].to_numpy(float)
-    z = (values - values.mean(axis=0)) / values.std(axis=0)
-    fig, ax = plt.subplots(figsize=(7.2, 3.2))
-    im = ax.imshow(z, cmap="RdBu_r", vmin=-1.7, vmax=1.7, aspect="auto")
-    ax.set_xticks(range(len(labels)), labels)
-    ax.set_yticks(range(4), [COND_SHORT[i] for i in range(1, 5)])
-    for i in range(z.shape[0]):
-        for j in range(z.shape[1]):
-            ax.text(j, i, f"{z[i,j]:+.2f}", ha="center", va="center", fontsize=8,
-                    color="white" if abs(z[i,j]) > 0.85 else "black")
-    cbar = fig.colorbar(im, ax=ax, fraction=0.032, pad=0.03)
-    cbar.set_label("列内标准分数")
-    fig.tight_layout()
-    save_figure(fig, OUT, "05_condition_profile_heatmap")
-
 
 def fig05b_boundary_proximity(optimum: pd.DataFrame) -> None:
     """Audit how close each recommended point lies to its empirical support limit."""
@@ -268,41 +244,6 @@ def fig05b_boundary_proximity(optimum: pd.DataFrame) -> None:
     fig.tight_layout(w_pad=1.8)
     save_figure(fig, OUT, "05b_boundary_proximity")
 
-
-def fig06_method_overview() -> None:
-    fig, ax = plt.subplots(figsize=(9.0, 3.7))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 4.5)
-    ax.axis("off")
-    stages = [
-        (0.25, 1.2, 1.55, 2.1, "原始数据", "过程量、总功率\n出口浓度记录"),
-        (2.1, 1.2, 1.65, 2.1, "数据审计", "截顶诊断\n时间切分与支持域"),
-        (4.05, 2.35, 1.75, 1.35, "数据驱动层", "工况聚类\n岭回归功率模型"),
-        (4.05, 0.35, 1.75, 1.35, "灰箱情景层", "捕集指数\n振打峰值代理"),
-        (6.15, 1.2, 1.65, 2.1, "约束优化", "5/10 mg情景约束\n历史支持域搜索"),
-        (8.15, 1.2, 1.55, 2.1, "输出", "分工况控制策略\n功率代价与敏感性"),
-    ]
-    fills = ["#E8F1F8", "#F2F4F7", "#E8F5F0", "#FFF2E5", "#F3ECF7", "#E8F1F8"]
-    for (x, y, w, h, title, body), fill in zip(stages, fills):
-        box = FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.04,rounding_size=0.08", facecolor=fill, edgecolor="#4B5563", linewidth=1.0)
-        ax.add_patch(box)
-        ax.text(x+w/2, y+h*0.68, title, ha="center", va="center", fontsize=10, fontweight="bold")
-        ax.text(x+w/2, y+h*0.34, body, ha="center", va="center", fontsize=8.5, linespacing=1.45)
-    arrows = [
-        ((1.82, 2.25), (2.08, 2.25), "清洗数据"),
-        ((3.77, 2.52), (4.03, 2.85), "可辨识部分"),
-        ((3.77, 1.98), (4.03, 1.05), "不可辨识部分"),
-        ((5.82, 3.0), (6.13, 2.65), "功率预测"),
-        ((5.82, 1.05), (6.13, 1.75), "排放约束"),
-        ((7.82, 2.25), (8.13, 2.25), "最优解"),
-    ]
-    for start, end, label in arrows:
-        ax.add_patch(FancyArrowPatch(start, end, arrowstyle="-|>", mutation_scale=10, color=GRAY, linewidth=1.1))
-        ax.text((start[0]+end[0])/2, (start[1]+end[1])/2+0.18, label, ha="center", fontsize=7, color=GRAY)
-    ax.text(4.93, 4.12, "实测证据", ha="center", color=PALETTE[2], fontsize=8, fontweight="bold")
-    ax.text(4.93, 0.04, "显式先验（不冒充实测辨识）", ha="center", color=PALETTE[4], fontsize=8, fontweight="bold")
-    fig.tight_layout()
-    save_figure(fig, OUT, "06_method_overview")
 
 
 def fit_power_model(df: pd.DataFrame) -> RidgePowerModel:
@@ -428,21 +369,6 @@ def fig09_voltage_response(df: pd.DataFrame, profiles: pd.DataFrame, model: Ridg
     save_figure(fig, OUT, "09_voltage_power_response")
 
 
-def fig10_power(optimum: pd.DataFrame, q4: pd.DataFrame) -> None:
-    p = optimum.pivot(index="condition_cluster", columns="limit_mgNm3", values="predicted_power_kW")
-    x = np.arange(4)
-    fig, ax = plt.subplots(figsize=(7.2, 4.0))
-    b1 = ax.bar(x-0.18, p[10.0], 0.36, color=PALETTE[5], label="10 mg/Nm³")
-    b2 = ax.bar(x+0.18, p[5.0], 0.36, color=PALETTE[4], label="5 mg/Nm³")
-    _label_bars(ax, b1); _label_bars(ax, b2)
-    ax.set_xticks(x, [COND_SHORT[i] for i in range(1,5)])
-    ax.set_ylabel("情景最优功率 (kW)")
-    ax.set_ylim(0, max(p.max())*1.15)
-    ax.legend(frameon=False, ncol=2)
-    finish_axes(ax)
-    fig.tight_layout()
-    save_figure(fig, OUT, "10_optimal_power")
-
 
 def grouped_controls(optimum: pd.DataFrame, cols: list[str], stem: str, ylabel: str) -> None:
     fig, axes = plt.subplots(2, 2, figsize=(8.2, 5.8), sharey=True)
@@ -460,34 +386,6 @@ def grouped_controls(optimum: pd.DataFrame, cols: list[str], stem: str, ylabel: 
     fig.tight_layout(h_pad=1.8)
     save_figure(fig, OUT, stem)
 
-
-def fig12b_control_profiles(optimum: pd.DataFrame) -> None:
-    """Compare voltage and rapping profiles for representative low/high-load conditions."""
-    fig, axes = plt.subplots(1, 2, figsize=(8.4, 3.6))
-    x = np.arange(4)
-    fields = ["电场1", "电场2", "电场3", "电场4"]
-    styles = {
-        (1, 10.0): ("o--", PALETTE[0], "工况1，10 mg"),
-        (1, 5.0): ("s-", PALETTE[0], "工况1，5 mg"),
-        (3, 10.0): ("^--", PALETTE[2], "工况3，10 mg"),
-        (3, 5.0): ("D-", PALETTE[2], "工况3，5 mg"),
-    }
-    for ax, cols, ylabel, tag in [
-        (axes[0], U_COLS, "中心情景电压 (kV)", "a"),
-        (axes[1], T_COLS, "中心情景振打周期 (s)", "b"),
-    ]:
-        add_subpanel_label(ax, tag)
-        for (cluster, limit), (style, color, label) in styles.items():
-            row = optimum[(optimum["condition_cluster"] == cluster) & (optimum["limit_mgNm3"] == limit)].iloc[0]
-            ax.plot(x, row[cols].to_numpy(float), style, color=color, label=label, linewidth=1.6, markersize=5)
-        ax.set_xticks(x, fields)
-        ax.set_ylabel(ylabel)
-        headroom(ax, 0.12)
-        finish_axes(ax, grid_axis="both")
-    handles, labels = axes[0].get_legend_handles_labels()
-    fig.tight_layout(w_pad=1.8, rect=(0, 0.09, 1, 1))
-    figure_legend(fig, handles, labels, ncol=4, bottom=0.0)
-    save_figure(fig, OUT, "12b_radar_controls")
 
 
 def fig13_emission(optimum: pd.DataFrame) -> None:
@@ -648,7 +546,7 @@ def _relpath(path: str) -> str:
         return Path(path).name
 
 
-SCHEMATIC_ROW = {
+TIKZ_ROWS = [{
     "figure_id": "01", "manuscript_figure": 1, "stem": "00_esp_schematic",
     "caption": "四电场电除尘器结构与变量定义",
     "png": "figures_paper/00_esp_schematic.pdf", "pdf": "figures_paper/00_esp_schematic.pdf",
@@ -656,7 +554,73 @@ SCHEMATIC_ROW = {
     "transformation": "00_esp_schematic.tex（TikZ矢量重绘，xelatex编译）",
     "supported_manuscript_claims": "§1.1；图1",
     "limitations": "结构示意图，不含实测数据；比例非工程真实尺寸",
-}
+}, {
+    "figure_id": "04", "manuscript_figure": 4, "stem": "06_method_overview",
+    "caption": "数据驱动层与灰箱情景层协同的总体框架",
+    "png": "figures_paper/06_method_overview.pdf", "pdf": "figures_paper/06_method_overview.pdf",
+    "source_data": "10_修订后完整论文_终稿.md（§3框架描述，示意图）",
+    "transformation": "06_method_overview.tex（TikZ矢量重绘，xelatex编译）",
+    "supported_manuscript_claims": "§3.2；图4",
+    "limitations": "概念流程图，不含新的经验数据",
+}]
+
+
+def fig19_frontier(frontier: pd.DataFrame, weighted: pd.DataFrame) -> None:
+    """排放—功率权衡前沿：说明放宽限值换来的功率下降不是等排放下的节能。"""
+    fig, ax = plt.subplots(figsize=(7.4, 4.0))
+    for idx, (cluster, grp) in enumerate(frontier.groupby("condition_cluster")):
+        grp = grp.sort_values("limit_mgNm3")
+        ax.plot(grp["limit_mgNm3"], grp["predicted_power_kW"], "o-",
+                color=PALETTE[idx], markersize=4.5, linewidth=1.5,
+                label=COND_SHORT[int(cluster)].replace("\n", " "))
+    w = weighted.sort_values("limit_mgNm3")
+    ax.plot(w["limit_mgNm3"], w["weighted_power_kW"], "s--", color="#111827",
+            markersize=5, linewidth=2.0, label="工况加权")
+    anchor = float(frontier["historical_anchor_mgNm3"].iloc[0])
+    ax.axvline(anchor, color=GRAY, linestyle=":", linewidth=1.2)
+    ax.annotate(f"情景下历史锚点\n≈{anchor:.1f} mg/Nm³", xy=(anchor, ax.get_ylim()[1]),
+                xytext=(anchor + 0.25, ax.get_ylim()[1] - 18), fontsize=8, color=GRAY)
+    p10 = float(w[w["limit_mgNm3"] == 10.0]["weighted_power_kW"].iloc[0])
+    p5 = float(w[w["limit_mgNm3"] == 5.0]["weighted_power_kW"].iloc[0])
+    ax.annotate("", xy=(10.0, p10), xytext=(5.0, p5),
+                arrowprops={"arrowstyle": "<->", "color": PALETTE[4], "linewidth": 1.3})
+    ax.text(7.5, (p5 + p10) / 2 + 8, f"放宽限值 5→10 mg/Nm³\n加权功率降 {p5 - p10:.0f} kW（{100*(p5-p10)/p5:.1f}%）",
+            fontsize=8.2, color=PALETTE[4], ha="center")
+    ax.set_xlabel("情景排放限值 (mg/Nm³)")
+    ax.set_ylabel("支持域内最佳采样预测功率 (kW)")
+    ax.set_xticks(sorted(frontier["limit_mgNm3"].unique()))
+    ax.legend(frameon=False, ncol=2, fontsize=8.4, loc="upper right")
+    headroom(ax, 0.16)
+    finish_axes(ax, grid_axis="both")
+    fig.tight_layout()
+    save_figure(fig, OUT, "19_emission_power_frontier")
+
+
+def fig20_eta_sensitivity(prior: pd.DataFrame) -> None:
+    """功率增幅对电压效应尺度 eta 的依赖，并给出 1/eta 解析关系。"""
+    feasible = prior.dropna(subset=["weighted_power_increase_pct"]).copy()
+    fig, ax = plt.subplots(figsize=(6.6, 3.9))
+    for idx, (b0, grp) in enumerate(feasible.groupby("peak_scale")):
+        ax.scatter(grp["eta_voltage_effect"], grp["weighted_power_increase_pct"],
+                   s=42, color=PALETTE[idx], edgecolor="white", linewidth=0.6, zorder=3,
+                   label=f"峰值尺度 $b_0$={b0}")
+    eta = np.linspace(0.78, 1.22, 100)
+    ax.plot(eta, 13.69 * (1.0 / eta), color="#111827", linestyle="--", linewidth=1.6,
+            zorder=2, label=r"解析近似 $13.7\%\times(1/\eta)$")
+    means = feasible.groupby("eta_voltage_effect")["weighted_power_increase_pct"].mean()
+    for x, y in means.items():
+        ax.annotate(f"均值 {y:.1f}%", (x, y), textcoords="offset points", xytext=(34, -3),
+                    ha="left", fontsize=8.2, color=GRAY,
+                    bbox={"boxstyle": "round,pad=0.2", "facecolor": "white",
+                          "edgecolor": "none", "alpha": 0.85})
+    ax.set_xlabel(r"电压效应总体尺度 $\eta$（工程先验，未由附件标定）")
+    ax.set_ylabel("10→5 mg/Nm³ 加权功率增幅 (%)")
+    ax.set_xticks([0.8, 1.0, 1.2])
+    ax.legend(frameon=False, fontsize=8.2, loc="upper right")
+    headroom(ax, 0.20)
+    finish_axes(ax, grid_axis="both")
+    fig.tight_layout()
+    save_figure(fig, OUT, "20_eta_sensitivity")
 
 
 def write_manifest() -> None:
@@ -672,7 +636,8 @@ def write_manifest() -> None:
                      "transformation": f"paper_figures.py::{function_name}; plot_sha256={script_hash}; model_sha256={model_hash}",
                      "supported_manuscript_claims": claims,
                      "limitations": limitations})
-    rows.insert(0, SCHEMATIC_ROW)
+    rows = TIKZ_ROWS + rows
+    rows.sort(key=lambda r: r["manuscript_figure"])
     pd.DataFrame(rows).to_csv(OUT / "figure_manifest.csv", index=False, encoding="utf-8-sig")
     lines = ["# 论文图组与图注", "", "所有图均提供 PNG 预览和 PDF 矢量版本。", ""]
     for row in sorted(rows, key=lambda x: x["manuscript_figure"]):
@@ -697,23 +662,24 @@ def main() -> None:
     ablation = pd.read_csv(RESULTS / "field_priority_ablation_summary.csv")
     baselines = pd.read_csv(RESULTS / "power_model_baselines.csv")
     q4 = pd.read_csv(RESULTS / "question4_by_condition.csv")
+    frontier = pd.read_csv(RESULTS / "emission_power_frontier.csv")
+    frontier_w = pd.read_csv(RESULTS / "emission_power_frontier_weighted.csv")
+    prior = pd.read_csv(RESULTS / "question4_sensitivity.csv")
     model = fit_power_model(df)
 
     fig01_outlet_diagnosis(df)
     fig02_timeseries(df)
     fig03_cluster_selection(cluster_eval)
     fig04_condition_map(df)
-    fig05_profile_heatmap(profiles)
     fig05b_boundary_proximity(optimum)
-    fig06_method_overview()
     fig07_power_prediction(df, model, baselines)
     fig08b_feature_importance(model)
     fig08_residuals(df, model)
     fig09_voltage_response(df, profiles, model)
-    fig10_power(optimum, q4)
     grouped_controls(optimum, U_COLS, "11_optimal_voltage", "最优电压 (kV)")
-    fig12b_control_profiles(optimum)
     grouped_controls(optimum, T_COLS, "12_optimal_rapping_period", "最优振打周期 (s)")
+    fig19_frontier(frontier, frontier_w)
+    fig20_eta_sensitivity(prior)
     fig13_emission(optimum)
     fig14_peak(profiles)
     fig15_seed_stability(seed_data)

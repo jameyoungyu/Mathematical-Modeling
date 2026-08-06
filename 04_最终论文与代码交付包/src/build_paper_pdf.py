@@ -59,14 +59,20 @@ def inline(text: str) -> str:
 def convert_table(header: list[str], align: list[str], rows: list[list[str]],
                   number: str, title: str) -> str:
     spec = "".join({"r": "r", "c": "c"}.get(a, "l") for a in align)
+    wide = len(header) >= 9          # 宽表按页宽等比缩放，避免溢出版心
     lines = [r"\begin{table}[htbp]", r"\centering",
              r"\caption*{\normalsize 表" + number + "\u3000" + inline(title) + "}",
-             r"\vspace{-2pt}",
-             r"\begin{tabular}{" + spec + "}", r"\toprule",
-             " & ".join(inline(h) for h in header) + r" \\", r"\midrule"]
+             r"\vspace{-2pt}"]
+    if wide:
+        lines.append(r"\resizebox{\textwidth}{!}{%")
+    lines += [r"\begin{tabular}{" + spec + "}", r"\toprule",
+              " & ".join(inline(h) for h in header) + r" \\", r"\midrule"]
     for row in rows:
         lines.append(" & ".join(inline(c) for c in row) + r" \\")
-    lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    if wide:
+        lines.append("}")
+    lines.append(r"\end{table}")
     return "\n".join(lines)
 
 

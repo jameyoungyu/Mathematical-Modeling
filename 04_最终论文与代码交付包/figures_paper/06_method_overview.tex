@@ -1,0 +1,69 @@
+% 总体方法框架：数据驱动层与灰箱情景层分层协同
+% 独立编译：xelatex 06_method_overview.tex
+\documentclass[tikz,border=5pt]{standalone}
+\usepackage[UTF8]{ctex}
+\usepackage{amsmath}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds,calc}
+
+\definecolor{cEmp}{HTML}{0072B2}   % 实测可辨识
+\definecolor{cSce}{HTML}{D55E00}   % 显式先验（不可辨识）
+\definecolor{cNeu}{HTML}{3F4A5A}   % 中性流程
+\definecolor{bEmp}{HTML}{EAF3FA}
+\definecolor{bSce}{HTML}{FDF0E6}
+\definecolor{bNeu}{HTML}{F2F4F7}
+
+\begin{document}
+\begin{tikzpicture}[
+  node distance=0pt,
+  box/.style   ={rectangle, rounded corners=2.5pt, draw=cNeu, line width=0.8pt,
+                 fill=bNeu, align=center, inner sep=6pt, text width=30mm,
+                 font=\small},
+  emp/.style   ={box, draw=cEmp, fill=bEmp},
+  sce/.style   ={box, draw=cSce, fill=bSce, dashed, dash pattern=on 3pt off 2pt},
+  flow/.style  ={-{Stealth[length=5pt,width=4pt]}, line width=0.9pt, draw=cNeu},
+  flowE/.style ={flow, draw=cEmp},
+  flowS/.style ={flow, draw=cSce, dashed, dash pattern=on 3pt off 2pt},
+  tag/.style   ={font=\scriptsize, inner sep=1.5pt, fill=white, text=cNeu},
+  hd/.style    ={font=\small\bfseries},
+]
+
+% ---------- 主链 ----------
+\def\yU{2.45}\def\yD{-2.45}
+\node[box]                  at (0,0)      (data)  {\textbf{原始数据}\\[2pt]\scriptsize 10080条分钟级记录\\\scriptsize 过程量、总功率、出口浓度};
+\node[box]                  at (4.8,0)    (audit) {\textbf{可识别性门禁}\\[2pt]\scriptsize 时间连续性与量纲\\\scriptsize 截顶诊断、滞后相关};
+
+% ---------- 上支：实测可辨识 ----------
+\node[emp]                  at (10.4,\yU) (emp1)  {\textbf{工况聚类}\\[2pt]\scriptsize 入口温度、浓度、流量\\\scriptsize $k$-means，$k=4$};
+\node[emp]                  at (15.2,\yU) (emp2)  {\textbf{功率模型}\\[2pt]\scriptsize 二次岭回归\\\scriptsize 滚动验证 $R^2=0.9837$};
+
+% ---------- 下支：不可辨识→显式先验 ----------
+\node[sce]                  at (10.4,\yD) (sce1)  {\textbf{去除指数灰箱}\\[2pt]\scriptsize Deutsch–Anderson骨架\\\scriptsize 积灰损失 $G_k(T)$};
+\node[sce]                  at (15.2,\yD) (sce2)  {\textbf{振打峰值代理}\\[2pt]\scriptsize $B_k(T;\rho,\gamma)$\\\scriptsize 同相叠加为保守上界};
+
+% ---------- 汇合 ----------
+\node[box, text width=34mm] at (20.4,0)   (opt)   {\textbf{支持域约束优化}\\[2pt]\scriptsize 逐变量 P05–P95\\\scriptsize 经验 Mahalanobis 阈值\\\scriptsize 工程排序约束};
+\node[box, text width=34mm] at (25.4,0)   (out)   {\textbf{输出}\\[2pt]\scriptsize 分工况控制参数\\\scriptsize 排放—功率前沿\\\scriptsize 先验敏感性区间};
+
+% ---------- 连线 ----------
+\draw[flow]  (data) -- (audit);
+\draw[flowE] (audit.east) -- ++(9mm,0) |- (emp1.west);
+\draw[flowS] (audit.east) -- ++(9mm,0) |- (sce1.west);
+\draw[flowE] (emp1) -- (emp2);
+\draw[flowS] (sce1) -- (sce2);
+\draw[flowE] (emp2.east) -- ++(11mm,0) |- (opt.west);
+\draw[flowS] (sce2.east) -- ++(11mm,0) |- (opt.west);
+\draw[flow]  (opt) -- (out);
+
+% ---------- 支路标注 ----------
+\node[tag, text=cEmp, anchor=west] at (8.75,\yU+1.35) {\textbf{实测可辨识层}：由附件数据估计，可独立复算};
+\node[tag, text=cSce, anchor=west] at (8.75,\yD-1.35) {\textbf{附件不可辨识层}：显式工程先验，全文标注为情景};
+
+% ---------- 底部说明 ----------
+\begin{scope}[on background layer]
+  \node[fit=(data)(out)(emp1)(sce1), inner sep=7mm] (bg) {};
+\end{scope}
+\node[font=\scriptsize\itshape, text=cNeu, below=1mm of bg.south, anchor=north]
+  {两层仅在支持域优化阶段合并；实测层结论可复算，情景层结论随先验变化，全文分层标注。};
+
+\end{tikzpicture}
+\end{document}
