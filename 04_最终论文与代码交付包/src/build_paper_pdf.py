@@ -329,14 +329,15 @@ def build_tex(title: str, abstract: str, body: str, code: str) -> str:
         r"\begin{center}{\zihao{4}\bfseries 摘\quad 要}\end{center}",
         r"\vspace{2pt}",
     ]
-    abs_lines = [l for l in abstract.split("\n") if l.strip()]
     kw = ""
     keep = []
-    for l in abs_lines:
+    for l in abstract.split("\n"):          # 保留空行以维持摘要的分段结构
         if l.startswith(r"\textbf{关键词："):
             kw = l
         else:
             keep.append(l)
+    while keep and not keep[-1].strip():
+        keep.pop()
     parts += keep
     if kw:
         parts += ["", r"\vspace{8pt}", "", r"\noindent " + kw]
