@@ -21,7 +21,8 @@ SRC_DIR = Path(__file__).resolve().parent
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from plot_utils import GRAY, LIGHT_GRAY, PALETTE, add_subpanel_label, finish_axes, save_figure, set_paper_style
+from plot_utils import (GRAY, LIGHT_GRAY, NEUTRAL_FILL, PALETTE, add_subpanel_label,
+                        figure_legend, finish_axes, headroom, note, save_figure, set_paper_style)
 from scenario_model import RidgePowerModel, T_COLS, U_COLS
 
 
@@ -62,51 +63,51 @@ CAPTIONS = {
 }
 
 TRACE_META = {
-    "01_outlet_data_diagnosis": (str(DATA_FILE), "fig01_outlet_diagnosis", "§2.2；图1", "出口记录可能为量程截顶；不代表真实排放分布"),
-    "02_process_timeseries": (str(DATA_FILE), "fig02_timeseries", "§2.1—2.2；图2", "只展示首24 h，不代表全周期分布"),
-    "03_cluster_selection": (str(RESULTS / "cluster_selection_metrics.csv"), "fig03_cluster_selection", "§5.1；图5", "聚类指标只评价统计分离度，不等于物理工况唯一性"),
-    "04_condition_map": (str(DATA_FILE), "fig04_condition_map", "§5.1；图6", "为可视化抽样点；聚类实际使用全部训练样本"),
-    "05_condition_profile_heatmap": (str(RESULTS / "condition_profiles.csv"), "fig05_profile_heatmap", "§5.1；图7", "列内标准化仅用于相对比较"),
-    "06_method_overview": (str(ROOT / "10_修订后完整论文_核验版.md"), "fig06_method_overview", "§3；图3", "概念流程图，不含新的经验数据"),
-    "07_power_prediction": (str(RESULTS / "power_model_baselines.csv"), "fig07_power_prediction + RidgePowerModel", "§5.2；图8", "回顾性测试并非真正未触碰盲测"),
-    "08_power_residuals": (str(DATA_FILE), "fig08_residuals + RidgePowerModel", "§5.2；图10", "存在−10.78 kW平均偏差和高功率区低估"),
-    "08b_feature_importance": (str(DATA_FILE), "fig08b_feature_importance + RidgePowerModel", "§5.2；图9", "标准化系数用于预测解释，不代表单变量因果效应"),
-    "09_voltage_power_response": (str(DATA_FILE), "fig09_voltage_response + RidgePowerModel", "§5.2；图11", "局部情景曲线，仅在历史电压附近解释"),
-    "10_optimal_power": (str(RESULTS / "optimal_controls_central_scenario.csv"), "fig10_power", "§5.4；图13", "功率来自数据模型；可行性来自未辨识灰箱情景"),
-    "11_optimal_voltage": (str(RESULTS / "optimal_controls_central_scenario.csv"), "grouped_controls(U_COLS)", "§6；图14", "最优电压是情景试验起点，不是设备安全设定"),
-    "12_optimal_rapping_period": (str(RESULTS / "optimal_controls_central_scenario.csv"), "grouped_controls(T_COLS)", "§6；图16", "无实际振打事件，周期结果依赖峰值先验"),
-    "12b_radar_controls": (str(RESULTS / "optimal_controls_central_scenario.csv"), "fig12b_control_profiles", "§6；图15", "控制剖面来自中心灰箱情景，不是设备安全设定"),
-    "13_emission_decomposition": (str(RESULTS / "optimal_controls_central_scenario.csv"), "fig13_emission", "§7.2；图18", "全部排放值为情景推演，不是实测"),
-    "14_rapping_peak_mechanism": (str(RESULTS / "condition_profiles.csv"), "fig14_peak", "§4.2；图4", "峰值指数1.35与尺度1.2属于工程先验"),
-    "15_search_convergence": (str(RESULTS / "optimization_seed_stability.csv"), "fig15_seed_stability", "§8.1；图19", "随机种子稳定不等价于全局最优证明"),
-    "16_sensitivity_distribution": (str(RESULTS / "structural_sensitivity.csv"), "fig16_structural_sensitivity", "§8.2；图20", "扫描范围仍由显式情景网格决定"),
-    "17_sensitivity_heatmap": (str(RESULTS / "field_priority_ablation_summary.csv"), "fig17_field_ablation", "§8.3；图21", "消融仍依赖同一灰箱结构与支持域"),
-    "18_condition_energy_penalty": (str(RESULTS / "question4_by_condition.csv"), "fig18_penalty", "§7.1；图17", "13.69%为单一种子中心情景点估计"),
-    "05b_boundary_proximity": (str(RESULTS / "optimal_controls_central_scenario.csv"), "fig05b_boundary_proximity", "§5.4；图12", "经验支持域不是设备安全边界，贴边解仍需现场复核"),
+    "01_outlet_data_diagnosis": (str(DATA_FILE), "fig01_outlet_diagnosis", "§2.2；图2", "出口记录可能为量程截顶；不代表真实排放分布"),
+    "02_process_timeseries": (str(DATA_FILE), "fig02_timeseries", "§2.1—2.2；图3", "只展示首24 h，不代表全周期分布"),
+    "03_cluster_selection": (str(RESULTS / "cluster_selection_metrics.csv"), "fig03_cluster_selection", "§5.1；图6", "聚类指标只评价统计分离度，不等于物理工况唯一性"),
+    "04_condition_map": (str(DATA_FILE), "fig04_condition_map", "§5.1；图7", "为可视化抽样点；聚类实际使用全部训练样本"),
+    "05_condition_profile_heatmap": (str(RESULTS / "condition_profiles.csv"), "fig05_profile_heatmap", "§5.1；图8", "列内标准化仅用于相对比较"),
+    "06_method_overview": (str(ROOT / "10_修订后完整论文_终稿.md"), "fig06_method_overview", "§3；图4", "概念流程图，不含新的经验数据"),
+    "07_power_prediction": (str(RESULTS / "power_model_baselines.csv"), "fig07_power_prediction + RidgePowerModel", "§5.2；图9", "回顾性测试并非真正未触碰盲测"),
+    "08_power_residuals": (str(DATA_FILE), "fig08_residuals + RidgePowerModel", "§5.2；图11", "存在−10.78 kW平均偏差和高功率区低估"),
+    "08b_feature_importance": (str(DATA_FILE), "fig08b_feature_importance + RidgePowerModel", "§5.2；图10", "标准化系数用于预测解释，不代表单变量因果效应"),
+    "09_voltage_power_response": (str(DATA_FILE), "fig09_voltage_response + RidgePowerModel", "§5.2；图12", "局部情景曲线，仅在历史电压附近解释"),
+    "10_optimal_power": (str(RESULTS / "optimal_controls_central_scenario.csv"), "fig10_power", "§5.4；图14", "功率来自数据模型；可行性来自未辨识灰箱情景"),
+    "11_optimal_voltage": (str(RESULTS / "optimal_controls_central_scenario.csv"), "grouped_controls(U_COLS)", "§6；图15", "最优电压是情景试验起点，不是设备安全设定"),
+    "12_optimal_rapping_period": (str(RESULTS / "optimal_controls_central_scenario.csv"), "grouped_controls(T_COLS)", "§6；图17", "无实际振打事件，周期结果依赖峰值先验"),
+    "12b_radar_controls": (str(RESULTS / "optimal_controls_central_scenario.csv"), "fig12b_control_profiles", "§6；图16", "控制剖面来自中心灰箱情景，不是设备安全设定"),
+    "13_emission_decomposition": (str(RESULTS / "optimal_controls_central_scenario.csv"), "fig13_emission", "§7.2；图19", "全部排放值为情景推演，不是实测"),
+    "14_rapping_peak_mechanism": (str(RESULTS / "condition_profiles.csv"), "fig14_peak", "§4.2；图5", "峰值指数1.35与尺度1.2属于工程先验"),
+    "15_search_convergence": (str(RESULTS / "optimization_seed_stability.csv"), "fig15_seed_stability", "§8.1；图20", "随机种子稳定不等价于全局最优证明"),
+    "16_sensitivity_distribution": (str(RESULTS / "structural_sensitivity.csv"), "fig16_structural_sensitivity", "§8.2；图21", "扫描范围仍由显式情景网格决定"),
+    "17_sensitivity_heatmap": (str(RESULTS / "field_priority_ablation_summary.csv"), "fig17_field_ablation", "§8.3；图22", "消融仍依赖同一灰箱结构与支持域"),
+    "18_condition_energy_penalty": (str(RESULTS / "question4_by_condition.csv"), "fig18_penalty", "§7.1；图18", "13.69%为单一种子中心情景点估计"),
+    "05b_boundary_proximity": (str(RESULTS / "optimal_controls_central_scenario.csv"), "fig05b_boundary_proximity", "§5.4；图13", "经验支持域不是设备安全边界，贴边解仍需现场复核"),
 }
 
 MANUSCRIPT_FIGURE = {
-    "01_outlet_data_diagnosis": 1,
-    "02_process_timeseries": 2,
-    "06_method_overview": 3,
-    "14_rapping_peak_mechanism": 4,
-    "03_cluster_selection": 5,
-    "04_condition_map": 6,
-    "05_condition_profile_heatmap": 7,
-    "07_power_prediction": 8,
-    "08b_feature_importance": 9,
-    "08_power_residuals": 10,
-    "09_voltage_power_response": 11,
-    "05b_boundary_proximity": 12,
-    "10_optimal_power": 13,
-    "11_optimal_voltage": 14,
-    "12b_radar_controls": 15,
-    "12_optimal_rapping_period": 16,
-    "18_condition_energy_penalty": 17,
-    "13_emission_decomposition": 18,
-    "15_search_convergence": 19,
-    "16_sensitivity_distribution": 20,
-    "17_sensitivity_heatmap": 21,
+    "01_outlet_data_diagnosis": 2,
+    "02_process_timeseries": 3,
+    "06_method_overview": 4,
+    "14_rapping_peak_mechanism": 5,
+    "03_cluster_selection": 6,
+    "04_condition_map": 7,
+    "05_condition_profile_heatmap": 8,
+    "07_power_prediction": 9,
+    "08b_feature_importance": 10,
+    "08_power_residuals": 11,
+    "09_voltage_power_response": 12,
+    "05b_boundary_proximity": 13,
+    "10_optimal_power": 14,
+    "11_optimal_voltage": 15,
+    "12b_radar_controls": 16,
+    "12_optimal_rapping_period": 17,
+    "18_condition_energy_penalty": 18,
+    "13_emission_decomposition": 19,
+    "15_search_convergence": 20,
+    "16_sensitivity_distribution": 21,
+    "17_sensitivity_heatmap": 22,
 }
 
 
@@ -149,7 +150,7 @@ def fig01_outlet_diagnosis(df: pd.DataFrame) -> None:
         ax.text(bar.get_x() + bar.get_width()/2, value + total*0.012, f"{value}\n({100*value/total:.1f}%)", ha="center", fontsize=8)
     ax.set_ylabel("样本数")
     ax.set_ylim(0, max(values) * 1.18)
-    ax.text(0.02, 0.97, "百分比以全部10080条样本为分母", transform=ax.transAxes, va="top", fontsize=7, color=GRAY)
+    note(ax, "百分比以全部10080条样本为分母", loc="upper right")
     finish_axes(ax)
     fig.tight_layout(w_pad=2.0)
     save_figure(fig, OUT, "01_outlet_data_diagnosis")
@@ -249,16 +250,19 @@ def fig05b_boundary_proximity(optimum: pd.DataFrame) -> None:
     axes[0].set_xticks(x, labels)
     axes[0].set_ylabel("边界相对距离 $d_M^2/q_{0.975}$ (%)")
     axes[0].set_ylim(0, 108)
-    axes[0].legend(frameon=False, loc="lower left", fontsize=7.5)
+    axes[0].legend(frameon=False, loc="lower left", fontsize=8)
     finish_axes(axes[0], grid_axis="y")
 
     add_subpanel_label(axes[1], "b")
     y = np.arange(len(ordered))[::-1]
     axes[1].barh(y, ordered["support_threshold_d2"], color=LIGHT_GRAY, height=0.58, label="经验97.5%边界")
-    axes[1].barh(y, ordered["mahalanobis_d2"], color=colors, height=0.38, label="推荐解距离")
+    axes[1].barh(y, ordered["mahalanobis_d2"], color=PALETTE[0], height=0.38, label="推荐解距离")
+    for yy, ratio, d2 in zip(y, ordered["ratio_pct"], ordered["mahalanobis_d2"]):
+        if ratio > 90:
+            axes[1].barh(yy, d2, color=PALETTE[4], height=0.38)
     axes[1].set_yticks(y, labels)
     axes[1].set_xlabel("马氏距离平方")
-    axes[1].legend(frameon=False, fontsize=7.5)
+    axes[1].legend(frameon=False, fontsize=8, loc="lower right")
     finish_axes(axes[1], grid_axis="x")
 
     fig.tight_layout(w_pad=1.8)
@@ -336,10 +340,9 @@ def fig07_power_prediction(df: pd.DataFrame, model: RidgePowerModel, baselines: 
     ax.bar(x-0.18, val, 0.36, color=PALETTE[5], label="验证集")
     ax.bar(x+0.18, tst, 0.36, color=PALETTE[0], label="回顾性测试")
     ax.set_xticks(x, labels)
-    ax.set_ylabel("RMSE (kW)")
+    ax.set_ylabel("RMSE (kW，对数刻度)")
     ax.set_yscale("log")
-    ax.text(0.03, 0.96, "纵轴为对数刻度", transform=ax.transAxes, va="top", fontsize=7, color=GRAY)
-    ax.legend(frameon=False)
+    ax.legend(frameon=False, loc="upper right")
     finish_axes(ax)
     fig.tight_layout()
     save_figure(fig, OUT, "07_power_prediction")
@@ -479,9 +482,11 @@ def fig12b_control_profiles(optimum: pd.DataFrame) -> None:
             ax.plot(x, row[cols].to_numpy(float), style, color=color, label=label, linewidth=1.6, markersize=5)
         ax.set_xticks(x, fields)
         ax.set_ylabel(ylabel)
-        ax.legend(frameon=False, fontsize=7.2)
+        headroom(ax, 0.12)
         finish_axes(ax, grid_axis="both")
-    fig.tight_layout(w_pad=1.8)
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.tight_layout(w_pad=1.8, rect=(0, 0.09, 1, 1))
+    figure_legend(fig, handles, labels, ncol=4, bottom=0.0)
     save_figure(fig, OUT, "12b_radar_controls")
 
 
@@ -635,18 +640,39 @@ def fig18_penalty(q4: pd.DataFrame) -> None:
     save_figure(fig, OUT, "18_condition_energy_penalty")
 
 
+def _relpath(path: str) -> str:
+    """交付物中一律使用相对路径，避免写入本机绝对路径。"""
+    try:
+        return Path(path).resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        return Path(path).name
+
+
+SCHEMATIC_ROW = {
+    "figure_id": "01", "manuscript_figure": 1, "stem": "00_esp_schematic",
+    "caption": "四电场电除尘器结构与变量定义",
+    "png": "figures_paper/00_esp_schematic.pdf", "pdf": "figures_paper/00_esp_schematic.pdf",
+    "source_data": "题目附图（赛题给定的设备结构示意）",
+    "transformation": "00_esp_schematic.tex（TikZ矢量重绘，xelatex编译）",
+    "supported_manuscript_claims": "§1.1；图1",
+    "limitations": "结构示意图，不含实测数据；比例非工程真实尺寸",
+}
+
+
 def write_manifest() -> None:
     script_hash = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     model_hash = hashlib.sha256((SRC_DIR / "scenario_model.py").read_bytes()).hexdigest()
     rows = []
     for stem, caption in CAPTIONS.items():
         source_data, function_name, claims, limitations = TRACE_META[stem]
+        source_data = _relpath(source_data)
         rows.append({"figure_id": stem.split("_")[0], "manuscript_figure": MANUSCRIPT_FIGURE[stem], "stem": stem, "caption": caption,
-                     "png": str((OUT/f"{stem}.png").resolve()), "pdf": str((OUT/f"{stem}.pdf").resolve()),
+                     "png": f"figures_paper/{stem}.png", "pdf": f"figures_paper/{stem}.pdf",
                      "source_data": source_data,
                      "transformation": f"paper_figures.py::{function_name}; plot_sha256={script_hash}; model_sha256={model_hash}",
                      "supported_manuscript_claims": claims,
                      "limitations": limitations})
+    rows.insert(0, SCHEMATIC_ROW)
     pd.DataFrame(rows).to_csv(OUT / "figure_manifest.csv", index=False, encoding="utf-8-sig")
     lines = ["# 论文图组与图注", "", "所有图均提供 PNG 预览和 PDF 矢量版本。", ""]
     for row in sorted(rows, key=lambda x: x["manuscript_figure"]):
