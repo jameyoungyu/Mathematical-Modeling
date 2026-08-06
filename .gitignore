@@ -12,3 +12,16 @@ tmp/
 **/qa_format*
 **/manual_lo/
 **/.lo_profile_*
+
+# LaTeX 编译中间产物
+04_最终论文与代码交付包/build/*.aux
+04_最终论文与代码交付包/build/*.log
+04_最终论文与代码交付包/build/*.out
+04_最终论文与代码交付包/figures_paper/*.aux
+04_最终论文与代码交付包/figures_paper/*.log
+
+# Python 编译产物与虚拟环境
+__pycache__/
+*.py[cod]
+.venv/
+venv/

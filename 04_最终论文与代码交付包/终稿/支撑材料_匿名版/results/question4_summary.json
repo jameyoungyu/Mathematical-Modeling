@@ -1,8 +1,0 @@
-{
-  "weighted_power_10_kW": 1609.415563803269,
-  "weighted_power_5_kW": 1829.791278624482,
-  "weighted_increase_pct": 13.692903174145709,
-  "validation_error_guard_kW": 11.776086758966064,
-  "weighted_validation_error_adjusted_power_10_kW": 1621.191650562235,
-  "weighted_validation_error_adjusted_power_5_kW": 1841.567365383448
-}
