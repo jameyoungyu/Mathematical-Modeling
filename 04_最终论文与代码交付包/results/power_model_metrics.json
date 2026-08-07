@@ -1,18 +1,32 @@
 {
-  "model": "standardized_quadratic_ridge_voltage_plus_period_and_condition",
+  "model": "physical_voltage_square_plus_rapping_frequency",
+  "formula": "P = a0 + sum_i b_i U_i^2 + sum_i c_i / T_i",
   "fit_scope": "train_only",
-  "alpha_selected_by_blocked_rolling_validation": 0.1,
-  "validation_r2": 0.9836748381911681,
-  "validation_rmse_kW": 7.12124568283022,
-  "validation_bias_kW": -1.8731535682292926,
-  "validation_abs_error_q90_kW": 11.776086758966064,
-  "retrospective_test_r2": 0.9570781626465803,
-  "retrospective_test_rmse_kW": 14.764002176387203,
-  "retrospective_test_bias_kW": -10.778136591095537,
+  "intercept_kW": 73.08657042918531,
+  "b_field_kW_per_kV2": [
+    0.08492746048033613,
+    0.08511877989700126,
+    0.08468661849377083,
+    0.08532605990937947
+  ],
+  "c_rapping_kW_s": [
+    54265.79985046334,
+    53678.70970044706,
+    54915.83121951025,
+    52648.27524130527
+  ],
+  "train_r2": 0.9980727894235566,
+  "validation_r2": 0.9885424887060452,
+  "validation_rmse_kW": 5.965850539424423,
+  "validation_bias_kW": 0.1074880891057873,
+  "validation_abs_error_q90_kW": 9.778714734711754,
+  "retrospective_test_r2": 0.9929511224056288,
+  "retrospective_test_rmse_kW": 5.983081693578674,
+  "retrospective_test_bias_kW": -0.023521093486491573,
   "test_protocol": "retrospective_not_blind_due_to_prior_package_use",
   "reporting_guard_rule": "point_prediction_plus_validation_absolute_error_q90",
-  "selected_alphas": {
-    "linear_ridge": 10.0,
-    "quadratic_ridge": 0.1
+  "ridge_selected_alphas": {
+    "linear_ridge_T": 10.0,
+    "quadratic_ridge_T": 0.1
   }
 }

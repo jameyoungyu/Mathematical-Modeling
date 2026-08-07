@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Compute the scenario emission–power trade-off frontier.
+"""Compute the scenario emission-power trade-off frontier.
 
-For each typical operating condition the support-domain search is repeated at
-a range of emission limits, so the paper can show the whole trade-off curve
-rather than only the 10 and 5 mg/Nm³ end points. This makes explicit that the
-10 mg/Nm³ solution relaxes emission relative to the 0.1-scaled historical
-anchor (~5 mg/Nm³) instead of saving energy at constant emission.
+The support-domain search is repeated at a range of emission limits, so the
+paper can show the whole trade-off curve rather than only the 10 and
+5 mg/Nm^3 end points.  Because the historical anchor is ~50 mg/Nm^3, every
+point on this curve costs power relative to historical operation; the curve
+also records how much voltage headroom above the historical maximum each
+limit needs before it becomes reachable at all.
 
 Usage:  python3 src/compute_frontier.py
 """
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import numpy as np
@@ -20,22 +20,17 @@ import pandas as pd
 
 from scenario_model import (
     DATA_FILE,
-    SEED,
+    HEADROOM_5,
     T_COLS,
-    U_COLS,
-    candidate_bank,
     condition_profiles,
     evaluate_power_models,
-    local_candidate_bank,
     scenario_t_star,
-    select_optimum,
+    solve_condition,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "results"
 LIMITS = [5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
-BASE_CANDIDATES = 220_000
-LOCAL_CANDIDATES = 30_000
 
 
 def main() -> None:
@@ -50,55 +45,54 @@ def main() -> None:
     guard = float(metrics["validation_abs_error_q90_kW"])
 
     global_t_median = train[T_COLS].median().to_numpy(float)
+    t_stars = {int(p["condition_cluster"]): scenario_t_star(p, global_t_median)
+               for _, p in profiles.iterrows()}
+    historical_weighted = float(np.average(profiles["historical_power_kW"],
+                                           weights=profiles["share"]))
+
     rows: list[dict[str, object]] = []
+    weighted_rows: list[dict[str, object]] = []
+    for limit in LIMITS:
+        # smallest declared headroom that makes every condition reachable
+        headroom = 0.0
+        while headroom <= HEADROOM_5 + 1e-9:
+            trial = [solve_condition(p, model, t_stars[int(p["condition_cluster"])], limit,
+                                     voltage_headroom=headroom, multistart=12)
+                     for _, p in profiles.iterrows()]
+            if all(r["status"] == "SCENARIO_FEASIBLE" for r in trial):
+                break
+            headroom = round(headroom + 0.01, 2)
 
-    for _, profile in profiles.iterrows():
-        cluster = int(profile["condition_cluster"])
-        group = train[train["condition_cluster"] == cluster]
-        t_star = scenario_t_star(profile, global_t_median)
-        rng = np.random.default_rng(SEED)
-
-        base_bank = candidate_bank(profile, model, t_star, BASE_CANDIDATES, rng, group)
-        # 先在两个端点做局部细化，再把细化样本并入公共候选库
-        additions = []
-        for limit in (LIMITS[0], LIMITS[-1]):
-            prelim = select_optimum(profile, base_bank, t_star, limit,
-                                    validation_error_guard_kW=guard)
-            if "predicted_power_kW" in prelim:
-                additions.append(local_candidate_bank(profile, model, prelim,
-                                                      LOCAL_CANDIDATES, rng, group))
-        bank = pd.concat([base_bank] + additions, ignore_index=True)
-        bank = bank.drop_duplicates(U_COLS + T_COLS, keep="first")
-
-        for limit in LIMITS:
-            res = select_optimum(profile, bank, t_star, limit,
-                                 validation_error_guard_kW=guard)
+        solved = [solve_condition(p, model, t_stars[int(p["condition_cluster"])], limit,
+                                  voltage_headroom=headroom)
+                  for _, p in profiles.iterrows()]
+        for profile_row, r in zip(profiles.itertuples(), solved):
             rows.append({
-                "condition_cluster": cluster,
-                "condition_name": profile["condition_name"],
-                "share": float(profile["share"]),
+                "condition_cluster": r["condition_cluster"],
+                "condition_name": r["condition_name"],
                 "limit_mgNm3": limit,
-                "status": res["status"],
-                "predicted_power_kW": res.get("predicted_power_kW", np.nan),
-                "scenario_base_emission_mgNm3": res.get("scenario_base_emission_mgNm3", np.nan),
-                "scenario_peak_total_mgNm3": res.get("scenario_peak_total_mgNm3", np.nan),
-                "historical_power_kW": float(profile["historical_power_kW"]),
-                "historical_anchor_mgNm3": float(profile["C_out_scaled_anchor"]),
+                "voltage_headroom_pct": 100.0 * headroom,
+                "status": r["status"],
+                "predicted_power_kW": r.get("predicted_power_kW", np.nan),
+                "validation_error_adjusted_power_kW": r.get("predicted_power_kW", np.nan) + guard,
+                "share": float(profile_row.share),
+                "historical_power_kW": historical_weighted,
             })
-            print(f"工况{cluster}  限值{limit:>4.1f}  "
-                  f"功率{res.get('predicted_power_kW', float('nan')):8.2f} kW  {res['status']}")
+        weights = np.array([float(p.share) for p in profiles.itertuples()])
+        powers = np.array([float(r.get("predicted_power_kW", np.nan)) for r in solved])
+        weighted_rows.append({
+            "limit_mgNm3": limit,
+            "voltage_headroom_pct": 100.0 * headroom,
+            "weighted_power_kW": float(np.average(powers, weights=weights)),
+            "weighted_daily_energy_MWh": float(np.average(powers, weights=weights)) * 24.0 / 1000.0,
+            "historical_power_kW": historical_weighted,
+        })
 
-    frontier = pd.DataFrame(rows)
-    frontier.to_csv(OUT_DIR / "emission_power_frontier.csv", index=False, encoding="utf-8-sig")
-
-    weighted = (frontier.groupby("limit_mgNm3")
-                .apply(lambda g: float(np.average(g["predicted_power_kW"], weights=g["share"])),
-                       include_groups=False)
-                .rename("weighted_power_kW").reset_index())
-    weighted.to_csv(OUT_DIR / "emission_power_frontier_weighted.csv",
-                    index=False, encoding="utf-8-sig")
-    print("\n工况加权前沿：")
-    print(weighted.to_string(index=False))
+    pd.DataFrame(rows).to_csv(OUT_DIR / "emission_power_frontier.csv",
+                              index=False, encoding="utf-8-sig")
+    pd.DataFrame(weighted_rows).to_csv(OUT_DIR / "emission_power_frontier_weighted.csv",
+                                       index=False, encoding="utf-8-sig")
+    print(pd.DataFrame(weighted_rows).to_string(index=False))
 
 
 if __name__ == "__main__":

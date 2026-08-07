@@ -1,47 +1,66 @@
 {
   "power_model": {
-    "model": "standardized_quadratic_ridge_voltage_plus_period_and_condition",
+    "model": "physical_voltage_square_plus_rapping_frequency",
+    "formula": "P = a0 + sum_i b_i U_i^2 + sum_i c_i / T_i",
     "fit_scope": "train_only",
-    "alpha_selected_by_blocked_rolling_validation": 0.1,
-    "validation_r2": 0.9836748381911681,
-    "validation_rmse_kW": 7.12124568283022,
-    "validation_bias_kW": -1.8731535682292926,
-    "validation_abs_error_q90_kW": 11.776086758966064,
-    "retrospective_test_r2": 0.9570781626465803,
-    "retrospective_test_rmse_kW": 14.764002176387203,
-    "retrospective_test_bias_kW": -10.778136591095537,
+    "intercept_kW": 73.08657042918531,
+    "b_field_kW_per_kV2": [
+      0.08492746048033613,
+      0.08511877989700126,
+      0.08468661849377083,
+      0.08532605990937947
+    ],
+    "c_rapping_kW_s": [
+      54265.79985046334,
+      53678.70970044706,
+      54915.83121951025,
+      52648.27524130527
+    ],
+    "train_r2": 0.9980727894235566,
+    "validation_r2": 0.9885424887060452,
+    "validation_rmse_kW": 5.965850539424423,
+    "validation_bias_kW": 0.1074880891057873,
+    "validation_abs_error_q90_kW": 9.778714734711754,
+    "retrospective_test_r2": 0.9929511224056288,
+    "retrospective_test_rmse_kW": 5.983081693578674,
+    "retrospective_test_bias_kW": -0.023521093486491573,
     "test_protocol": "retrospective_not_blind_due_to_prior_package_use",
     "reporting_guard_rule": "point_prediction_plus_validation_absolute_error_q90",
-    "selected_alphas": {
-      "linear_ridge": 10.0,
-      "quadratic_ridge": 0.1
+    "ridge_selected_alphas": {
+      "linear_ridge_T": 10.0,
+      "quadratic_ridge_T": 0.1
     }
   },
   "cluster_k": 4,
   "central_q4": {
-    "weighted_power_10_kW": 1609.415563803269,
-    "weighted_power_5_kW": 1829.791278624482,
-    "weighted_increase_pct": 13.692903174145709,
-    "validation_error_guard_kW": 11.776086758966064,
-    "weighted_validation_error_adjusted_power_10_kW": 1621.191650562235,
-    "weighted_validation_error_adjusted_power_5_kW": 1841.567365383448
+    "weighted_power_10_kW": 1972.988238324754,
+    "weighted_power_5_kW": 2105.5434577723954,
+    "weighted_increase_pct": 6.71850023597671,
+    "historical_weighted_actual_power_kW": 1783.1906666666664,
+    "power_10_vs_historical_pct": 10.643705981978812,
+    "daily_energy_10_MWh": 47.351717719794095,
+    "daily_energy_5_MWh": 50.53304298653749,
+    "daily_energy_historical_MWh": 42.796575999999995,
+    "validation_error_guard_kW": 9.778714734711754
   },
-  "prior_parameter_sensitivity": {
-    "increase_pct_min": 10.396133927528272,
-    "increase_pct_median": 13.508992458120783,
-    "increase_pct_max": 18.44668127860054,
-    "feasible_combinations": 26,
-    "total_combinations": 27
+  "rapping_share_at_median_pct": 38.816784452718814,
+  "scale_sensitivity": {
+    "feasible_combinations": 15,
+    "total_combinations": 27,
+    "increase_pct_min": 3.986856034056596,
+    "increase_pct_median": 5.85145280354562,
+    "increase_pct_max": 7.039642802225932
   },
   "structural_sensitivity": {
-    "feasible_combinations": 405,
-    "total_combinations": 405,
-    "increase_pct_min": 11.368338895192931,
-    "increase_pct_median": 12.987466713884,
-    "increase_pct_max": 14.306857291386187
+    "feasible_combinations": 81,
+    "total_combinations": 81,
+    "increase_pct_min": 5.126636511311311,
+    "increase_pct_median": 6.400048501463074,
+    "increase_pct_max": 7.548055244146323
   },
-  "seed_stability_max_cv_pct": 0.18062737647006405,
-  "seed_stability_max_range_pct_of_mean": 0.46411495008653747,
-  "local_refinement_max_improvement_pct": 0.985961387317591,
+  "optimiser_verification": {
+    "max_random_search_gap_pct": 5.172964328421159,
+    "max_multistart_spread_kW": 4.075127435498871e-08
+  },
   "central_all_conditions_feasible": true
 }

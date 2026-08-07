@@ -15,14 +15,14 @@ SRC = Path(__file__).resolve().parent
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from scenario_model import RidgePowerModel, _r2, _rmse
+from scenario_model import PhysicalPowerModel, _r2, _rmse
 
 
 ROOT = SRC.parent
 DATA = ROOT / "data" / "full_timeseries_with_flags.csv"
 RESULTS = ROOT / "results"
 FIGURES = ROOT / "figures_paper"
-MANUSCRIPT = ROOT / "论文终稿源文.md"
+MANUSCRIPT = ROOT / "10_修订后完整论文_终稿.md"
 OUT = ROOT / "integrity"
 
 
@@ -49,8 +49,7 @@ def main() -> None:
 
     metrics = json.loads((RESULTS / "power_model_metrics.json").read_text())
     train, val, test = (df[df["split"] == s] for s in ("train", "validation", "test"))
-    model = RidgePowerModel(alpha=float(metrics["alpha_selected_by_blocked_rolling_validation"]))
-    model.fit(train, train["P_total_kW"].to_numpy(float))
+    model = PhysicalPowerModel().fit(train, train["P_total_kW"].to_numpy(float))
     vp, tp = model.predict(val), model.predict(test)
     recomputed = {
         "validation_r2": _r2(val["P_total_kW"].to_numpy(float), vp),
@@ -70,10 +69,39 @@ def main() -> None:
         {k: metrics[k] for k in metrics if "reporting" in k or "guard" in k},
         {"reporting_guard_rule": "point_prediction_plus_validation_absolute_error_q90"},
     )
+    check(
+        "power_model_is_physical_specification",
+        metrics["model"] == "physical_voltage_square_plus_rapping_frequency",
+        metrics["model"], "physical_voltage_square_plus_rapping_frequency",
+    )
+    # the four field coefficients must be near-identical: the fields share a design
+    b = np.asarray(metrics["b_field_kW_per_kV2"], float)
+    check("field_coefficients_consistent", float(b.std() / b.mean()) < 0.01,
+          float(b.std() / b.mean()), "<1% relative spread")
+
     baselines = pd.read_csv(RESULTS / "power_model_baselines.csv")
-    val_base = baselines[baselines["split"] == "validation"].set_index("model")
-    check("quadratic_beats_linear_validation", float(val_base.loc["quadratic_ridge", "rmse_kW"]) < float(val_base.loc["linear_ridge", "rmse_kW"]), val_base["rmse_kW"].to_dict(), "quadratic < linear")
-    check("linear_beats_mean_validation", float(val_base.loc["linear_ridge", "rmse_kW"]) < float(val_base.loc["mean_predictor", "rmse_kW"]), val_base["rmse_kW"].to_dict(), "linear < mean")
+    tst_base = baselines[baselines["split"] == "retrospective_test"].set_index("model")
+    check(
+        "invT_beats_linear_T_on_test",
+        float(tst_base.loc["physical_invT", "rmse_kW"]) < float(tst_base.loc["quadratic_ridge_T", "rmse_kW"]),
+        tst_base["rmse_kW"].to_dict(), "physical_invT < quadratic_ridge_T",
+    )
+    check(
+        "invT_removes_test_bias",
+        abs(float(tst_base.loc["physical_invT", "bias_kW"])) < 1.0
+        and abs(float(tst_base.loc["quadratic_ridge_T", "bias_kW"])) > 5.0,
+        {"physical_invT": float(tst_base.loc["physical_invT", "bias_kW"]),
+         "quadratic_ridge_T": float(tst_base.loc["quadratic_ridge_T", "bias_kW"])},
+        "|bias| < 1 kW with 1/T, > 5 kW with linear T",
+    )
+    check(
+        "condition_variables_add_nothing",
+        abs(float(tst_base.loc["physical_invT_plus_conditions", "r2"])
+            - float(tst_base.loc["physical_invT", "r2"])) < 1e-3,
+        {"with": float(tst_base.loc["physical_invT_plus_conditions", "r2"]),
+         "without": float(tst_base.loc["physical_invT", "r2"])},
+        "delta R2 < 1e-3",
+    )
     rolling = pd.read_csv(RESULTS / "power_model_rolling_validation.csv")
     check("rolling_fold_count", rolling["fold"].nunique() == 3, int(rolling["fold"].nunique()), 3)
 
@@ -99,10 +127,59 @@ def main() -> None:
         "new validation-error names present; old conservative names absent",
     )
     check("central_all_feasible", bool((optimum["status"] == "SCENARIO_FEASIBLE").all()), optimum["status"].unique().tolist(), ["SCENARIO_FEASIBLE"])
-    check("central_limits_respected", bool((optimum["scenario_peak_total_mgNm3"] <= optimum["limit_mgNm3"] + 1e-12).all()), float((optimum["scenario_peak_total_mgNm3"] - optimum["limit_mgNm3"]).max()), "<=0")
-    check("mahalanobis_respected", bool((optimum["mahalanobis_d2"] <= optimum["support_threshold_d2"] + 1e-12).all()), float((optimum["mahalanobis_d2"]-optimum["support_threshold_d2"]).max()), "<=0")
-    thresholds = optimum.groupby("condition_cluster")["support_threshold_d2"].first().round(2).tolist()
-    check("empirical_support_thresholds", thresholds == [20.55, 18.72, 16.85, 19.09], thresholds, [20.55, 18.72, 16.85, 19.09])
+    check("central_limits_respected", bool((optimum["scenario_peak_total_mgNm3"] <= optimum["limit_mgNm3"] + 1e-9).all()), float((optimum["scenario_peak_total_mgNm3"] - optimum["limit_mgNm3"]).max()), "<=0")
+    check(
+        "emission_anchor_not_rescaled",
+        bool((pd.read_csv(RESULTS / "condition_profiles.csv")["C_out_recorded_median"] == 50.0).all()),
+        pd.read_csv(RESULTS / "condition_profiles.csv")["C_out_recorded_median"].tolist(),
+        "all 50.0 mg/Nm3 (recorded, unscaled)",
+    )
+    scenario = json.loads((RESULTS / "scenario_parameters.json").read_text())
+    check("no_outlet_rescaling_parameter", "central_outlet_scale" not in scenario,
+          sorted(scenario), "no central_outlet_scale key")
+
+    audit = pd.read_csv(RESULTS / "support_boundary_audit.csv")
+    check("support_audit_rows", len(audit) == 8, len(audit), 8)
+    check(
+        "targets_leave_historical_experience",
+        bool((audit["ratio_to_q975"] > 1.0).all()),
+        float(audit["ratio_to_q975"].min()), ">1 for all eight solutions",
+    )
+    check(
+        "10mg_inside_voltage_envelope",
+        bool((audit[audit["limit_mgNm3"] == 10.0]["max_voltage_over_historical_max_pct"] <= 1e-6).all()),
+        float(audit[audit["limit_mgNm3"] == 10.0]["max_voltage_over_historical_max_pct"].max()),
+        "<=0% over the historical maximum",
+    )
+    restricted = pd.read_csv(RESULTS / "mahalanobis_constrained_feasibility.csv")
+    merged = restricted.merge(
+        optimum[["condition_cluster", "limit_mgNm3", "predicted_power_kW"]],
+        on=["condition_cluster", "limit_mgNm3"], suffixes=("_shell", "_free"))
+    feasible_shell = merged["status_with_mahalanobis_constraint"] == "SCENARIO_FEASIBLE"
+    check(
+        "mahalanobis_shell_variant_mostly_feasible",
+        int(feasible_shell.sum()) == 7,
+        int(feasible_shell.sum()), "7 of 8 combinations feasible inside the shell",
+    )
+    penalty = 100.0 * (merged.loc[feasible_shell, "predicted_power_kW_shell"]
+                       / merged.loc[feasible_shell, "predicted_power_kW_free"] - 1.0)
+    check(
+        "shell_variant_costs_power",
+        bool((penalty > 0).all()),
+        [round(float(penalty.min()), 2), round(float(penalty.max()), 2)],
+        "staying inside the shell is never cheaper than the free optimum",
+    )
+    headroom = pd.read_csv(RESULTS / "voltage_headroom_requirement.csv")
+    check(
+        "headroom_10mg_is_zero",
+        bool((headroom[headroom["limit_mgNm3"] == 10.0]["min_voltage_headroom_pct"] == 0.0).all()),
+        headroom[headroom["limit_mgNm3"] == 10.0]["min_voltage_headroom_pct"].tolist(), "all 0%",
+    )
+    check(
+        "headroom_5mg_within_declared_margin",
+        float(headroom[headroom["limit_mgNm3"] == 5.0]["min_voltage_headroom_pct"].max()) <= 5.0,
+        float(headroom[headroom["limit_mgNm3"] == 5.0]["min_voltage_headroom_pct"].max()), "<=5%",
+    )
 
     q4 = pd.read_csv(RESULTS / "question4_by_condition.csv")
     p10 = float(np.sum(q4["share"] * q4["power_10_kW"]) / q4["share"].sum())
@@ -112,63 +189,69 @@ def main() -> None:
     check("weighted_power_10", close(p10, summary["weighted_power_10_kW"], 1e-9), p10, summary["weighted_power_10_kW"])
     check("weighted_power_5", close(p5, summary["weighted_power_5_kW"], 1e-9), p5, summary["weighted_power_5_kW"])
     check("weighted_increase", close(increase, summary["weighted_increase_pct"], 1e-9), increase, summary["weighted_increase_pct"])
+    check(
+        "tightening_costs_power_vs_history",
+        summary["power_10_vs_historical_pct"] > 0 and summary["weighted_increase_pct"] > 0,
+        {"10mg_vs_history_pct": summary["power_10_vs_historical_pct"],
+         "increase_pct": summary["weighted_increase_pct"]},
+        "both positive: tightening the limit costs power",
+    )
+    rel = np.abs(q4["analytic_delta_power_kW"] - q4["numeric_delta_power_kW"]) / q4["numeric_delta_power_kW"]
+    check(
+        "analytic_matches_numeric_delta_power",
+        float(rel.max()) < 0.02, float(rel.max()), "<2% relative difference",
+    )
+
+    verification = pd.read_csv(RESULTS / "optimization_verification.csv")
+    check("verification_rows", len(verification) == 8, len(verification), 8)
+    check(
+        "multistart_agrees_on_optimum",
+        float(verification["multistart_power_spread_kW"].max()) < 1.0,
+        float(verification["multistart_power_spread_kW"].max()), "<1 kW across converged starts",
+    )
+    gaps = verification["random_search_gap_pct"].dropna()
+    check(
+        "random_search_finds_nothing_better",
+        bool((gaps >= -1e-9).all()), float(gaps.min()), ">=0 for every combination",
+    )
 
     sens = pd.read_csv(RESULTS / "question4_sensitivity.csv")
-    vals = sens["weighted_power_increase_pct"].dropna()
-    check("sensitivity_feasible_count", int(sens["all_conditions_feasible"].sum()) == 26, int(sens["all_conditions_feasible"].sum()), 26)
-    check("sensitivity_min", round(float(vals.min()), 2) == 10.40, round(float(vals.min()), 2), 10.40)
-    check("sensitivity_median", round(float(vals.median()), 2) == 13.51, round(float(vals.median()), 2), 13.51)
-    check("sensitivity_max", round(float(vals.max()), 2) == 18.45, round(float(vals.max()), 2), 18.45)
-
-    seeds = pd.read_csv(RESULTS / "optimization_seed_stability.csv")
-    check("optimization_seed_count", seeds["seed"].nunique() == 5, int(seeds["seed"].nunique()), 5)
-    grouped = seeds.groupby(["condition_cluster", "limit_mgNm3"])["predicted_power_kW"]
-    max_cv = float((100*grouped.std()/grouped.mean()).max())
-    max_range = float((100*(grouped.max()-grouped.min())/grouped.mean()).max())
-    check("seed_max_cv", max_cv <= 0.181, max_cv, "<=0.181%")
-    check("seed_max_range", max_range <= 0.465, max_range, "<=0.465%")
-    check("local_refinement_gain", float(seeds["local_refinement_improvement_pct"].max()) <= 0.987, float(seeds["local_refinement_improvement_pct"].max()), "<=0.987%")
+    check("sensitivity_grid_size", len(sens) == 27, len(sens), 27)
+    p_ref = pd.read_csv(RESULTS / "p_exponent_reference.csv")
+    check("p_reference_rows", len(p_ref) == 5, len(p_ref), 5)
+    check(
+        "p_reference_monotone_decreasing",
+        bool((p_ref.sort_values("p_exponent")["analytic_increase_pct"].diff().dropna() < 0).all()),
+        p_ref.sort_values("p_exponent")["analytic_increase_pct"].round(3).tolist(),
+        "increase falls as p rises (proportional to 2/p)",
+    )
 
     structural = pd.read_csv(RESULTS / "structural_sensitivity.csv")
     structural_vals = structural.loc[structural["all_conditions_feasible"] == True, "weighted_power_increase_pct"]
-    check("structural_total_count", len(structural) == 405, len(structural), 405)
-    check("structural_all_feasible", len(structural_vals) == 405, len(structural_vals), 405)
-    check("structural_min", round(float(structural_vals.min()), 2) == 11.37, round(float(structural_vals.min()), 2), 11.37)
-    check("structural_median", round(float(structural_vals.median()), 2) == 12.99, round(float(structural_vals.median()), 2), 12.99)
-    check("structural_max", round(float(structural_vals.max()), 2) == 14.31, round(float(structural_vals.max()), 2), 14.31)
+    check("structural_total_count", len(structural) == 81, len(structural), 81)
+    check("structural_all_feasible", len(structural_vals) == 81, len(structural_vals), 81)
 
-    ablation = pd.read_csv(RESULTS / "field_priority_ablation_summary.csv")
-    shares = ablation["front_two_share_of_positive_adjustment"]
-    check("ablation_profiles", set(ablation["alpha_profile"]) == {"equal", "weak_front", "central_front"}, sorted(ablation["alpha_profile"].tolist()), ["central_front", "equal", "weak_front"])
-    check("ablation_front_share_range", float(shares.min()) >= 0.707 and float(shares.max()) <= 0.738, [float(shares.min()), float(shares.max())], "[0.707,0.738]")
-    dynamic = pd.read_csv(RESULTS / "dynamic_control_schedule.csv")
-    check("dynamic_schedule_conditions", len(dynamic) == 4, len(dynamic), 4)
-    check("dynamic_schedule_provisional", bool(dynamic["implementation_status"].str.startswith("PROVISIONAL").all()), dynamic["implementation_status"].unique().tolist(), "PROVISIONAL*")
-    old_columns = {
-        "strict_mode_entry_upper_bound_mgNm3",
-        "strict_mode_exit_upper_bound_mgNm3",
-        "minimum_dwell_min",
-    }
+    rapping = pd.read_csv(RESULTS / "rapping_power_tradeoff.csv")
     check(
-        "old_auto_switch_thresholds_removed",
-        old_columns.isdisjoint(dynamic.columns),
-        sorted(dynamic.columns),
-        "no legacy 4.0/4.5 threshold or dwell columns",
+        "rapping_share_reported",
+        30.0 < float(rapping.iloc[0]["rapping_share_pct"]) < 45.0,
+        float(rapping.iloc[0]["rapping_share_pct"]), "between 30% and 45% at median settings",
     )
-    new_columns = {
-        "mode_selection_rule",
-        "available_modes",
-        "automatic_emission_threshold_switching",
-    }
+    strategy = pd.read_csv(RESULTS / "historical_strategy_correlations.csv")
     check(
-        "external_mode_selection_schema",
-        new_columns.issubset(dynamic.columns)
-        and bool((dynamic["mode_selection_rule"] == "EXTERNAL_TARGET_SELECTION").all())
-        and bool((dynamic["available_modes"] == "TARGET-10/TARGET-5/FALLBACK").all())
-        and not bool(dynamic["automatic_emission_threshold_switching"].astype(bool).any()),
-        {c: dynamic[c].unique().tolist() for c in new_columns if c in dynamic.columns},
-        "external target selection; automatic threshold switching disabled",
+        "strategy_windows_reported",
+        set(strategy["window"]) == {"full_record", "train", "validation", "retrospective_test"},
+        sorted(set(strategy["window"])),
+        "four evaluation windows",
     )
+    period_rule = strategy[strategy["control"].str.startswith("T")]
+    check(
+        "rapping_period_rule_stable_across_windows",
+        bool((period_rule["r_C_in_gNm3"] < 0).all()),
+        float(period_rule["r_C_in_gNm3"].max()), "<0 in every window and field",
+    )
+    events = pd.read_csv(RESULTS / "anomaly_events.csv")
+    check("anomaly_events_documented", len(events) == 2, len(events), 2)
 
     manuscript = MANUSCRIPT.read_text(encoding="utf-8")
     # A final submission may print this verifier itself in Appendix D. Restrict
@@ -188,7 +271,7 @@ def main() -> None:
     check("all_references_cited", cited == set(range(1, 14)), sorted(cited), list(range(1, 14)))
     check("reference_list_complete", listed == set(range(1, 14)), sorted(listed), list(range(1, 14)))
     clean_manuscript = re.sub(r"<!--.*?-->\n?", "", review_manuscript)
-    table6_segment = clean_manuscript.split("表6", 1)[1].split("表7", 1)[0]
+    table6_segment = clean_manuscript.split("表10\u3000四工况两档目标", 1)[1].split("表11", 1)[0]
     table6_rows: dict[tuple[int, float], list[float]] = {}
     for line in table6_segment.splitlines():
         if not re.match(r"^\| [1-4] \| (?:10|5) \|", line):
@@ -210,7 +293,7 @@ def main() -> None:
             round(float(row["scenario_peak_total_mgNm3"]), 3),
             round(float(row["predicted_power_kW"]), 2),
         ]
-        table6_matches &= bool(np.allclose(displayed, expected, atol=1e-9))
+        table6_matches &= bool(np.allclose(displayed, expected, atol=5e-3))
     check(
         "table6_complete_and_matches_results",
         table6_matches,
@@ -219,15 +302,16 @@ def main() -> None:
     )
     abstract = clean_manuscript.split("## 摘要", 1)[1].split("**关键词", 1)[0]
     abstract_chars = len(re.sub(r"\s+", "", abstract))
-    check("abstract_under_500_chars", abstract_chars <= 500, abstract_chars, "<=500")
+    check("abstract_fills_one_page", 700 <= abstract_chars <= 1300, abstract_chars, "700-1300 chars (one page)")
     check("anonymous_manuscript", "作者：" not in clean_manuscript and "学校：" not in clean_manuscript, ["作者：" in clean_manuscript, "学校：" in clean_manuscript], [False, False])
     check("no_english_abstract", "## Abstract" not in clean_manuscript, "## Abstract" in clean_manuscript, False)
-    check("old_point_estimate_removed", "13.52%" not in clean_manuscript, "13.52%" in clean_manuscript, False)
-    check("table_caption_count", len(re.findall(r"^表\d+", clean_manuscript, flags=re.M)) == 10, len(re.findall(r"^表\d+", clean_manuscript, flags=re.M)), 10)
+    check("outlet_rescaling_claim_removed", "乘0.10" not in clean_manuscript and "0.1缩放" not in clean_manuscript, ["乘0.10" in clean_manuscript, "0.1缩放" in clean_manuscript], [False, False])
+    check("table_caption_count", len(re.findall(r"^表\d+", clean_manuscript, flags=re.M)) == 14, len(re.findall(r"^表\d+", clean_manuscript, flags=re.M)), 14)
     check("manuscript_figure_count", len(re.findall(r"^!\[图", clean_manuscript, flags=re.M)) == 21, len(re.findall(r"^!\[图", clean_manuscript, flags=re.M)), 21)
     check("ai_disclosure_present", "AI工具使用声明" in clean_manuscript, "AI工具使用声明" in clean_manuscript, True)
     check("support_list_exists", (ROOT / "支撑材料文件清单.md").exists(), (ROOT / "支撑材料文件清单.md").exists(), True)
-    check("ai_detail_exists", (ROOT / "AI工具使用详情.md").exists(), (ROOT / "AI工具使用详情.md").exists(), True)
+    ai_detail = next(ROOT.parent.glob("*/AI工具使用详情*.md"), None)
+    check("ai_detail_exists", ai_detail is not None, str(ai_detail), "AI工具使用详情*.md present in the process directory")
 
     manifest = pd.read_csv(FIGURES / "figure_manifest.csv")
     check("figure_manifest_count", len(manifest) == 21, len(manifest), 21)

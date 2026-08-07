@@ -1,8 +1,11 @@
 {
-  "weighted_power_10_kW": 1609.415563803269,
-  "weighted_power_5_kW": 1829.791278624482,
-  "weighted_increase_pct": 13.692903174145709,
-  "validation_error_guard_kW": 11.776086758966064,
-  "weighted_validation_error_adjusted_power_10_kW": 1621.191650562235,
-  "weighted_validation_error_adjusted_power_5_kW": 1841.567365383448
+  "weighted_power_10_kW": 1972.988238324754,
+  "weighted_power_5_kW": 2105.5434577723954,
+  "weighted_increase_pct": 6.71850023597671,
+  "historical_weighted_actual_power_kW": 1783.1906666666664,
+  "power_10_vs_historical_pct": 10.643705981978812,
+  "daily_energy_10_MWh": 47.351717719794095,
+  "daily_energy_5_MWh": 50.53304298653749,
+  "daily_energy_historical_MWh": 42.796575999999995,
+  "validation_error_guard_kW": 9.778714734711754
 }

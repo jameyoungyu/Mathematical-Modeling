@@ -5,7 +5,7 @@ Converts ``10_修订后完整论文_终稿.md`` into XeLaTeX and compiles it.
 Layout follows the CUMCM paper format specification: A4, >=2.5 cm margins,
 abstract alone on page 1, continuous arabic page numbers centred in the footer.
 
-Usage:  python3 src/build_paper_pdf.py [--no-code]
+Usage:  python3 src/build_paper_pdf.py [--no-code | --full-code]
 """
 
 from __future__ import annotations
@@ -28,11 +28,53 @@ _SPECIALS = {
     "\\": r"\textbackslash{}", "&": r"\&", "%": r"\%", "$": r"\$",
     "#": r"\#", "_": r"\_", "{": r"\{", "}": r"\}",
     "~": r"\textasciitilde{}", "^": r"\textasciicircum{}",
+    # symbols the CJK/serif fonts do not carry -> render them as maths
+    "\u2103": r"$^\circ$C", "\u221d": r"$\propto$", "\u2260": r"$\neq$",
+    "\u2264": r"$\le$", "\u2265": r"$\ge$", "\u2248": r"$\approx$",
+    "\u207b": r"$^-$", "\u00b9": r"$^1$", "\u2070": r"$^0$",
+    "\u2192": r"$\rightarrow$", "\u2191": r"$\uparrow$", "\u2193": r"$\downarrow$",
 }
 
 
 def esc(text: str) -> str:
     return "".join(_SPECIALS.get(ch, ch) for ch in text)
+
+
+#: bare links and DOIs are single unbreakable words for TeX; \url can break them
+_URL_RE = re.compile(r"(https?://\S+?)(?=[\s\u3002\uff0c]|$)|(?<=DOI: )(10\.\S+?)(?=[\s\u3002]|$)")
+
+
+def _urlify(piece: str) -> str:
+    r"""Escape text, but wrap any bare URL or DOI in a breakable url command."""
+    out: list[str] = []
+    last = 0
+    for m in _URL_RE.finditer(piece):
+        out.append(esc(piece[last:m.start()]))
+        link = m.group(0).rstrip(".")
+        trailing = m.group(0)[len(link):]
+        out.append(r"\url{" + link + "}" + esc(trailing))
+        last = m.end()
+    out.append(esc(piece[last:]))
+    return "".join(out)
+
+
+#: Markdown bold may wrap a maths span ("**若把$x$作为约束**"), so the markers
+#: cannot be resolved inside a single plain-text piece. They are replaced by a
+#: sentinel first and paired up after every segment has been rendered.
+_BOLD = "\x00"
+
+
+def _smart_quotes(piece: str) -> str:
+    """Straight double quotes in Chinese prose -> paired curly quotes."""
+    out = []
+    open_next = True
+    for ch in piece:
+        if ch == '"':
+            out.append("\u201c" if open_next else "\u201d")
+            open_next = not open_next
+        else:
+            out.append(ch)
+    return "".join(out)
 
 
 def inline(text: str) -> str:
@@ -42,36 +84,91 @@ def inline(text: str) -> str:
         if i % 2:                       # math segment - pass through verbatim
             out.append(seg)
             continue
-        # code spans first: their content must be escaped but not styled
-        parts = []
+        # code spans next: their content must be escaped but not styled
         for j, piece in enumerate(re.split(r"(`[^`]*`)", seg)):
             if j % 2:
-                parts.append(r"\texttt{" + esc(piece[1:-1]) + "}")
+                out.append(r"\texttt{" + esc(piece[1:-1]) + "}")
             else:
-                piece = esc(piece)
-                piece = re.sub(r"\*\*(.+?)\*\*", r"\\textbf{\1}", piece)
-                parts.append(piece)
-        out.append("".join(parts))
-    return "".join(out)
+                piece = piece.replace("**", _BOLD)
+                out.append(_urlify(_smart_quotes(piece)))
+    rendered = "".join(out)
+
+    # pair the sentinels; an unmatched trailing marker is dropped
+    parts = rendered.split(_BOLD)
+    if len(parts) == 1:
+        return rendered
+    result = parts[0]
+    for k, chunk in enumerate(parts[1:], start=1):
+        result += (r"\textbf{" if k % 2 else "}") + chunk
+    if len(parts) % 2 == 0:             # odd number of markers
+        result += "}"
+    return result
 
 
 # ---------------------------------------------------------------- block level
 
+def _display_width(text: str) -> int:
+    """Rough typeset width in en-units (CJK glyphs are double width)."""
+    text = re.sub(r"\$[^$]*\$", "xx", text)          # math sets compactly
+    text = re.sub(r"[*`]", "", text)
+    return sum(2 if ord(ch) > 0x2E80 else 1 for ch in text)
+
+
+# A row of ``l`` columns cannot wrap, so any table whose natural width exceeds
+# the text block silently runs off the page. Text-heavy columns therefore
+# become wrapping ``X`` columns and the table is set to exactly \textwidth.
+_LINE_BUDGET = 84          # en-units that fit across the 16 cm text block
+_WRAP_THRESHOLD = 16       # a column wider than this must be allowed to wrap
+
+
 def convert_table(header: list[str], align: list[str], rows: list[list[str]],
                   number: str, title: str) -> str:
-    spec = "".join({"r": "r", "c": "c"}.get(a, "l") for a in align)
-    wide = len(header) >= 9          # 宽表按页宽等比缩放，避免溢出版心
+    ncol = len(header)
+    widths = [max([_display_width(header[j])]
+                  + [_display_width(r[j]) for r in rows if j < len(r)])
+              for j in range(ncol)]
+    natural = sum(widths) + 2 * ncol
+
+    wrappable = [j for j in range(ncol)
+                 if align[j] == "l" and widths[j] > _WRAP_THRESHOLD]
+    use_tabularx = natural > _LINE_BUDGET and bool(wrappable)
+
+    if use_tabularx:
+        # Share the wrapping width between the text columns in proportion to
+        # how much text each of them actually carries.
+        # Proportional-to-length shares starve short-but-not-short-enough
+        # columns, so damp the ratio with a square root and floor it.
+        raw = {j: max(widths[j], 1) ** 0.5 for j in wrappable}
+        total_wrap = sum(raw.values())
+        shares = {j: max(len(wrappable) * raw[j] / total_wrap, 0.55) for j in wrappable}
+        scale = len(wrappable) / sum(shares.values())
+        parts = []
+        for j in range(ncol):
+            if j in wrappable:
+                parts.append(r">{\hsize=%.3f\hsize\raggedright\arraybackslash}X"
+                             % (shares[j] * scale))
+            else:
+                parts.append({"r": "r", "c": "c"}.get(align[j], "l"))
+        open_env = r"\begin{tabularx}{\textwidth}{" + "".join(parts) + "}"
+        close_env = r"\end{tabularx}"
+        shrink = False
+    else:
+        spec = "".join({"r": "r", "c": "c"}.get(a, "l") for a in align)
+        open_env = r"\begin{tabular}{" + spec + "}"
+        close_env = r"\end{tabular}"
+        shrink = natural > _LINE_BUDGET        # all-numeric wide table: scale it
+
     lines = [r"\begin{table}[htbp]", r"\centering",
              r"\caption*{\normalsize 表" + number + "\u3000" + inline(title) + "}",
-             r"\vspace{-2pt}"]
-    if wide:
+             r"\vspace{-2pt}", r"\zihao{-5}"]
+    if shrink:
         lines.append(r"\resizebox{\textwidth}{!}{%")
-    lines += [r"\begin{tabular}{" + spec + "}", r"\toprule",
+    lines += [open_env, r"\toprule",
               " & ".join(inline(h) for h in header) + r" \\", r"\midrule"]
     for row in rows:
         lines.append(" & ".join(inline(c) for c in row) + r" \\")
-    lines += [r"\bottomrule", r"\end{tabular}"]
-    if wide:
+    lines += [r"\bottomrule", close_env]
+    if shrink:
         lines.append("}")
     lines.append(r"\end{table}")
     return "\n".join(lines)
@@ -266,17 +363,17 @@ PREAMBLE = r"""
 \usepackage{xcolor}
 \usepackage{setspace}
 \usepackage{array}
+\usepackage{tabularx}
 \usepackage{fancyhdr}
+\usepackage{xurl}
 
-\setCJKmainfont{Noto Serif CJK SC}
-\setCJKsansfont{Noto Sans CJK SC}
-\setCJKmonofont{Noto Sans Mono CJK SC}
-\setmainfont{TeX Gyre Termes}
-\setmonofont{Noto Sans Mono CJK SC}[Scale=0.82]
+%%FONTS%%
 
 \onehalfspacing
 \setlength{\parindent}{2em}
 \captionsetup{skip=4pt}
+\emergencystretch=3em
+\sloppy
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -319,8 +416,49 @@ PREAMBLE = r"""
 """
 
 
+
+# ---------------------------------------------------------------- fonts
+
+#: Preferred first, portable fallback second. The submission machine normally
+#: has TeX Gyre Termes and Noto CJK; a bare TeX Live may not.
+FONT_CHOICES = {
+    "main": ["TeX Gyre Termes", "Liberation Serif", "DejaVu Serif"],
+    "mono": ["Noto Sans Mono CJK SC", "DejaVu Sans Mono"],
+    "cjkmain": ["Noto Serif CJK SC", "Fandol Song", "Noto Sans CJK SC"],
+    "cjksans": ["Noto Sans CJK SC", "Fandol Hei"],
+    "cjkmono": ["Noto Sans Mono CJK SC", "Noto Sans CJK SC"],
+}
+
+
+def _installed_families() -> set[str]:
+    try:
+        out = subprocess.run(["fc-list", ":", "family"], capture_output=True,
+                             text=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return set()
+    return {name.strip() for line in out.splitlines() for name in line.split(",")}
+
+
+def font_block() -> str:
+    available = _installed_families()
+
+    def pick(key: str) -> str:
+        for name in FONT_CHOICES[key]:
+            if not available or name in available:
+                return name
+        return FONT_CHOICES[key][-1]
+
+    return "\n".join([
+        r"\setCJKmainfont{%s}" % pick("cjkmain"),
+        r"\setCJKsansfont{%s}" % pick("cjksans"),
+        r"\setCJKmonofont{%s}" % pick("cjkmono"),
+        r"\setmainfont{%s}" % pick("main"),
+        r"\setmonofont{%s}[Scale=0.82]" % pick("mono"),
+    ])
+
+
 def build_tex(title: str, abstract: str, body: str, code: str) -> str:
-    parts = [PREAMBLE, r"\begin{document}", ""]
+    parts = [PREAMBLE.replace("%%FONTS%%", font_block()), r"\begin{document}", ""]
     # --- page 1: title + abstract only
     parts += [
         r"\begin{center}",
@@ -350,25 +488,66 @@ def build_tex(title: str, abstract: str, body: str, code: str) -> str:
     return "\n".join(parts)
 
 
-def code_appendix() -> str:
-    out = [r"\clearpage",
-           r"\section*{附录D\quad 完整源程序}",
-           r"\addcontentsline{toc}{section}{附录D\quad 完整源程序}",
-           r"本附录给出生成本文全部结果与图表的完整可运行源程序，与电子支撑材料 \texttt{src/} 目录一致。"]
-    for n, name in enumerate(CODE_MODULES, start=1):
-        path = SRC / name
-        if not path.exists():
+def _extract(module: str, names: list[str]) -> str:
+    """Pull whole top-level definitions out of a source file, in order."""
+    text = (SRC / module).read_text(encoding="utf-8").split("\n")
+    out: list[str] = []
+    for name in names:
+        try:
+            i = next(k for k, l in enumerate(text)
+                     if l.startswith(("def " + name + "(", "class " + name)))
+        except StopIteration:
             continue
-        out += [r"\subsection*{D.%d\quad \texttt{%s}}" % (n, esc(name)),
-                r"\lstinputlisting[style=pycode]{%s}" % (path.as_posix())]
+        j = i + 1
+        while j < len(text) and (not text[j].strip() or text[j][:1] in " )]}\t"):
+            j += 1
+        while j > i and not text[j - 1].strip():
+            j -= 1
+        out.extend(text[i:j] + [""])
+    return "\n".join(out).rstrip() + "\n"
+
+
+#: The submission carries the full source electronically; printing 15 pages of
+#: listings inside the manuscript costs page budget without informing anyone.
+CORE_EXTRACTS = [
+    ("scenario_model.py", ["PhysicalPowerModel"]),
+    ("scenario_model.py", ["scenario_emission", "field_priority"]),
+]
+
+
+def code_appendix(full: bool = False) -> str:
+    out = [r"\clearpage",
+           r"\section*{附录D\quad 核心源程序节选}",
+           r"\addcontentsline{toc}{section}{附录D\quad 核心源程序节选}"]
+    if full:
+        out.append(r"本附录给出生成本文全部结果与图表的完整可运行源程序，与电子支撑材料 \texttt{src/} 目录一致。")
+        for n, name in enumerate(CODE_MODULES, start=1):
+            path = SRC / name
+            if not path.exists():
+                continue
+            out += [r"\subsection*{D.%d\quad \texttt{%s}}" % (n, esc(name)),
+                    r"\lstinputlisting[style=pycode]{%s}" % (path.as_posix())]
+        return "\n".join(out)
+
+    out.append(r"为控制篇幅，本附录只给出决定全文数值结果的两段核心定义：功率层的物理设定，与灰箱"
+               r"排放层的去除指数、振打峰值及电场优先判据。包含数据审计、优化求解、敏感性扫描与全部绘图程序的"
+               r"可运行源码（\texttt{src/} 共 6 个模块）随电子支撑材料提交，目录结构见表A1。")
+    BUILD.mkdir(exist_ok=True)
+    for n, (module, names) in enumerate(CORE_EXTRACTS, start=1):
+        snippet = BUILD / ("code_excerpt_%d.py" % n)
+        snippet.write_text(_extract(module, names), encoding="utf-8")
+        out += [r"\subsection*{D.%d\quad \texttt{%s}：%s}"
+                % (n, esc(module), "、".join(esc(x) for x in names)),
+                r"\lstinputlisting[style=pycode]{%s}" % snippet.as_posix()]
     return "\n".join(out)
 
 
 def main() -> None:
     include_code = "--no-code" not in sys.argv
+    full_code = "--full-code" in sys.argv
     md = MANUSCRIPT.read_text(encoding="utf-8")
     title, abstract, body = convert(md)
-    tex = build_tex(title, abstract, body, code_appendix() if include_code else "")
+    tex = build_tex(title, abstract, body, code_appendix(full_code) if include_code else "")
 
     BUILD.mkdir(exist_ok=True)
     tex_path = BUILD / "paper.tex"
