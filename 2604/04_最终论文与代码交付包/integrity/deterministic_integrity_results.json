@@ -1,7 +1,7 @@
 {
   "status": "PASS",
-  "total_checks": 78,
-  "passed": 78,
+  "total_checks": 79,
+  "passed": 79,
   "failed": 0,
   "checks": [
     {
@@ -514,7 +514,10 @@
         10,
         11,
         12,
-        13
+        13,
+        14,
+        15,
+        16
       ],
       "expected": [
         1,
@@ -529,8 +532,21 @@
         10,
         11,
         12,
-        13
+        13,
+        14,
+        15,
+        16
       ]
+    },
+    {
+      "check": "ai_tool_references_listed",
+      "passed": true,
+      "actual": [
+        "[14] OpenAI Codex, GPT-5, OpenAI, 2026-08-05—2026-08-07.",
+        "[15] GLM, GLM-5.2, 智谱AI, 2026-08-05—2026-08-07.",
+        "[16] Kimi, K3, 月之暗面, 2026-08-06—2026-08-07."
+      ],
+      "expected": "three dated AI-tool entries"
     },
     {
       "check": "table6_complete_and_matches_results",

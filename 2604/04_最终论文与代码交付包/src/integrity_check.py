@@ -279,8 +279,19 @@ def main() -> None:
             else:
                 cited.add(int(part))
     listed = set(map(int, re.findall(r"^\[([0-9]+)\] ", review_manuscript.split("## 参考文献", 1)[1], flags=re.M)))
-    check("all_references_cited", cited == set(range(1, 14)), sorted(cited), list(range(1, 14)))
-    check("reference_list_complete", listed == set(range(1, 14)), sorted(listed), list(range(1, 14)))
+    # [1]-[13] are literature: every one must be both listed and cited in the
+    # text.  [14]-[16] are the AI-tool disclosure entries the competition rules
+    # require in the reference list; they are declarations, not sources, so
+    # they are listed without an inline citation.
+    literature, ai_tools = set(range(1, 14)), set(range(14, 17))
+    check("all_references_cited", cited == literature, sorted(cited), sorted(literature))
+    check("reference_list_complete", listed == literature | ai_tools,
+          sorted(listed), sorted(literature | ai_tools))
+    ai_block = review_manuscript.split("## 参考文献", 1)[1]
+    check("ai_tool_references_listed",
+          all(re.search(r"^\[%d\] .+\d{4}-\d{2}-\d{2}" % n, ai_block, flags=re.M) for n in ai_tools),
+          [l for l in ai_block.splitlines() if re.match(r"^\[1[4-6]\] ", l)],
+          "three dated AI-tool entries")
     clean_manuscript = re.sub(r"<!--.*?-->\n?", "", review_manuscript)
     table6_segment = clean_manuscript.split("表12\u3000四工况两档目标", 1)[1].split("表13", 1)[0]
     table6_rows: dict[tuple[int, float], list[float]] = {}

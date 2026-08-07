@@ -63,6 +63,10 @@ def _urlify(piece: str) -> str:
 #: cannot be resolved inside a single plain-text piece. They are replaced by a
 #: sentinel first and paired up after every segment has been rendered.
 _BOLD = "\x00"
+#: single "*" is italic. Maths is split off before this runs, so the "*" in
+#: spans like $C^*$ is never seen here, and list bullets are stripped by the
+#: block parser, so the only "*" reaching this point is emphasis.
+_ITAL = "\x01"
 
 
 def _smart_quotes(piece: str, state: list[bool]) -> str:
@@ -94,17 +98,20 @@ def inline(text: str) -> str:
             if j % 2:
                 out.append(r"\texttt{" + esc(piece[1:-1]) + "}")
             else:
-                piece = piece.replace("**", _BOLD)
+                piece = piece.replace("**", _BOLD).replace("*", _ITAL)
                 out.append(_urlify(_smart_quotes(piece, quote_open)))
     rendered = "".join(out)
+    return _pair(_pair(rendered, _BOLD, "textbf"), _ITAL, "textit")
 
-    # pair the sentinels; an unmatched trailing marker is dropped
-    parts = rendered.split(_BOLD)
+
+def _pair(text: str, sentinel: str, command: str) -> str:
+    """Turn alternating sentinels into a LaTeX command; drop an odd trailing one."""
+    parts = text.split(sentinel)
     if len(parts) == 1:
-        return rendered
+        return text
     result = parts[0]
     for k, chunk in enumerate(parts[1:], start=1):
-        result += (r"\textbf{" if k % 2 else "}") + chunk
+        result += ("\\" + command + "{" if k % 2 else "}") + chunk
     if len(parts) % 2 == 0:             # odd number of markers
         result += "}"
     return result
