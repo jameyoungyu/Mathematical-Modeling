@@ -19,8 +19,9 @@ ROOT = Path(__file__).resolve().parent.parent
 MANUSCRIPT = ROOT / "10_修订后完整论文_终稿.md"
 BUILD = ROOT / "build"
 SRC = ROOT / "src"
-CODE_MODULES = ["scenario_model.py", "paper_figures.py", "plot_utils.py",
-                "compute_frontier.py", "integrity_check.py", "build_paper_pdf.py"]
+CODE_MODULES = ["scenario_model.py", "outlet_diagnostics.py", "paper_figures.py",
+                "plot_utils.py", "compute_frontier.py", "integrity_check.py",
+                "build_paper_pdf.py"]
 
 # ---------------------------------------------------------------- inline text
 
@@ -376,8 +377,19 @@ PREAMBLE = r"""
 \onehalfspacing
 \setlength{\parindent}{2em}
 \captionsetup{skip=4pt}
-\emergencystretch=3em
-\sloppy
+
+% Line breaking.  \sloppy (tolerance 9999) let TeX stretch the inter-word and
+% inter-CJK glue without bound, so a line holding a long unbreakable inline
+% formula was padded until the Chinese characters visibly drifted apart.  Use a
+% permissive but finite tolerance instead, let long inline maths wrap at its
+% relations and binary operators, and cap how far the CJK glue may stretch.
+\tolerance=3000
+\emergencystretch=2em
+\relpenalty=200
+\binoppenalty=400
+\hfuzz=2pt
+\hbadness=3000
+\xeCJKsetup{CJKglue=\hskip 0pt plus 0.04\baselineskip}
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -541,8 +553,10 @@ def code_appendix(full: bool = True) -> str:
     for n, (module, names) in enumerate(CORE_EXTRACTS, start=1):
         snippet = BUILD / ("code_excerpt_%d.py" % n)
         snippet.write_text(_extract(module, names), encoding="utf-8")
-        out += [r"\subsection*{E.%d\quad \texttt{%s}\uff1a%s}"
-                % (n, esc(module), "\u3001".join(esc(x) for x in names)),
+        # the format string is raw, so the separator cannot be written as an
+        # escape inside it -- \uff1a would reach XeLaTeX as a control sequence
+        out += [r"\subsection*{E.%d\quad \texttt{%s}%s%s}"
+                % (n, esc(module), "\uff1a", "\u3001".join(esc(x) for x in names)),
                 r"\lstinputlisting[style=pycode]{%s}" % snippet.as_posix()]
     return "\n".join(out)
 

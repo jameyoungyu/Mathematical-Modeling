@@ -423,12 +423,39 @@ def field_priority(profile: pd.Series, model: PhysicalPowerModel,
 
 # ---------------------------------------------------------------- optimisation
 
-def _bounds(profile: pd.Series, voltage_headroom: float) -> tuple[np.ndarray, np.ndarray]:
+def _bounds(profile: pd.Series, voltage_headroom: float,
+            period_upper: str = "max") -> tuple[np.ndarray, np.ndarray]:
+    """Support box for the eight controls.
+
+    ``period_upper`` selects the upper bound of the rapping periods: ``"max"``
+    is the historical maximum used throughout the paper, ``"p95"`` the 95th
+    percentile.  Every optimum places all four periods exactly on this bound,
+    so the choice -- not any interior trade-off -- fixes the rapping half of
+    the solution; ``"p95"`` quantifies what that choice is worth.
+    """
     lo = np.concatenate([[profile[f"{c}_min"] for c in U_COLS],
                          [profile[f"{c}_min"] for c in T_COLS]])
+    t_key = "_p95" if period_upper == "p95" else "_max"
     hi = np.concatenate([[profile[f"{c}_max"] * (1.0 + voltage_headroom) for c in U_COLS],
-                         [profile[f"{c}_max"] for c in T_COLS]])
+                         [profile[f"{c}{t_key}"] for c in T_COLS]])
     return lo.astype(float), hi.astype(float)
+
+
+#: a control counts as sitting on a bound when it is within this distance of it
+BOUND_TOL = np.array([0.05] * 4 + [0.5] * 4)
+
+
+def active_bounds(z: np.ndarray, lo: np.ndarray, hi: np.ndarray) -> dict[str, object]:
+    """Which controls sit on their support bound, and on which side."""
+    at_lo = np.abs(z - lo) <= BOUND_TOL
+    at_hi = np.abs(z - hi) <= BOUND_TOL
+    names = U_COLS + T_COLS
+    return {
+        "controls_at_lower_bound": "|".join(n for n, f in zip(names, at_lo) if f),
+        "controls_at_upper_bound": "|".join(n for n, f in zip(names, at_hi) if f),
+        "n_controls_at_bound": int(np.sum(at_lo | at_hi)),
+        "all_periods_at_upper_bound": bool(np.all(at_hi[4:])),
+    }
 
 
 def _ordering(z: np.ndarray) -> np.ndarray:
@@ -449,6 +476,7 @@ def solve_condition(
     mahalanobis: tuple[np.ndarray, np.ndarray, float] | None = None,
     multistart: int = MULTISTART,
     seed: int = SEED,
+    period_upper: str = "max",
     **emission_kwargs,
 ) -> dict[str, object]:
     """Deterministic multi-start SLSQP solve of one condition/limit pair.
@@ -459,7 +487,7 @@ def solve_condition(
     multi-start is therefore used, and ``verify_with_random_search`` re-checks
     the result against a large random sample of the same feasible set.
     """
-    lo, hi = _bounds(profile, voltage_headroom)
+    lo, hi = _bounds(profile, voltage_headroom, period_upper)
 
     def objective(z: np.ndarray) -> float:
         return float(model.power(z[:4], z[4:]))
@@ -544,7 +572,11 @@ def solve_condition(
         "historical_power_kW": float(profile["historical_power_kW"]),
         "multistart_converged": converged,
         "multistart_power_spread_kW": float(np.max(values) - np.min(values)) if values else np.nan,
+        "period_upper_rule": period_upper,
+        "emission_slack_mgNm3": float(emission_slack(z)),
+        "min_ordering_slack": float(np.min(_ordering(z))),
     }
+    row.update(active_bounds(z, lo, hi))
     row["power_change_vs_historical_pct"] = 100.0 * (
         row["predicted_power_kW"] / float(profile["historical_power_kW"]) - 1.0)
     for i, col in enumerate(U_COLS + T_COLS):
@@ -587,13 +619,14 @@ def aggregate(rows: list[dict[str, object]], key: str = "predicted_power_kW") ->
 
 def solve_all(profiles: pd.DataFrame, model: PhysicalPowerModel,
               t_stars: dict[int, np.ndarray], limit: float, headroom: float,
-              multistart: int = MULTISTART, **emission_kwargs) -> list[dict[str, object]]:
+              multistart: int = MULTISTART, period_upper: str = "max",
+              **emission_kwargs) -> list[dict[str, object]]:
     rows = []
     for _, profile in profiles.iterrows():
         cluster = int(profile["condition_cluster"])
         r = solve_condition(profile, model, t_stars[cluster], limit,
                             voltage_headroom=headroom, multistart=multistart,
-                            **emission_kwargs)
+                            period_upper=period_upper, **emission_kwargs)
         r["share"] = float(profile["share"])
         rows.append(r)
     return rows
@@ -738,6 +771,47 @@ def main() -> None:
     optimum["validation_error_guard_kW"] = guard
     optimum.to_csv(OUT_DIR / "optimal_controls_central_scenario.csv",
                    index=False, encoding="utf-8-sig")
+
+    # -- active-constraint report -------------------------------------------
+    # Which controls the optimum leaves sitting on the edge of the support box.
+    # All four periods do, in every one of the eight solves: lengthening a
+    # period buys rapping power directly while costing only a sliver of the
+    # emission headroom, so the period half of the solution is a corner set by
+    # the box rather than by an interior trade-off.
+    active_cols = ["condition_cluster", "condition_name", "limit_mgNm3",
+                   "controls_at_lower_bound", "controls_at_upper_bound",
+                   "n_controls_at_bound", "all_periods_at_upper_bound",
+                   "emission_slack_mgNm3", "min_ordering_slack", "predicted_power_kW"]
+    pd.DataFrame(rows10 + rows5)[active_cols].to_csv(
+        OUT_DIR / "active_constraints.csv", index=False, encoding="utf-8-sig")
+
+    # -- what the period bound itself is worth -------------------------------
+    # Re-solve with the rapping-period ceiling at P95 instead of the historical
+    # maximum.  The maximum is a single extreme minute of the training week, so
+    # this quantifies how much of the reported optimum rests on that one point.
+    period_rows = []
+    for limit, headroom, base_rows in ((10.0, HEADROOM_10, rows10), (5.0, HEADROOM_5, rows5)):
+        p95_rows = solve_all(profiles, model, t_stars, limit, headroom, period_upper="p95")
+        for base, alt in zip(base_rows, p95_rows):
+            if alt.get("status") != "SCENARIO_FEASIBLE":
+                period_rows.append({"condition_cluster": base["condition_cluster"],
+                                    "limit_mgNm3": limit, "status": alt.get("status")})
+                continue
+            period_rows.append({
+                "condition_cluster": base["condition_cluster"],
+                "condition_name": base["condition_name"],
+                "limit_mgNm3": limit,
+                "status": "SCENARIO_FEASIBLE",
+                "power_bound_max_kW": base["predicted_power_kW"],
+                "power_bound_p95_kW": alt["predicted_power_kW"],
+                "power_penalty_kW": alt["predicted_power_kW"] - base["predicted_power_kW"],
+                "power_penalty_pct": 100.0 * (alt["predicted_power_kW"]
+                                              / base["predicted_power_kW"] - 1.0),
+                "share": base["share"],
+            })
+    period_sensitivity = pd.DataFrame(period_rows)
+    period_sensitivity.to_csv(OUT_DIR / "period_bound_sensitivity.csv",
+                              index=False, encoding="utf-8-sig")
 
     # -- support-domain audit (reported, not imposed) ------------------------
     audit_rows = []

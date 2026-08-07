@@ -282,7 +282,7 @@ def main() -> None:
     check("all_references_cited", cited == set(range(1, 14)), sorted(cited), list(range(1, 14)))
     check("reference_list_complete", listed == set(range(1, 14)), sorted(listed), list(range(1, 14)))
     clean_manuscript = re.sub(r"<!--.*?-->\n?", "", review_manuscript)
-    table6_segment = clean_manuscript.split("表11\u3000四工况两档目标", 1)[1].split("表12", 1)[0]
+    table6_segment = clean_manuscript.split("表12\u3000四工况两档目标", 1)[1].split("表13", 1)[0]
     table6_rows: dict[tuple[int, float], list[float]] = {}
     for line in table6_segment.splitlines():
         if not re.match(r"^\| [1-4] \| (?:10|5) \|", line):
@@ -311,7 +311,7 @@ def main() -> None:
         {f"condition_{key[0]}_target_{key[1]:g}": value for key, value in table6_rows.items()},
         "8 rows matching optimal_controls_central_scenario.csv after displayed rounding",
     )
-    p_table_segment = clean_manuscript.split("表15\u3000功率增幅对幂次", 1)[1].split("\n\n", 3)[1]
+    p_table_segment = clean_manuscript.split("表17\u3000功率增幅对幂次", 1)[1].split("\n\n", 3)[1]
     printed = {}
     for line in p_table_segment.splitlines():
         cells = [c.strip().strip("*") for c in line.strip().strip("|").split("|")]
@@ -326,12 +326,48 @@ def main() -> None:
 
     abstract = clean_manuscript.split("## 摘要", 1)[1].split("**关键词", 1)[0]
     abstract_chars = len(re.sub(r"\s+", "", abstract))
-    check("abstract_fills_one_page", 700 <= abstract_chars <= 1300, abstract_chars, "700-1300 chars (one page)")
+    # Range recalibrated for the "针对问题X，本文建立了……模型" abstract: naming the
+    # model and method for each of the four questions costs roughly 500 more
+    # characters than the previous compressed wording.  Verified against the
+    # rendered PDF -- at 1870 chars the abstract fills page 1 and page 2 still
+    # opens with section 1, so the upper bound is where it would start to spill.
+    check("abstract_fills_one_page", 1400 <= abstract_chars <= 2000, abstract_chars, "1400-2000 chars (one page)")
     check("anonymous_manuscript", "作者：" not in clean_manuscript and "学校：" not in clean_manuscript, ["作者：" in clean_manuscript, "学校：" in clean_manuscript], [False, False])
     check("no_english_abstract", "## Abstract" not in clean_manuscript, "## Abstract" in clean_manuscript, False)
     check("outlet_rescaling_claim_removed", "乘0.10" not in clean_manuscript and "0.1缩放" not in clean_manuscript, ["乘0.10" in clean_manuscript, "0.1缩放" in clean_manuscript], [False, False])
-    check("table_caption_count", len(re.findall(r"^表\d+", clean_manuscript, flags=re.M)) == 15, len(re.findall(r"^表\d+", clean_manuscript, flags=re.M)), 15)
+    check("table_caption_count", len(re.findall(r"^表\d+", clean_manuscript, flags=re.M)) == 17, len(re.findall(r"^表\d+", clean_manuscript, flags=re.M)), 17)
     check("manuscript_figure_count", len(re.findall(r"^!\[图", clean_manuscript, flags=re.M)) == 20, len(re.findall(r"^!\[图", clean_manuscript, flags=re.M)), 20)
+    # -- the outlet column is ruled unusable on a falsifiable test, not on a
+    # -- failure to find a signal; the cap fraction is predicted, not fitted
+    diag = pd.read_csv(RESULTS / "outlet_censoring_periodicity.csv")
+    censoring = diag[diag["test"] == "censored_normal_mle"].iloc[0]
+    check("censoring_test_present", len(diag) == 5, len(diag), 5)
+    check(
+        "censoring_prediction_matches_observed",
+        abs(float(censoring["statistic"]) - float(censoring["reference"])) < 0.01,
+        abs(float(censoring["statistic"]) - float(censoring["reference"])),
+        "< 0.01",
+    )
+    folding = diag[diag["test"] == "epoch_folding"]
+    check("rapping_periodicity_bounded", float(folding["statistic"].max()) < 0.05,
+          float(folding["statistic"].max()), "< 0.05 mg/Nm3")
+
+    # -- every optimum is a corner solution in the rapping periods; the paper
+    # -- has to say so, and the P95 re-solve has to remain feasible
+    active = pd.read_csv(RESULTS / "active_constraints.csv")
+    check("active_constraints_reported", len(active) == 8, len(active), 8)
+    check("all_solutions_corner_in_periods",
+          bool(active["all_periods_at_upper_bound"].all()),
+          active["all_periods_at_upper_bound"].tolist(), "all True")
+    period = pd.read_csv(RESULTS / "period_bound_sensitivity.csv")
+    check("period_bound_sensitivity_feasible",
+          len(period) == 8 and (period["status"] == "SCENARIO_FEASIBLE").all(),
+          period["status"].tolist(), "8 x SCENARIO_FEASIBLE")
+    weighted = lambda frame, col: float((frame[col] * frame["share"]).sum() / frame["share"].sum())
+    p10, p5 = period[period["limit_mgNm3"] == 10.0], period[period["limit_mgNm3"] == 5.0]
+    p95_rise = 100.0 * (weighted(p5, "power_bound_p95_kW") / weighted(p10, "power_bound_p95_kW") - 1.0)
+    check("q4_increase_robust_to_period_bound", 5.0 < p95_rise < 8.0, round(p95_rise, 2), "5-8 % under the P95 bound")
+
     check("ai_disclosure_present", "AI工具使用声明" in clean_manuscript, "AI工具使用声明" in clean_manuscript, True)
     check("support_list_exists", (ROOT / "支撑材料文件清单.md").exists(), (ROOT / "支撑材料文件清单.md").exists(), True)
     ai_detail = next(ROOT.parent.glob("*/AI工具使用详情*.md"), None)

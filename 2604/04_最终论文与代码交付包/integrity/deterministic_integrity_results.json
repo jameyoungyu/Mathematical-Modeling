@@ -1,7 +1,7 @@
 {
   "status": "PASS",
-  "total_checks": 71,
-  "passed": 71,
+  "total_checks": 78,
+  "passed": 78,
   "failed": 0,
   "checks": [
     {
@@ -209,13 +209,20 @@
         "U2_kV",
         "U3_kV",
         "U4_kV",
+        "all_periods_at_upper_bound",
         "condition_cluster",
         "condition_name",
+        "controls_at_lower_bound",
+        "controls_at_upper_bound",
+        "emission_slack_mgNm3",
         "field_power_kW",
         "historical_power_kW",
         "limit_mgNm3",
+        "min_ordering_slack",
         "multistart_converged",
         "multistart_power_spread_kW",
+        "n_controls_at_bound",
+        "period_upper_rule",
         "power_change_vs_historical_pct",
         "predicted_power_kW",
         "rapping_power_kW",
@@ -649,8 +656,8 @@
     {
       "check": "abstract_fills_one_page",
       "passed": true,
-      "actual": 1251,
-      "expected": "700-1300 chars (one page)"
+      "actual": 1950,
+      "expected": "1400-2000 chars (one page)"
     },
     {
       "check": "anonymous_manuscript",
@@ -685,14 +692,74 @@
     {
       "check": "table_caption_count",
       "passed": true,
-      "actual": 15,
-      "expected": 15
+      "actual": 17,
+      "expected": 17
     },
     {
       "check": "manuscript_figure_count",
       "passed": true,
       "actual": 20,
       "expected": 20
+    },
+    {
+      "check": "censoring_test_present",
+      "passed": true,
+      "actual": 5,
+      "expected": 5
+    },
+    {
+      "check": "censoring_prediction_matches_observed",
+      "passed": true,
+      "actual": 0.001401912387585913,
+      "expected": "< 0.01"
+    },
+    {
+      "check": "rapping_periodicity_bounded",
+      "passed": true,
+      "actual": 0.0281010101010101,
+      "expected": "< 0.05 mg/Nm3"
+    },
+    {
+      "check": "active_constraints_reported",
+      "passed": true,
+      "actual": 8,
+      "expected": 8
+    },
+    {
+      "check": "all_solutions_corner_in_periods",
+      "passed": true,
+      "actual": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "expected": "all True"
+    },
+    {
+      "check": "period_bound_sensitivity_feasible",
+      "passed": true,
+      "actual": [
+        "SCENARIO_FEASIBLE",
+        "SCENARIO_FEASIBLE",
+        "SCENARIO_FEASIBLE",
+        "SCENARIO_FEASIBLE",
+        "SCENARIO_FEASIBLE",
+        "SCENARIO_FEASIBLE",
+        "SCENARIO_FEASIBLE",
+        "SCENARIO_FEASIBLE"
+      ],
+      "expected": "8 x SCENARIO_FEASIBLE"
+    },
+    {
+      "check": "q4_increase_robust_to_period_bound",
+      "passed": true,
+      "actual": 6.13,
+      "expected": "5-8 % under the P95 bound"
     },
     {
       "check": "ai_disclosure_present",
@@ -709,7 +776,7 @@
     {
       "check": "ai_detail_exists",
       "passed": true,
-      "actual": "/home/user/Mathematical-Modeling/03_论文过程研讨与评审报告/AI工具使用详情_匿名版.md",
+      "actual": "/home/user/Mathematical-Modeling/2604/03_论文过程研讨与评审报告/AI工具使用详情_匿名版.md",
       "expected": "AI工具使用详情*.md present in the process directory"
     },
     {
