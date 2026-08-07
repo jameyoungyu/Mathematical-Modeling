@@ -776,7 +776,7 @@
     {
       "check": "ai_detail_exists",
       "passed": true,
-      "actual": "/home/user/Mathematical-Modeling/03_论文过程研讨与评审报告/AI工具使用详情_匿名版.md",
+      "actual": "/home/user/Mathematical-Modeling/2604/03_论文过程研讨与评审报告/AI工具使用详情_匿名版.md",
       "expected": "AI工具使用详情*.md present in the process directory"
     },
     {

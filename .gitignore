@@ -13,12 +13,12 @@ tmp/
 **/manual_lo/
 **/.lo_profile_*
 
-# LaTeX 编译中间产物
-04_最终论文与代码交付包/build/*.aux
-04_最终论文与代码交付包/build/*.log
-04_最终论文与代码交付包/build/*.out
-04_最终论文与代码交付包/figures_paper/*.aux
-04_最终论文与代码交付包/figures_paper/*.log
+# LaTeX 编译中间产物（各题目录下通用）
+**/build/*.aux
+**/build/*.log
+**/build/*.out
+**/figures_paper/*.aux
+**/figures_paper/*.log
 
 # Python 编译产物与虚拟环境
 __pycache__/
