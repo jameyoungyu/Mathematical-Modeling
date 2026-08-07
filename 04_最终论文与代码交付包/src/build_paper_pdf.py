@@ -5,7 +5,7 @@ Converts ``10_修订后完整论文_终稿.md`` into XeLaTeX and compiles it.
 Layout follows the CUMCM paper format specification: A4, >=2.5 cm margins,
 abstract alone on page 1, continuous arabic page numbers centred in the footer.
 
-Usage:  python3 src/build_paper_pdf.py [--no-code | --full-code]
+Usage:  python3 src/build_paper_pdf.py [--no-code | --core-code]
 """
 
 from __future__ import annotations
@@ -507,44 +507,45 @@ def _extract(module: str, names: list[str]) -> str:
     return "\n".join(out).rstrip() + "\n"
 
 
-#: The submission carries the full source electronically; printing 15 pages of
-#: listings inside the manuscript costs page budget without informing anyone.
+#: Appendix E carries the full listing by default; ``--core-code`` prints only
+#: the two definitions that determine every number in the paper.
 CORE_EXTRACTS = [
     ("scenario_model.py", ["PhysicalPowerModel"]),
     ("scenario_model.py", ["scenario_emission", "field_priority"]),
 ]
 
 
-def code_appendix(full: bool = False) -> str:
+def code_appendix(full: bool = True) -> str:
+    title = "\u9644\u5f55E\\quad " + ("\u5b8c\u6574\u6e90\u7a0b\u5e8f" if full else "\u6838\u5fc3\u6e90\u7a0b\u5e8f\u8282\u9009")
     out = [r"\clearpage",
-           r"\section*{附录D\quad 核心源程序节选}",
-           r"\addcontentsline{toc}{section}{附录D\quad 核心源程序节选}"]
+           r"\section*{%s}" % title,
+           r"\addcontentsline{toc}{section}{%s}" % title]
     if full:
-        out.append(r"本附录给出生成本文全部结果与图表的完整可运行源程序，与电子支撑材料 \texttt{src/} 目录一致。")
+        out.append("\u672c\u9644\u5f55\u7ed9\u51fa\u751f\u6210\u672c\u6587\u5168\u90e8\u7ed3\u679c\u4e0e\u56fe\u8868\u7684\u5b8c\u6574\u53ef\u8fd0\u884c\u6e90\u7a0b\u5e8f\uff0c\u4e0e\u7535\u5b50\u652f\u6491\u6750\u6599 \\texttt{src/} \u76ee\u5f55\u9010\u5b57\u4e00\u81f4\u3002"
+                   "\u6309\u4f9d\u8d56\u987a\u5e8f\u6392\u5217\uff1a\u60c5\u666f\u6a21\u578b\u4e0e\u4f18\u5316\u3001\u6392\u653e\u2014\u529f\u7387\u524d\u6cbf\u3001\u7ed8\u56fe\u6837\u5f0f\u4e0e\u56fe\u96c6\u751f\u6210\u3001\u786e\u5b9a\u6027\u6838\u9a8c\u3001\u63d0\u4ea4\u7a3f\u88c5\u914d\u3002")
         for n, name in enumerate(CODE_MODULES, start=1):
             path = SRC / name
             if not path.exists():
                 continue
-            out += [r"\subsection*{D.%d\quad \texttt{%s}}" % (n, esc(name)),
+            out += [r"\subsection*{E.%d\quad \texttt{%s}}" % (n, esc(name)),
                     r"\lstinputlisting[style=pycode]{%s}" % (path.as_posix())]
         return "\n".join(out)
 
-    out.append(r"为控制篇幅，本附录只给出决定全文数值结果的两段核心定义：功率层的物理设定，与灰箱"
-               r"排放层的去除指数、振打峰值及电场优先判据。包含数据审计、优化求解、敏感性扫描与全部绘图程序的"
-               r"可运行源码（\texttt{src/} 共 6 个模块）随电子支撑材料提交，目录结构见表A1。")
+    out.append("\u4e3a\u63a7\u5236\u7bc7\u5e45\uff0c\u672c\u9644\u5f55\u53ea\u7ed9\u51fa\u51b3\u5b9a\u5168\u6587\u6570\u503c\u7ed3\u679c\u7684\u4e24\u6bb5\u6838\u5fc3\u5b9a\u4e49\uff1b"
+               "\u5b8c\u6574\u53ef\u8fd0\u884c\u6e90\u7801\u968f\u7535\u5b50\u652f\u6491\u6750\u6599\u63d0\u4ea4\u3002")
     BUILD.mkdir(exist_ok=True)
     for n, (module, names) in enumerate(CORE_EXTRACTS, start=1):
         snippet = BUILD / ("code_excerpt_%d.py" % n)
         snippet.write_text(_extract(module, names), encoding="utf-8")
-        out += [r"\subsection*{D.%d\quad \texttt{%s}：%s}"
-                % (n, esc(module), "、".join(esc(x) for x in names)),
+        out += [r"\subsection*{E.%d\quad \texttt{%s}\uff1a%s}"
+                % (n, esc(module), "\u3001".join(esc(x) for x in names)),
                 r"\lstinputlisting[style=pycode]{%s}" % snippet.as_posix()]
     return "\n".join(out)
 
 
 def main() -> None:
     include_code = "--no-code" not in sys.argv
-    full_code = "--full-code" in sys.argv
+    full_code = "--core-code" not in sys.argv
     md = MANUSCRIPT.read_text(encoding="utf-8")
     title, abstract, body = convert(md)
     tex = build_tex(title, abstract, body, code_appendix(full_code) if include_code else "")

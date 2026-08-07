@@ -899,18 +899,26 @@ $p$ & 物理含义 & 10$\rightarrow$5 mg/Nm³加权增幅 & 5 mg/Nm³在5\%电�
 输出：控制参数、功率代价、外推审计、敏感性、图表与运行摘要。
 \end{lstlisting}
 
-\textbf{源程序清单：} \texttt{src/scenario\_model.py}（功率模型、灰箱排放情景、支持域优化与敏感性）、\texttt{src/paper\_figures.py}（21幅正文图与图注追踪表）、\texttt{src/plot\_utils.py}（统一绘图样式）、\texttt{src/integrity\_check.py}（确定性核验）、\texttt{src/compute\_frontier.py}（排放—功率前沿）、\texttt{src/build\_paper\_pdf.py}（提交稿装配）。附录E给出决定全文数值的两段核心定义，完整可运行源程序随电子支撑材料提交。
+\textbf{源程序清单：} \texttt{src/scenario\_model.py}（功率模型、灰箱排放情景、支持域优化与敏感性）、\texttt{src/paper\_figures.py}（21幅正文图与图注追踪表）、\texttt{src/plot\_utils.py}（统一绘图样式）、\texttt{src/integrity\_check.py}（确定性核验）、\texttt{src/compute\_frontier.py}（排放—功率前沿）、\texttt{src/build\_paper\_pdf.py}（提交稿装配）。生成本文全部结果与图表的完整可运行源程序见附录E，与电子支撑材料 \texttt{src/} 目录逐字一致。
 
 \textbf{支撑材料清单：} \texttt{data/}处理数据包；\texttt{results/}下功率基线、滚动验证、最优控制、外推审计、电压裕度需求、求解对照、结构情景、场权重消融、幂次参考表、动态控制表和运行摘要；\texttt{figures\_paper/}下21幅正文图（20幅PNG/PDF由绘图程序生成，图1为TikZ源文件独立编译）及\texttt{figure\_manifest.csv}；\texttt{integrity/}下确定性核验结果。
 
 \textbf{AI工具使用声明（提交前由参赛队核验确认）：} 本稿坚持参赛队人工主导。题意分析、模型构建、公式推导、参数设定、程序审阅、结果复算和论文定稿由参赛队承担；AI编码助手仅用于代码排错、图表版式检查、文字校对与格式核验。AI输出均经人工筛选和复核，未替代现场数据，也未把不可识别的排放关系改写为实证结论。
 \clearpage
-\section*{附录D\quad 核心源程序节选}
-\addcontentsline{toc}{section}{附录D\quad 核心源程序节选}
-为控制篇幅，本附录只给出决定全文数值结果的两段核心定义：功率层的物理设定，与灰箱排放层的去除指数、振打峰值及电场优先判据。包含数据审计、优化求解、敏感性扫描与全部绘图程序的可运行源码（\texttt{src/} 共 6 个模块）随电子支撑材料提交，目录结构见表A1。
-\subsection*{D.1\quad \texttt{scenario\_model.py}：PhysicalPowerModel}
-\lstinputlisting[style=pycode]{/home/user/Mathematical-Modeling/04_最终论文与代码交付包/build/code_excerpt_1.py}
-\subsection*{D.2\quad \texttt{scenario\_model.py}：scenario\_emission、field\_priority}
-\lstinputlisting[style=pycode]{/home/user/Mathematical-Modeling/04_最终论文与代码交付包/build/code_excerpt_2.py}
+\section*{附录E\quad 完整源程序}
+\addcontentsline{toc}{section}{附录E\quad 完整源程序}
+本附录给出生成本文全部结果与图表的完整可运行源程序，与电子支撑材料 \texttt{src/} 目录逐字一致。按依赖顺序排列：情景模型与优化、排放—功率前沿、绘图样式与图集生成、确定性核验、提交稿装配。
+\subsection*{E.1\quad \texttt{scenario\_model.py}}
+\lstinputlisting[style=pycode]{/home/user/Mathematical-Modeling/04_最终论文与代码交付包/src/scenario_model.py}
+\subsection*{E.2\quad \texttt{paper\_figures.py}}
+\lstinputlisting[style=pycode]{/home/user/Mathematical-Modeling/04_最终论文与代码交付包/src/paper_figures.py}
+\subsection*{E.3\quad \texttt{plot\_utils.py}}
+\lstinputlisting[style=pycode]{/home/user/Mathematical-Modeling/04_最终论文与代码交付包/src/plot_utils.py}
+\subsection*{E.4\quad \texttt{compute\_frontier.py}}
+\lstinputlisting[style=pycode]{/home/user/Mathematical-Modeling/04_最终论文与代码交付包/src/compute_frontier.py}
+\subsection*{E.5\quad \texttt{integrity\_check.py}}
+\lstinputlisting[style=pycode]{/home/user/Mathematical-Modeling/04_最终论文与代码交付包/src/integrity_check.py}
+\subsection*{E.6\quad \texttt{build\_paper\_pdf.py}}
+\lstinputlisting[style=pycode]{/home/user/Mathematical-Modeling/04_最终论文与代码交付包/src/build_paper_pdf.py}
 
 \end{document}
