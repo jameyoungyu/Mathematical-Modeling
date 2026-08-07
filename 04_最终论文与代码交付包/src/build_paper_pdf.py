@@ -381,7 +381,7 @@ PREAMBLE = r"""
 \fancyfoot[C]{\thepage}
 
 \ctexset{
-  section/format = {\raggedright\zihao{4}\bfseries},
+  section/format = {\centering\zihao{4}\bfseries},
   subsection/format = {\raggedright\zihao{5}\bfseries},
   section/beforeskip = 12pt plus 2pt minus 2pt,
   section/afterskip = 8pt,
