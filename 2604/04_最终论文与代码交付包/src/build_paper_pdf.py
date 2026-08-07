@@ -170,7 +170,7 @@ def convert_table(header: list[str], align: list[str], rows: list[list[str]],
         close_env = r"\end{tabular}"
         shrink = natural > _LINE_BUDGET        # all-numeric wide table: scale it
 
-    lines = [r"\begin{table}[htbp]", r"\centering",
+    lines = [r"\begin{table}[htb]", r"\centering",
              r"\caption*{\normalsize 表" + number + "\u3000" + inline(title) + "}",
              r"\vspace{-2pt}", r"\zihao{-5}"]
     if shrink:
@@ -288,7 +288,7 @@ def convert(md: str) -> tuple[str, str, str]:
                 cap = cm.group(1)
                 i = k
             width = "0.96" if path.endswith("00_esp_schematic.pdf") else "0.92"
-            target += [r"\begin{figure}[htbp]", r"\centering",
+            target += [r"\begin{figure}[htb]", r"\centering",
                        r"\includegraphics[width=%s\textwidth]{%s}" % (width, path),
                        r"\caption*{\normalsize 图" + num + "\u3000" + inline(cap) + "}",
                        r"\end{figure}"]
@@ -397,6 +397,18 @@ PREAMBLE = r"""
 \setlength{\belowdisplayskip}{5pt plus 2pt minus 2pt}
 \setlength{\abovedisplayshortskip}{3pt plus 1pt minus 1pt}
 \setlength{\belowdisplayshortskip}{3pt plus 1pt minus 1pt}
+
+% No page may carry a float and nothing else. The "p" placement is what lets
+% LaTeX build such a page, so figures and tables are placed [htb] only, and
+% \textfraction then guarantees every page keeps at least a little running
+% text. The counterpart is that a float must be allowed to take almost the
+% whole of a top or bottom area, or it would have nowhere left to go.
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.75}
+\renewcommand{\textfraction}{0.06}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{5}
 
 % Line breaking.  \sloppy (tolerance 9999) let TeX stretch the inter-word and
 % inter-CJK glue without bound, so a line holding a long unbreakable inline

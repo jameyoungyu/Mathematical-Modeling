@@ -37,6 +37,18 @@
 \setlength{\abovedisplayshortskip}{3pt plus 1pt minus 1pt}
 \setlength{\belowdisplayshortskip}{3pt plus 1pt minus 1pt}
 
+% No page may carry a float and nothing else. The "p" placement is what lets
+% LaTeX build such a page, so figures and tables are placed [htb] only, and
+% \textfraction then guarantees every page keeps at least a little running
+% text. The counterpart is that a float must be allowed to take almost the
+% whole of a top or bottom area, or it would have nowhere left to go.
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.75}
+\renewcommand{\textfraction}{0.06}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{5}
+
 % Line breaking.  \sloppy (tolerance 9999) let TeX stretch the inter-word and
 % inter-CJK glue without bound, so a line holding a long unbreakable inline
 % formula was padded until the Chinese characters visibly drifted apart.  Use a
@@ -124,7 +136,7 @@
 
 在建立模型之前，须先明确本题的变量在设备上各处于什么位置，否则后文的“可调量”与“结果量”容易混淆。图1给出研究对象的结构与变量定义：含尘烟气依次流经四个电场，每个电场由独立高压电源施加电压$U_i$，并由独立振打装置按周期$T_i$清灰。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.96\textwidth]{figures_paper/00_esp_schematic.pdf}
 \caption*{\normalsize 图1　四电场电除尘器结构与变量定义}
@@ -192,7 +204,7 @@ L_t=C_{in,t}Q_t/1000
 对14列逐一审计的结果见表1：\textbf{出口浓度一列无法用于识别目标区间内的排放响应，其余各列则能为功率建模、工况分层或历史操作规律分析提供有效信息}。
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表1　附件逐列可识别性审计结论}
 \vspace{-2pt}
@@ -211,7 +223,7 @@ $U_i,T_i$ 控制设定 & 与工况变量存在稳定相关结构（§4.2） & �
 
 在对出口浓度作任何拟合之前，必须先确认一件事：这一列记录是否覆盖了题目要求的目标区间，以及它与控制量之间是否存在可学习的关系。若不先做这一步，任何回归模型都可能在事实上只是复现传感器读数。图2给出该列的分布与截顶诊断。已有研究曾用宽负荷下的机组负荷与各电场二次电流训练出口浓度模型[8]；相比之下，本附件既没有二次电流，出口记录本身也几乎不变化，不具备同样的条件。附录B给出直接以$C_{out}$为目标建模的对照结果，可与其他方案交叉比较。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/01_outlet_data_diagnosis.png}
 \caption*{\normalsize 图2　出口浓度数据诊断}
@@ -222,7 +234,7 @@ $U_i,T_i$ 控制设定 & 与工况变量存在稳定相关结构（§4.2） & �
 \textbf{“截顶”是推断，须由可证伪的检验支持。} 上述证据的形式都是“没有找到关系”，而“没找到”与“不可能找到”并不等价。为把这一判断由经验陈述提升为可检验的结论，本文对截顶假设作如下检验：设真实浓度为潜变量$C^*\sim N(\mu,\sigma^2)$，记录值为$\min(C^*,50)$，仅用\textbf{未封顶的4539条}记录按截尾极大似然估计$(\mu,\sigma)$，再用估计值\textbf{预测}应有的封顶比例，并与实际封顶比例比较——后者未参与估计，因而是一次真正的外推检验。结果见表2。
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表2　截顶假设与振打周期性的可证伪检验}
 \vspace{-2pt}
@@ -244,7 +256,7 @@ $U_i,T_i$ 控制设定 & 与工况变量存在稳定相关结构（§4.2） & �
 需要强调的是，以上结果只说明该记录不能提供可供学习的信号，不能据此反推物理变量对真实排放没有影响。
 作为对照，图3给出首24 h各过程量的时序，用以说明“信息量不足”是出口浓度一列的特有问题，而非整份数据的普遍状况。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/02_process_timeseries.png}
 \caption*{\normalsize 图3　首24 h过程量时序}
@@ -263,7 +275,7 @@ $U_i,T_i$ 控制设定 & 与工况变量存在稳定相关结构（§4.2） & �
 本文将假设分为数据事实、情景假设、优化边界与运行约束四类，并逐条标注其证据状态，如表3所示。
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表3　模型假设及证据状态}
 \vspace{-2pt}
@@ -288,7 +300,7 @@ $U_i,T_i$ 控制设定 & 与工况变量存在稳定相关结构（§4.2） & �
 \subsection*{3.2 主要符号}
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表4　主要符号与单位}
 \vspace{-2pt}
@@ -317,7 +329,7 @@ $\rho,\gamma$ & 振打相位叠加尺度、峰值—周期指数 & — \\
 
 前两节分别给出了假设与符号，但四问之间如何衔接、哪些结论可由数据复算、哪些只能条件式采信，仍需一张图整体说明。图4给出全文技术路线。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/22_technical_roadmap.png}
 \caption*{\normalsize 图4　全文技术路线}
@@ -354,7 +366,7 @@ P=73.09+\sum_{i=1}^{4}b_iU_i^{2}+\sum_{i=1}^{4}\frac{c_i}{T_i}
 \textbf{规律二（不稳定）}：入口浓度升高时，前两个电场的电压随之升高（整周$r=+0.172,+0.166$），后两个电场基本不变（$r=+0.019$）。但该规律并不贯穿整周：$r(C_{in},U_1)$在前5天为$-0.052$，第6、7天分别为$+0.507$与$+0.492$。即入口浓度升高时抬升前级电压这一做法，仅出现于最后两天。本文如实报告该非平稳性：前后级响应的不对称在整周与最后两天均成立，却不能视为贯穿全周的稳定规律。这也表明历史数据中至少发生过一次操作策略调整，故第三问只将其作为参照，而非定论。
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表5　工况变量与控制设定的历史相关系数（全记录期）}
 \vspace{-2pt}
@@ -380,7 +392,7 @@ $T_4$ & −0.151 & −0.278 & −0.135 \\
 出口浓度虽不可识别，但附件仍可能保留控制策略、异常工况响应与功率响应等信息，因此有必要对其余变量继续分析；§4.2的相关结构与本节的两段异常工况合并呈现于图5。附件含两段持续数十分钟以上的异常工况，其控制端响应方向相反，构成理解设备行为的两个直接入口（图5a、5b）。
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表6　两段持续异常工况及控制端响应}
 \vspace{-2pt}
@@ -397,7 +409,7 @@ $T_4$ & −0.151 & −0.278 & −0.135 \\
 
 第二段事件在工程上更值得注意：\textbf{140～160 $^\circ$C正是水泥窑尾粉尘比电阻最高的温度区间}。比电阻过高会引发反电晕，使粉尘向极板迁移的速度下降、火花率上升，是电除尘最难运行的一段工况[3-4]。附件在这段时间里的记录显示，操作端选择了降压而不是升压，这与“高比电阻区应限制电流密度以抑制反电晕”的常规处置一致；但附件没有二次电流和火花率记录，无法判断这是否为最优处置。由此可得两点：第一，第二问的工况划分把温度作为主轴之一是必要的；第二，本文四类工况的温度中心约为120.7与130.4 $^\circ$C，\textbf{都没有覆盖这段高比电阻区间}，因此本文结论不能外推到该区间，须单独补采数据重新标定（§9.3）。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/04b_operating_evidence.png}
 \caption*{\normalsize 图5　附件中可识别的运行证据}
@@ -433,7 +445,7 @@ G_k(T)=\sum_{i=1}^{4}\beta_{i,k}
 
 \begin{quote}\small 本节全部排放系数均为工程先验，不是由附件出口浓度估计得到的参数。\end{quote}
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表7　灰箱排放模型参数来源与证据状态}
 \vspace{-2pt}
@@ -480,7 +492,7 @@ B_k(T;\rho,\gamma)=b_0\rho\left(\frac{L_k}{L_{med}}\right)
 
 由此可得一条由附件直接支持的定量结论：\textbf{在分钟级分辨率下，与振打周期同步的排放波动幅度不超过约0.03 mg/Nm³}。须同时说明该上界的适用范围：它约束的是能在分钟平均后残留下来的周期性成分，对持续数秒、在分钟平均中被摊薄、且其升高方向又被截顶抹去的单次尖峰并不构成约束。因此该检验\textbf{不能否定}峰值的存在，只能给出其可检出部分的上界；§4.5的标度关系仍由质量守恒推导，$b_0$与$\rho$仍待现场以秒级未截顶数据标定。但这一检验至少排除了一种情形——附件中并不存在一个大到可由分钟数据直接辨认的振打峰值信号。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/14_rapping_peak_mechanism.png}
 \caption*{\normalsize 图6　振打峰值机理与振打功率权衡}
@@ -493,7 +505,7 @@ B_k(T;\rho,\gamma)=b_0\rho\left(\frac{L_k}{L_{med}}\right)
 在上述骨架中，其他条件不变时各因素的作用方向如下。提高$U_i$会增大$K$、降低连续排放，但总功率按$U^2$上升。$K$不变时，入口浓度升高会使出口浓度同比升高。流量增大会缩短烟气在电场中的停留时间、同时抬高粉尘负荷，因而需要更强的捕集能力。温度则通过气体性质、粉尘比电阻和放电状态影响除尘效果，其中140～160 $^\circ$C的高比电阻区间最为不利（§4.3）。这些方向来自机理与文献[2-4]，不是从附件回归出来的。为便于对照，表8把第一问涉及的五类因素、它们对排放与电耗的作用及各自的证据性质汇总如下。
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表8　各因素对排放与电耗的作用及证据性质}
 \vspace{-2pt}
@@ -523,7 +535,7 @@ B_k(T;\rho,\gamma)=b_0\rho\left(\frac{L_k}{L_{med}}\right)
 
 两项指标的分歧是本节必须交代的问题，图7把它并列呈现。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/03_cluster_selection.png}
 \caption*{\normalsize 图7　聚类数选择结果}
@@ -533,7 +545,7 @@ B_k(T;\rho,\gamma)=b_0\rho\left(\frac{L_k}{L_{med}}\right)
 
 在确定$k=4$之后，图8给出四类工况在入口浓度—温度平面上的实际分布，用以核对分层结果是否与工况的物理含义相符。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/04_condition_map.png}
 \caption*{\normalsize 图8　训练期典型工况分布}
@@ -542,7 +554,7 @@ B_k(T;\rho,\gamma)=b_0\rho\left(\frac{L_k}{L_{med}}\right)
 图8中四类样本在浓度—温度平面上分区清晰，点的大小（流量）进一步区分了同温度带内的两类工况，与上述2×2结构一致。四类工况的统计画像见表10，其中的历史功率与锚点$K_0$将分别用于§5.5的对照基准与§4.4的排放起算点。
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表9　四类典型工况画像}
 \vspace{-2pt}
@@ -564,7 +576,7 @@ B_k(T;\rho,\gamma)=b_0\rho\left(\frac{L_k}{L_{med}}\right)
 §4.1采用的形式并不是唯一可选的。为说明“选什么形式”本身有多重要，本文在同一时间划分下比较四种设定：只用均值的基线、电压一次项＋周期一次项的岭回归[11]、电压二次项＋周期一次项的岭回归，以及本文的$U_i^2+1/T_i$形式。岭回归的正则强度按训练期3个逐步加长的窗口滚动选择，本文形式则没有可调超参数。结果见表10。
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表10　功率模型设定比较与时间外推结果}
 \vspace{-2pt}
@@ -596,7 +608,7 @@ B_k(T;\rho,\gamma)=b_0\rho\left(\frac{L_k}{L_{med}}\right)
 
 首先确认最终模型的整体预测水平。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/07_power_prediction.png}
 \caption*{\normalsize 图9　功率模型预测结果}
@@ -606,7 +618,7 @@ B_k(T;\rho,\gamma)=b_0\rho\left(\frac{L_k}{L_{med}}\right)
 
 预测精度高并不等于设定形式正确。图10进一步给出本文修正设定形式的依据。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/08b_feature_importance.png}
 \caption*{\normalsize 图10　振打周期的设定形式对比}
@@ -616,7 +628,7 @@ B_k(T;\rho,\gamma)=b_0\rho\left(\frac{L_k}{L_{med}}\right)
 
 修正是否彻底，需由残差结构本身确认。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/08_power_residuals.png}
 \caption*{\normalsize 图11　回顾性测试残差诊断}
@@ -661,7 +673,7 @@ K_k=K_{0,k}\,\frac{\sum_i\alpha_i\left(U_i/U_{i,k}^{ref}\right)^{2}}{\sum_i\alph
 该比值越大，表示该电场单位功率带来的除尘收益越高。须说明，这是\textbf{灰箱模型内部的条件式边际判据}：功率系数$b_i$由附件辨识，而去除贡献权重$\alpha_i$取自工程先验，其稳健性由§8.2的场权重消融进一步检验；该排序并非由实测出口浓度直接证实的物理事实。由于四个电场的$b_i$几乎相同，排序完全取决于$\alpha_i/(U^{ref}_{i,k})^{2}$，而\textbf{不是}取决于$\alpha_i$。原因在于功率按电压平方增长，参考电压较低的电场按相同比例抬升时，所需电功率显著更少。代入中心权重与各工况的历史中位电压，得到表11。可以看到，第三电场的去除权重$\alpha_3=0.95$虽然低于前两级，但它的参考电压低约10 kV，平方之后使它的单位功率收益在四类工况中\textbf{都排第一}。
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表11　电场优先级解析判据（$\times10^{-3}$ kW$^-$$^1$）}
 \vspace{-2pt}
@@ -687,7 +699,7 @@ K_k=K_{0,k}\,\frac{\sum_i\alpha_i\left(U_i/U_{i,k}^{ref}\right)^{2}}{\sum_i\alph
 四类工况的中心情景解如表12（5 mg/Nm³行为第四问提供参数）。
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表12　四工况两档目标的最优控制参数}
 \vspace{-2pt}
@@ -725,7 +737,7 @@ K_k=K_{0,k}\,\frac{\sum_i\alpha_i\left(U_i/U_{i,k}^{ref}\right)^{2}}{\sum_i\alph
 本文引入马氏距离，以定量评价推荐控制组合偏离历史运行经验的程度。仅逐个检查各电压是否越限并不足够，因为八个控制量之间彼此相关：历史上从未出现过$U_1$很高而$U_3$很低的组合，即便二者各自都落在允许范围内。马氏距离平方$d_M^2=(z-\mu_k)^T\Sigma_k^{-1}(z-\mu_k)$正是把这种相关性一并计入的距离，其中$\mu_k$和$\Sigma_k$是该工况训练期控制量的均值与协方差。将其与历史上97.5\%的时间均不超过的水平$q_{k,0.975}$（四类工况依次为20.55、18.72、16.85、19.09）相比，即可量化推荐解偏离历史经验的程度，结果见表13。
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表13　推荐解相对历史运行经验的外推审计}
 \vspace{-2pt}
@@ -754,7 +766,7 @@ K_k=K_{0,k}\,\frac{\sum_i\alpha_i\left(U_i/U_{i,k}^{ref}\right)^{2}}{\sum_i\alph
 
 其三，从电源容量看，10 mg/Nm³的四个解\textbf{在单变量电压幅值上未显著外推}：各电场电压均不超过该工况历史出现过的最大值。但如上所述，其控制组合仍偏离历史联合运行经验，故实际容量、绝缘与联锁方面的可行性仍须现场核验，不能仅凭幅值合规判定该目标可达。而5 mg/Nm³需要各电场电压比历史最大值再高，最多高出5.07\%；四类工况所需的最小裕度分别是5\%、4\%、1\%、0\%。\textbf{这说明5 mg/Nm³首先是容量问题，其次才是电耗问题}：若现场高压电源不具备该裕度，仅靠优化运行参数无法达标，须通过增设电场、改造电源或前端减尘等措施解决。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/05b_boundary_proximity.png}
 \caption*{\normalsize 图12　推荐解相对历史运行经验的外推审计}
@@ -773,7 +785,7 @@ K_k=K_{0,k}\,\frac{\sum_i\alpha_i\left(U_i/U_{i,k}^{ref}\right)^{2}}{\sum_i\alph
 上节说明推荐解偏离历史联合经验的程度，本节进一步说明\textbf{解本身停在哪些约束上}。这一信息决定了各控制量的取值由什么确定：停在可行域内部的分量由权衡决定，停在边界上的分量则由边界本身决定。逐解统计见表14。
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表14　最优解的活跃约束与振打周期上界的敏感性}
 \vspace{-2pt}
@@ -808,7 +820,7 @@ K_k=K_{0,k}\,\frac{\sum_i\alpha_i\left(U_i/U_{i,k}^{ref}\right)^{2}}{\sum_i\alph
 
 只给出10与5 mg/Nm³两个孤立点，无法判断二者之间的关系是单调的还是存在拐点，也无法看出限值每收紧一档的边际代价如何变化。为此把排放限值由10逐档收紧到5 mg/Nm³并重复求解，得到“排放—功率”权衡曲线（图13）。四类工况的最优功率随限值收紧单调上升，工况加权功率由1973.0 kW（10 mg/Nm³）升至2105.5 kW（5 mg/Nm³），中间各档依次为1991.3、2012.7、2046.3、2067.7 kW；所需电压裕度同步由0\%增至5\%（每收紧1 mg/Nm³约增1个百分点）。全部档位均高于历史实际加权功率1783.2 kW。该图把限值与功率的关系整体呈现出来：\textbf{沿曲线向左（限值更严）必然增加电耗，向右（限值更松）才降低电耗}；历史运行点则位于该图右侧更远处。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/19_emission_power_frontier.png}
 \caption*{\normalsize 图13　排放—功率权衡前沿}
@@ -839,7 +851,7 @@ K_k=K_{0,k}\,\frac{\sum_i\alpha_i\left(U_i/U_{i,k}^{ref}\right)^{2}}{\sum_i\alph
 为便于现场执行，按排放构成与容量状态把上述比较整理成一张决策表，见表15。
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表15　控制优先级决策规则}
 \vspace{-2pt}
@@ -861,7 +873,7 @@ K_k=K_{0,k}\,\frac{\sum_i\alpha_i\left(U_i/U_{i,k}^{ref}\right)^{2}}{\sum_i\alph
 
 上述两类策略的差异可由图14直接读出。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/11_optimal_voltage.png}
 \caption*{\normalsize 图14　两档排放限值下的电压配置}
@@ -889,7 +901,7 @@ K_k=K_{0,k}\,\frac{\sum_i\alpha_i\left(U_i/U_{i,k}^{ref}\right)^{2}}{\sum_i\alph
 \subsection*{7.2 分工况结果}
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表16　中心情景下10收紧至5 mg/Nm³的分工况功率代价}
 \vspace{-2pt}
@@ -919,7 +931,7 @@ K_k=K_{0,k}\,\frac{\sum_i\alpha_i\left(U_i/U_{i,k}^{ref}\right)^{2}}{\sum_i\alph
 
 上述闭式估计建立在四场电压同比缩放这一简化之上，而完整优化允许八个控制量各自独立调整。因此有必要检验该简化相对八变量数值最优解的偏差。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/18_condition_energy_penalty.png}
 \caption*{\normalsize 图15　闭式估计与数值最优解的一致性}
@@ -941,7 +953,7 @@ K_k=K_{0,k}\,\frac{\sum_i\alpha_i\left(U_i/U_{i,k}^{ref}\right)^{2}}{\sum_i\alph
 
 仅约束连续排放并不充分，因为振打瞬间的峰值同样占用限值裕度。图16给出两档解中限值裕度的实际构成。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/13_emission_decomposition.png}
 \caption*{\normalsize 图16　排放约束分解}
@@ -957,7 +969,7 @@ K_k=K_{0,k}\,\frac{\sum_i\alpha_i\left(U_i/U_{i,k}^{ref}\right)^{2}}{\sum_i\alph
 
 该对照说明：在问题结构明确之后，确定性求解优于大规模随机搜索。但仍须指出，对非凸问题而言，多起点收敛至同一点是\textbf{很强的证据，而非数学证明}。因此本文只称“最优解”，不宣称“全局最优”。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/15_search_convergence.png}
 \caption*{\normalsize 图17　求解方法对照}
@@ -971,7 +983,7 @@ K_k=K_{0,k}\,\frac{\sum_i\alpha_i\left(U_i/U_{i,k}^{ref}\right)^{2}}{\sum_i\alph
 
 \textbf{层次一：结构情景下核心结论是否稳定。} 扫描电场权重形状（3种）×峰值指数$\gamma\in\{1.00,1.30,1.60\}$×相位尺度$\rho\in\{0.65,0.80,1.00\}$×参考周期负荷指数（3种），共81组。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/16_sensitivity_distribution.png}
 \caption*{\normalsize 图18　结构情景下的功率增幅分布}
@@ -982,7 +994,7 @@ K_k=K_{0,k}\,\frac{\sum_i\alpha_i\left(U_i/U_{i,k}^{ref}\right)^{2}}{\sum_i\alph
 \textbf{层次二：什么参数真正主导功率代价与可达性。} 既然形状设定影响有限，就需要找出真正起决定作用的参数。由§7.1的解析式，功率增幅近似正比于$2/p$，即幂次$p$以显式方式进入结论；其余先验只通过峰值裕度间接影响结果。这正是本文把$p$单独提出的原因。表17给出$p$的参考表。
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表17　功率增幅对幂次$p$的依赖}
 \vspace{-2pt}
@@ -1002,7 +1014,7 @@ $p$ & 物理含义 & 10$\rightarrow$5 mg/Nm³加权增幅 & 5 mg/Nm³在5\%电�
 
 表中增幅为闭式估计值；对$p\ge2$的三档另作数值重解校验（图19叉号），与解析值相差不超过0.5个百分点。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/20_eta_sensitivity.png}
 \caption*{\normalsize 图19　功率增幅对幂次$p$的依赖}
@@ -1014,7 +1026,7 @@ $p$ & 物理含义 & 10$\rightarrow$5 mg/Nm³加权增幅 & 5 mg/Nm³在5\%电�
 
 \textbf{层次三：电场优先级是否依赖权重设定。} 第三问的判据含先验权重$\alpha_i$，需检验结论是否由该先验单独写入。
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
 \centering
 \includegraphics[width=0.92\textwidth]{figures_paper/17_sensitivity_heatmap.png}
 \caption*{\normalsize 图20　电场贡献权重消融结果}
@@ -1124,7 +1136,7 @@ $p$ & 物理含义 & 10$\rightarrow$5 mg/Nm³加权增幅 & 5 mg/Nm³在5\%电�
 本文与文献[5]、[7]同属“在排放约束下对多个电场分别优化”这一类工作，但两点不同：排放模型怎么标定，以及可行范围怎么划。对照见表A1。
 
 
-\begin{table}[htbp]
+\begin{table}[htb]
 \centering
 \caption*{\normalsize 表A1　与既有多电场节能优化研究的方法对照}
 \vspace{-2pt}
