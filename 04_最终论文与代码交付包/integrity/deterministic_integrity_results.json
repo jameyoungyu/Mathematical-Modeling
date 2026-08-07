@@ -619,7 +619,7 @@
     {
       "check": "abstract_fills_one_page",
       "passed": true,
-      "actual": 1211,
+      "actual": 1251,
       "expected": "700-1300 chars (one page)"
     },
     {
@@ -655,14 +655,14 @@
     {
       "check": "table_caption_count",
       "passed": true,
-      "actual": 14,
-      "expected": 14
+      "actual": 15,
+      "expected": 15
     },
     {
       "check": "manuscript_figure_count",
       "passed": true,
-      "actual": 21,
-      "expected": 21
+      "actual": 20,
+      "expected": 20
     },
     {
       "check": "ai_disclosure_present",
@@ -685,8 +685,8 @@
     {
       "check": "figure_manifest_count",
       "passed": true,
-      "actual": 21,
-      "expected": 21
+      "actual": 20,
+      "expected": 20
     },
     {
       "check": "figure_trace_fields",

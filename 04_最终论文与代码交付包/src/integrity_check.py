@@ -271,7 +271,7 @@ def main() -> None:
     check("all_references_cited", cited == set(range(1, 14)), sorted(cited), list(range(1, 14)))
     check("reference_list_complete", listed == set(range(1, 14)), sorted(listed), list(range(1, 14)))
     clean_manuscript = re.sub(r"<!--.*?-->\n?", "", review_manuscript)
-    table6_segment = clean_manuscript.split("表10\u3000四工况两档目标", 1)[1].split("表11", 1)[0]
+    table6_segment = clean_manuscript.split("表11\u3000四工况两档目标", 1)[1].split("表12", 1)[0]
     table6_rows: dict[tuple[int, float], list[float]] = {}
     for line in table6_segment.splitlines():
         if not re.match(r"^\| [1-4] \| (?:10|5) \|", line):
@@ -306,15 +306,15 @@ def main() -> None:
     check("anonymous_manuscript", "作者：" not in clean_manuscript and "学校：" not in clean_manuscript, ["作者：" in clean_manuscript, "学校：" in clean_manuscript], [False, False])
     check("no_english_abstract", "## Abstract" not in clean_manuscript, "## Abstract" in clean_manuscript, False)
     check("outlet_rescaling_claim_removed", "乘0.10" not in clean_manuscript and "0.1缩放" not in clean_manuscript, ["乘0.10" in clean_manuscript, "0.1缩放" in clean_manuscript], [False, False])
-    check("table_caption_count", len(re.findall(r"^表\d+", clean_manuscript, flags=re.M)) == 14, len(re.findall(r"^表\d+", clean_manuscript, flags=re.M)), 14)
-    check("manuscript_figure_count", len(re.findall(r"^!\[图", clean_manuscript, flags=re.M)) == 21, len(re.findall(r"^!\[图", clean_manuscript, flags=re.M)), 21)
+    check("table_caption_count", len(re.findall(r"^表\d+", clean_manuscript, flags=re.M)) == 15, len(re.findall(r"^表\d+", clean_manuscript, flags=re.M)), 15)
+    check("manuscript_figure_count", len(re.findall(r"^!\[图", clean_manuscript, flags=re.M)) == 20, len(re.findall(r"^!\[图", clean_manuscript, flags=re.M)), 20)
     check("ai_disclosure_present", "AI工具使用声明" in clean_manuscript, "AI工具使用声明" in clean_manuscript, True)
     check("support_list_exists", (ROOT / "支撑材料文件清单.md").exists(), (ROOT / "支撑材料文件清单.md").exists(), True)
     ai_detail = next(ROOT.parent.glob("*/AI工具使用详情*.md"), None)
     check("ai_detail_exists", ai_detail is not None, str(ai_detail), "AI工具使用详情*.md present in the process directory")
 
     manifest = pd.read_csv(FIGURES / "figure_manifest.csv")
-    check("figure_manifest_count", len(manifest) == 21, len(manifest), 21)
+    check("figure_manifest_count", len(manifest) == 20, len(manifest), 20)
     required_trace = {"source_data", "transformation", "caption", "supported_manuscript_claims", "limitations"}
     check("figure_trace_fields", required_trace.issubset(manifest.columns), sorted(manifest.columns), sorted(required_trace))
     missing_artifacts = []

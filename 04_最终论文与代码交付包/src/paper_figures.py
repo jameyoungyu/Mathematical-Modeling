@@ -40,72 +40,69 @@ COND_SHORT = {
 }
 
 CAPTIONS = {
-    "01_outlet_data_diagnosis": "出口浓度记录存在显著截顶且不覆盖目标区间。有效记录全部位于48.74～50.00 mg/Nm³，其中5491条恰好等于50 mg/Nm³，因而不能从该列辨识5或10 mg/Nm³附近的控制—排放关系。",
-    "02_process_timeseries": "原始过程量具有连续时序变化和多工况切换特征。图中展示首24小时入口温度、入口浓度、烟气流量及总功率的分钟级变化。",
-    "04b_operating_evidence": "附件中可识别的另一半信息。(a)(b) 为两段持续异常工况及控制端的同步响应：入口浓度尖峰时抬高$U_1$、功率随之上冲，入口温度尖峰（比电阻高值区）时反而降压降功率；(c) 为训练期工况变量与控制设定的相关矩阵，显示“高浓度→抬升前两电场电压、缩短各场振打周期”的历史操作规律。",
-    "14_rapping_peak_mechanism": "(a) 由“每周期积灰量∝$L\\cdot T$”推得单次再飞扬峰值随周期近似线性放大，而对小时均值的贡献∝$L\\cdot T\\cdot(1/T)=L$与周期无关（水平点线）；(b) 振打环节在中位工况下占总功率约四成，把周期由中位延长到历史极值可回收约109 kW，代价是单次积灰量增加约18%。",
-    "03_cluster_selection": "四类工况在轮廓系数与解释复杂度之间取得较好平衡。k=4的轮廓系数达到0.408，且避免继续增加聚类数带来的解释负担。",
-    "04_condition_map": "四类工况在入口浓度—温度平面上形成清晰分区，并由烟气流量大小补充刻画负荷差异。",
+    "01_outlet_data_diagnosis": "出口浓度记录存在显著截顶且不覆盖目标区间。有效记录全部位于48.74～50.00 mg/Nm³，其中5491条恰好等于50，5与10 mg/Nm³目标区间内没有任何训练样本，因而无法由该列直接回归出目标区间附近的控制—排放关系。",
+    "02_process_timeseries": "首24小时入口温度、入口浓度、烟气流量与总功率的分钟级变化。入口变量与功率具有连续变化和工况迁移特征，与图2中被压缩在单点附近的出口浓度形成对照。",
+    "22_technical_roadmap": "全文技术路线。可识别性审计把论证分为两条证据强度不同的路径：实证数据层（实线）可由附件复算，条件式灰箱层（虚线）须经现场标定后方可采信；两条路径仅在支持域优化阶段合并，四问结论按其所属路径分别标注。",
+    "04b_operating_evidence": "附件中可识别的另一半信息。(a)(b) 为两段持续异常工况及控制端的同步响应：入口浓度尖峰时抬高$U_1$、功率随之上冲，入口温度尖峰（比电阻高值区）时反而降压降功率；(c) 为整周记录中工况变量与控制设定的相关矩阵，显示入口浓度升高时缩短各场振打周期这一稳定规律。全部为历史操作的相关关系，不构成排放侧的因果证据。",
+    "14_rapping_peak_mechanism": "振打周期同时牵动电耗与瞬时峰值。(a) 由每周期积灰量$\\propto L\\cdot T$推得单次再飞扬峰值随周期近似线性放大，而在单位面积灰量对应的再飞扬比例近似不随周期变化的前提下，单位时间再飞扬量的一阶近似与周期无关（水平点线）；(b) 振打环节在中位工况下占总功率约四成，把周期由中位延长到历史极值可回收约109 kW，代价是单次积灰量增加约18%。",
+    "03_cluster_selection": "两项内部指标并不一致：轮廓系数在$k=4$取最大值，Calinski–Harabasz指标却在$k=5$取最大值。因此$k=4$并非唯一的\"数学最优\"聚类数，本文取$k=4$的依据是轮廓系数最高、四类簇心构成清晰的温度×流量结构，且四类比五类更便于控制解释。",
+    "04_condition_map": "四类工况在入口浓度—温度平面上形成清晰分区，点的大小表示烟气流量，从而同时呈现三维工况信息。",
     "07_power_prediction": "总功率由控制量近乎确定地决定。物理设定$P=a_0+\\sum b_iU_i^2+\\sum c_i/T_i$在回顾性测试段的$R^2$与RMSE均显著优于均值基线及把振打周期作为线性项的岭回归设定。",
-    "08b_feature_importance": "振打周期必须以$1/T$进入功率模型。(a) 扣除电场功率后的剩余功率对$T_1$呈明显双曲形状，线性设定（虚线）在两端系统性偏离；(b) 线性$T$设定在回顾性测试段留下约−10.8 kW的平均偏差，改为$1/T$后偏差降至约0。",
-    "08_power_residuals": "改用$1/T$设定后，回顾性测试残差围绕零对称分布，原先“高功率区负偏差扩大”的现象消失，说明该偏差源于设定误差而非数据漂移。",
-    "09_voltage_power_response": "在各工况典型状态下，模型给出的总功率随四电场电压同步提高而上升。曲线仅在各工况历史电压支持区间附近绘制。",
-    "05b_boundary_proximity": "把排放由历史约50 mg/Nm³压到10与5 mg/Nm³，必然离开历史联合运行经验：八组解的马氏距离平方为经验97.5%外壳的2.4～7.0倍；10 mg解仍位于历史电压包络之内，5 mg解则需要各场电压超出历史最大值最多5%。",
-    "19_emission_power_frontier": "排放—功率权衡前沿。限值由10逐档收紧至5 mg/Nm³时四类工况的最优功率单调上升，工况加权功率由约1972升至约2105 kW；两档均高于历史实际加权功率，说明超低排放改造是以增电耗换减排，而非节能。",
-    "11_optimal_voltage": "5 mg/Nm³方案在各工况均需进一步抬升电压，且抬升集中在单位功率去除收益最高的电场上；柱高已接近或超出历史电压包络，必须先核验高压电源容量。",
-    "12_optimal_rapping_period": "两档限值下的最优振打周期均被推向历史区间上端——延长周期直接降低振打功率；前级短、后级长的工程顺序约束始终保持。",
-    "13_emission_decomposition": "最优方案的约束值由连续排放基值和振打峰值增量共同构成。柱顶虚线分别表示10和5 mg/Nm³情景限值。",
-    "18_condition_energy_penalty": "四类工况由10收紧至5 mg/Nm³的功率增幅高度一致（约6.7%），这与解析式$\\Delta P=P_{field}\\Delta K/K$的预测相符：增幅主要由电场功率占比与当前去除指数决定，而与工况细节关系不大。",
-    "15_search_convergence": "多起点SLSQP与同一可行域内4×10^5点随机搜索的对照。八个工况—限值组合中，47～53个起点全部收敛到同一解（功率一致到10^-7 kW以内）；随机搜索均未找到更优解，其最优值反而高出0.97%～5.17%，工况1的10 mg/Nm³组合更是一个可行样本都没采到。可行域是被排放与排序约束夹出的窄带，随机撒点效率极低。",
-    "16_sensitivity_distribution": "81组结构情景全部可行。峰值指数在本文推导值1.00附近变化几乎不改变功率增幅，相位叠加尺度与场权重形状的影响也有限；加权增幅为5.13%～7.55%，中位数6.40%。",
-    "20_eta_sensitivity": "功率增幅由单一可标定的数$p$决定。$K\\propto U^p$时增幅近似正比于$2/p$：$p=1$为14.2%，$p=2$（Deutsch迁移速度形式）为6.8%，$p=3$为4.4%。其中$p=1$与$p=1.5$在5%电压裕度内无解，说明$p$首先决定能否达标。现场一次电压阶跃试验即可标定$p$。",
-    "17_sensitivity_heatmap": "场权重消融结果。三种去除贡献权重形状下，10→5 mg/Nm³所需的加权电压增量分布与按$\\alpha_i/(b_iU_{i}^{ref\\,2})$排序的解析优先级一致。",
+    "08b_feature_importance": "振打周期必须以$1/T$进入功率模型。(a) 扣除电场功率后的剩余功率对$T_1$呈明显双曲形状，线性设定（虚线）在两端系统性偏离；(b) 线性$T$设定在回顾性测试段留下约−10.8 kW的平均偏差，改为$1/T$后偏差降至约0，说明该偏差来自设定误差而非数据漂移。",
+    "08_power_residuals": "改用$1/T$设定后，回顾性测试残差围绕零对称分布，原先高功率区负偏差扩大的现象消失，确认修正后的误差不再含系统性结构。",
+    "05b_boundary_proximity": "单变量幅值合规不等于组合落在历史联合运行经验之内。(a) 八组解的马氏距离平方为经验97.5%外壳的2.4～7.0倍；(b) 10 mg/Nm³解的各场电压均未超出该工况历史最大值，5 mg/Nm³解则需超出最多约5%。",
+    "19_emission_power_frontier": "排放—功率权衡前沿。限值由10逐档收紧至5 mg/Nm³时四类工况的最优功率单调上升，工况加权功率由约1973升至约2105 kW；两档均高于历史实际加权功率1783.2 kW，说明超低排放改造是以增电耗换减排，而非节能。",
+    "11_optimal_voltage": "两档限值下的电压配置并非四场机械同步抬升：分配由单位功率去除收益$\\alpha_i/(b_iU_{i}^{ref\\,2})$与排序约束共同决定，工况3、4中$U_2$明显低于$U_1$，工况4的$U_4$被压至历史下界。",
+    "13_emission_decomposition": "限值裕度由连续排放基值与振打峰值增量共同占用。柱顶虚线分别表示10和5 mg/Nm³情景限值；峰值项占用0.95～1.61 mg/Nm³，故约束必须按$C_{peak}=C_{base}+B$整体施加，而不能只约束$C_{base}$。",
+    "18_condition_energy_penalty": "闭式估计与八变量数值最优解的一致性检验。(a) 四类工况的点均落在$y=x$线附近；(b) 相对偏差为−0.04%～+0.97%，全部落在±1%带内，说明按四场电压同比缩放导出的解析式可作为第四问功率代价的解析解释。",
+    "15_search_convergence": "多起点SLSQP与同一可行域内4×10^5点随机搜索的对照。八个工况—限值组合中，47～53个起点全部收敛到同一解（功率一致到10^-7 kW以内）；随机搜索均未找到更优解，其最优值反而高出0.97%～5.17%，工况1的10 mg/Nm³组合更是一个可行样本都没采到。这构成数值稳定性的强证据，但不是全局最优的数学证明。",
+    "16_sensitivity_distribution": "81组结构情景全部可行。峰值指数在本文推导值1.00附近变化几乎不改变功率增幅，相位叠加尺度与场权重形状的影响也有限；加权增幅为5.13%～7.55%，中位数6.40%，说明核心结论对灰箱形状设定不敏感。",
+    "20_eta_sensitivity": "功率增幅由幂次$p$主导。$K\\propto U^p$时增幅近似正比于$2/p$：$p=1$为14.2%，$p=2$（Deutsch迁移速度形式）为6.8%，$p=3$为4.4%。其中$p=1$与$p=1.5$在5%电压裕度内无解，说明$p$同时决定代价大小与目标可达性，是首要待标定参数。",
+    "17_sensitivity_heatmap": "场权重消融结果。三种去除贡献权重形状下，10→5 mg/Nm³所需的加权电压增量分布与按$\\alpha_i/(b_iU_{i}^{ref\\,2})$排序的解析优先级一致，说明优先级结论不由中心权重单独写入。",
 }
 
 TRACE_META = {
-    "01_outlet_data_diagnosis": (str(DATA_FILE), "fig01_outlet_diagnosis", "§2.1—2.2；图2", "出口记录为量程截顶；不代表真实排放分布"),
+    "01_outlet_data_diagnosis": (str(DATA_FILE), "fig01_outlet_diagnosis", "§2.2；图2", "出口记录为量程截顶；不代表真实排放分布"),
     "02_process_timeseries": (str(DATA_FILE), "fig02_timeseries", "§2.2；图3", "只展示首24 h，不代表全周期分布"),
-    "04b_operating_evidence": (str(RESULTS / "historical_strategy_correlations.csv"), "fig04b_operating_evidence", "§4.2—4.3；图4", "相关系数为同期线性关联，不等于因果；两段事件为个案，样本量有限"),
-    "14_rapping_peak_mechanism": (str(RESULTS / "rapping_power_tradeoff.csv"), "fig14_peak", "§4.4；图5", "峰值尺度$b_0$仍为工程先验；功率侧数值由附件识别"),
-    "03_cluster_selection": (str(RESULTS / "cluster_selection_metrics.csv"), "fig03_cluster_selection", "§5.1；图6", "聚类指标只评价统计分离度，不等于物理工况唯一性"),
-    "04_condition_map": (str(DATA_FILE), "fig04_condition_map", "§5.1；图7", "为可视化抽样点；聚类实际使用全部训练样本"),
-    "07_power_prediction": (str(RESULTS / "power_model_baselines.csv"), "fig07_power_prediction + PhysicalPowerModel", "§5.2；图8", "回顾性测试并非真正未触碰盲测"),
-    "08b_feature_importance": (str(RESULTS / "power_model_baselines.csv"), "fig08b_specification", "§5.2；图9", "残差图按$T_1$展开，其余三场周期固定在中位数"),
-    "08_power_residuals": (str(DATA_FILE), "fig08_residuals + PhysicalPowerModel", "§5.2；图10", "残差接近零均值，但仍非全新日期盲测"),
-    "09_voltage_power_response": (str(DATA_FILE), "fig09_voltage_response + PhysicalPowerModel", "§5.2；图11", "局部情景曲线，仅在历史电压附近解释"),
-    "05b_boundary_proximity": (str(RESULTS / "support_boundary_audit.csv"), "fig05b_boundary_proximity", "§5.4；图12", "经验支持域不是设备安全边界；超出部分必须由现场阶跃试验确认"),
-    "19_emission_power_frontier": (str(RESULTS / "emission_power_frontier.csv"), "fig19_frontier", "§5.5；图13", "各限值下均为灰箱情景解，前沿形状依赖排放先验"),
+    "22_technical_roadmap": (str(ROOT / "10_修订后完整论文_终稿.md"), "fig22_roadmap", "§3.3；图4", "概念流程图，不含新的经验数据"),
+    "04b_operating_evidence": (str(RESULTS / "historical_strategy_correlations.csv"), "fig04b_operating_evidence", "§4.2—4.3；图5", "相关系数为同期线性关联，不等于因果；两段事件为个案，样本量有限"),
+    "14_rapping_peak_mechanism": (str(RESULTS / "rapping_power_tradeoff.csv"), "fig14_peak", "§4.5；图6", "峰值尺度$b_0$仍为工程先验；小时均值结论依赖再飞扬比例近似恒定的前提"),
+    "03_cluster_selection": (str(RESULTS / "cluster_selection_metrics.csv"), "fig03_cluster_selection", "§5.1；图7", "聚类指标只评价统计分离度，不等于物理工况唯一性"),
+    "04_condition_map": (str(DATA_FILE), "fig04_condition_map", "§5.1；图8", "为可视化抽样点；聚类实际使用全部训练样本"),
+    "07_power_prediction": (str(RESULTS / "power_model_baselines.csv"), "fig07_power_prediction + PhysicalPowerModel", "§5.2；图9", "回顾性测试并非真正未触碰盲测"),
+    "08b_feature_importance": (str(RESULTS / "power_model_baselines.csv"), "fig08b_specification", "§5.2；图10", "残差图按$T_1$展开，其余三场周期固定在中位数"),
+    "08_power_residuals": (str(DATA_FILE), "fig08_residuals + PhysicalPowerModel", "§5.2；图11", "残差接近零均值，但仍非全新日期盲测"),
+    "05b_boundary_proximity": (str(RESULTS / "support_boundary_audit.csv"), "fig05b_boundary_proximity", "§5.6；图12", "经验支持域不是设备安全边界；超出部分必须由现场阶跃试验确认"),
+    "19_emission_power_frontier": (str(RESULTS / "emission_power_frontier.csv"), "fig19_frontier", "§5.7；图13", "各限值下均为灰箱情景解，前沿形状依赖排放先验"),
     "11_optimal_voltage": (str(RESULTS / "optimal_controls_central_scenario.csv"), "grouped_controls(U_COLS)", "§6；图14", "最优电压是情景试验起点，不是设备安全设定"),
-    "12_optimal_rapping_period": (str(RESULTS / "optimal_controls_central_scenario.csv"), "grouped_controls(T_COLS)", "§6；图15", "无实际振打事件，周期结果依赖峰值先验"),
-    "13_emission_decomposition": (str(RESULTS / "optimal_controls_central_scenario.csv"), "fig13_emission", "§7.2；图17", "全部排放值为情景推演，不是实测"),
-    "18_condition_energy_penalty": (str(RESULTS / "question4_by_condition.csv"), "fig18_penalty", "§7.1；图16", "中心情景点估计，需与$p$参考表同时解读"),
-    "15_search_convergence": (str(RESULTS / "optimization_verification.csv"), "fig15_optimizer_verification", "§8.1；图18", "随机搜索对照只能证伪，不构成全局最优的数学证明"),
-    "16_sensitivity_distribution": (str(RESULTS / "structural_sensitivity.csv"), "fig16_structural_sensitivity", "§8.2；图19", "扫描范围仍由显式情景网格决定"),
-    "20_eta_sensitivity": (str(RESULTS / "p_exponent_reference.csv"), "fig20_p_sensitivity", "§8.2；图20", "$p$的取值区间为先验网格；需由现场阶跃试验标定"),
-    "17_sensitivity_heatmap": (str(RESULTS / "field_priority_ablation_summary.csv"), "fig17_field_ablation", "§8.2；图21", "消融仍依赖同一灰箱结构与支持域"),
+    "18_condition_energy_penalty": (str(RESULTS / "question4_by_condition.csv"), "fig18_penalty", "§7.2；图15", "一致性只说明解析近似可用，不改变灰箱先验的条件性"),
+    "13_emission_decomposition": (str(RESULTS / "optimal_controls_central_scenario.csv"), "fig13_emission", "§7.4；图16", "全部排放值为情景推演，不是实测"),
+    "15_search_convergence": (str(RESULTS / "optimization_verification.csv"), "fig15_optimizer_verification", "§8.1；图17", "随机搜索对照只能证伪，不构成全局最优的数学证明"),
+    "16_sensitivity_distribution": (str(RESULTS / "structural_sensitivity.csv"), "fig16_structural_sensitivity", "§8.2；图18", "扫描范围仍由显式情景网格决定"),
+    "20_eta_sensitivity": (str(RESULTS / "p_exponent_reference.csv"), "fig20_p_sensitivity", "§8.2；图19", "$p$的取值区间为先验网格；需由现场阶跃试验标定"),
+    "17_sensitivity_heatmap": (str(RESULTS / "field_priority_ablation_summary.csv"), "fig17_field_ablation", "§8.2；图20", "消融仍依赖同一灰箱结构与支持域"),
 }
 
 MANUSCRIPT_FIGURE = {
     "01_outlet_data_diagnosis": 2,
     "02_process_timeseries": 3,
-    "04b_operating_evidence": 4,
-    "14_rapping_peak_mechanism": 5,
-    "03_cluster_selection": 6,
-    "04_condition_map": 7,
-    "07_power_prediction": 8,
-    "08b_feature_importance": 9,
-    "08_power_residuals": 10,
-    "09_voltage_power_response": 11,
+    "22_technical_roadmap": 4,
+    "04b_operating_evidence": 5,
+    "14_rapping_peak_mechanism": 6,
+    "03_cluster_selection": 7,
+    "04_condition_map": 8,
+    "07_power_prediction": 9,
+    "08b_feature_importance": 10,
+    "08_power_residuals": 11,
     "05b_boundary_proximity": 12,
     "19_emission_power_frontier": 13,
     "11_optimal_voltage": 14,
-    "12_optimal_rapping_period": 15,
-    "18_condition_energy_penalty": 16,
-    "13_emission_decomposition": 17,
-    "15_search_convergence": 18,
-    "16_sensitivity_distribution": 19,
-    "20_eta_sensitivity": 20,
-    "17_sensitivity_heatmap": 21,
+    "18_condition_energy_penalty": 15,
+    "13_emission_decomposition": 16,
+    "15_search_convergence": 17,
+    "16_sensitivity_distribution": 18,
+    "20_eta_sensitivity": 19,
+    "17_sensitivity_heatmap": 20,
 }
 
 
@@ -176,23 +173,32 @@ def fig02_timeseries(df: pd.DataFrame) -> None:
 
 
 def fig03_cluster_selection(cluster_eval: pd.DataFrame) -> None:
-    fig, axes = plt.subplots(1, 2, figsize=(7.7, 3.0))
-    ax = axes[0]
-    add_subpanel_label(ax, "a")
-    ax.plot(cluster_eval["k"], cluster_eval["silhouette"], "o-", color=PALETTE[0])
-    chosen = cluster_eval[cluster_eval["selected"]].iloc[0]
-    ax.scatter([chosen["k"]], [chosen["silhouette"]], s=65, color=PALETTE[4], zorder=3, label="选定 k=4")
-    ax.set_xlabel("聚类数 k")
-    ax.set_ylabel("轮廓系数")
-    ax.legend(frameon=False)
-    finish_axes(ax)
-    ax = axes[1]
-    add_subpanel_label(ax, "b")
-    ax.plot(cluster_eval["k"], cluster_eval["inertia"] / 1000, "s--", color=PALETTE[2], label="惯性/1000")
-    ax.set_xlabel("聚类数 k")
-    ax.set_ylabel("类内惯性 (×10³)")
-    finish_axes(ax)
-    fig.tight_layout(w_pad=2.0)
+    """The two internal indices disagree; the figure has to show that openly."""
+    k = cluster_eval["k"].to_numpy(int)
+    sil = cluster_eval["silhouette"].to_numpy(float)
+    ch = cluster_eval["calinski_harabasz"].to_numpy(float)
+    k_sil, k_ch = int(k[sil.argmax()]), int(k[ch.argmax()])
+
+    fig, axes = plt.subplots(1, 2, figsize=(8.0, 3.2))
+    for ax, y, best, label, color, marker in (
+            (axes[0], sil, k_sil, "轮廓系数", PALETTE[0], "o"),
+            (axes[1], ch / 1000.0, k_ch, "Calinski–Harabasz 指标 (×10³)", PALETTE[2], "s")):
+        ax.plot(k, y, marker + "-", color=color, markersize=5.5, linewidth=1.7)
+        ax.scatter([best], [y[k == best]], s=150, facecolor="none",
+                   edgecolor=PALETTE[4], linewidth=1.8, zorder=4)
+        ax.annotate("最大值 $k=%d$" % best, (best, y[k == best][0]),
+                    textcoords="offset points", xytext=(0, 16), ha="center",
+                    fontsize=8.6, color=PALETTE[4])
+        ax.set_xlabel("聚类数 $k$")
+        ax.set_ylabel(label)
+        ax.set_xticks(k)
+        headroom(ax, 0.24)
+        finish_axes(ax, grid_axis="both")
+    add_subpanel_label(axes[0], "a")
+    add_subpanel_label(axes[1], "b")
+    note(axes[0], "本文取 $k=4$", loc="lower right")
+    note(axes[1], "该指标支持 $k=5$", loc="lower right")
+    fig.tight_layout(w_pad=2.2)
     save_figure(fig, OUT, "03_cluster_selection")
 
 
@@ -259,7 +265,7 @@ def fig04b_operating_evidence(df: pd.DataFrame, events: pd.DataFrame,
     ax.set_yticks(range(3), list(cond_labels.values()))
     for i in range(matrix.shape[0]):
         for j in range(matrix.shape[1]):
-            ax.text(j, i, f"{matrix[i, j]:+.3f}", ha="center", va="center", fontsize=8,
+            ax.text(j, i, f"{matrix[i, j]:+.2f}", ha="center", va="center", fontsize=8.6,
                     color="white" if abs(matrix[i, j]) > 0.20 else "#1F2933")
     cbar = fig.colorbar(im, ax=ax, fraction=0.028, pad=0.015)
     cbar.set_label("Pearson 相关系数", fontsize=8.4)
@@ -272,6 +278,70 @@ def fig04b_operating_evidence(df: pd.DataFrame, events: pd.DataFrame,
             % (float(tr.loc["U1_kV", "r_C_in_gNm3"]), float(te.loc["U1_kV", "r_C_in_gNm3"])),
             transform=ax.transAxes, ha="right", va="top", fontsize=7.8, color=GRAY)
     save_figure(fig, OUT, "04b_operating_evidence")
+
+
+def fig22_roadmap() -> None:
+    """One-page technical roadmap.
+
+    The paper's argument splits at the identifiability audit into an
+    empirically identified branch and an explicitly conditional grey-box
+    branch; the two are visually distinguished so a reviewer can see at a
+    glance which conclusions carry which strength of evidence.
+    """
+    EMP, SCN = "#1F4E79", "#B45309"       # empirical / conditional
+    fig, ax = plt.subplots(figsize=(7.4, 6.6))
+    ax.set_xlim(0, 10); ax.set_ylim(0, 12.2); ax.axis("off")
+
+    def box(x, y, w, h, text, color, dashed=False, fill="#FFFFFF", fs=9.0):
+        ax.add_patch(FancyBboxPatch(
+            (x - w / 2, y - h / 2), w, h, boxstyle="round,pad=0.10",
+            linewidth=1.3, edgecolor=color, facecolor=fill,
+            linestyle="--" if dashed else "-", zorder=2))
+        ax.text(x, y, text, ha="center", va="center", fontsize=fs,
+                color="#1F2933", zorder=3, linespacing=1.45)
+
+    def arrow(x1, y1, x2, y2, color=GRAY):
+        ax.add_patch(FancyArrowPatch((x1, y1), (x2, y2), arrowstyle="-|>",
+                                     mutation_scale=13, linewidth=1.1,
+                                     color=color, zorder=1,
+                                     shrinkA=2, shrinkB=2))
+
+    box(5, 11.5, 5.6, 0.78, "现场原始数据　10080×14", GRAY, fill="#F3F4F6")
+    arrow(5, 11.11, 5, 10.62)
+    box(5, 10.2, 4.6, 0.80, "§2　可识别性审计", "#111827", fill="#E5E7EB")
+
+    arrow(4.0, 9.80, 2.6, 9.25); arrow(6.0, 9.80, 7.4, 9.25)
+    box(2.6, 8.55, 4.0, 1.30,
+        "实证数据层（可复算）\n§4.1　$P=a_0+\\sum b_iU_i^2+\\sum c_i/T_i$\n"
+        "§4.2—4.3　历史操作规律与异常工况", EMP)
+    box(7.4, 8.55, 4.0, 1.30,
+        "条件式灰箱层（推演）\n§4.4—4.5　$C_{peak}(U,T)=C_{base}+B$\n"
+        "Deutsch–Anderson　锚点 50 mg/Nm³", SCN, dashed=True)
+
+    arrow(2.6, 7.90, 4.2, 7.35); arrow(7.4, 7.90, 5.8, 7.35)
+    box(5, 6.95, 5.2, 0.80, "§5.1、§5.3　典型工况划分　+　历史支持域", "#111827")
+
+    arrow(5, 6.55, 5, 6.05)
+    box(5, 5.65, 5.4, 0.80, "问题二　§5.5　10 mg/Nm³ 最低功率控制参数", EMP)
+    arrow(5, 5.25, 5, 4.75)
+    box(5, 4.35, 5.4, 0.80, "问题三　§5.4、§6　电场调节优先级判据", EMP)
+    arrow(5, 3.95, 5, 3.45)
+    box(5, 3.05, 5.4, 0.80, "问题四　§7　10→5 mg/Nm³ 功率与容量代价", SCN, dashed=True)
+
+    arrow(5, 2.65, 5, 2.15)
+    box(5, 1.55, 6.6, 1.10,
+        "§5.6 外推审计　·　§8.2 敏感性分析\n§9.3 现场阶跃标定　·　独立盲测后闭环",
+        GRAY, fill="#F3F4F6", fs=8.6)
+
+    handles = [
+        plt.Line2D([], [], color=EMP, linewidth=1.6, label="实证辨识：可由附件复算"),
+        plt.Line2D([], [], color=SCN, linewidth=1.6, linestyle="--",
+                   label="条件式推演：须现场标定后方可采信"),
+    ]
+    ax.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, -0.03),
+              ncol=2, frameon=False, fontsize=8.4)
+    fig.tight_layout()
+    save_figure(fig, OUT, "22_technical_roadmap")
 
 
 def fig05b_boundary_proximity(audit: pd.DataFrame) -> None:
@@ -443,34 +513,6 @@ def fig08b_specification(df: pd.DataFrame, model: PhysicalPowerModel,
     finish_axes(ax)
     fig.tight_layout(w_pad=2.0)
     save_figure(fig, OUT, "08b_feature_importance")
-
-
-def fig09_voltage_response(df: pd.DataFrame, profiles: pd.DataFrame, model: RidgePowerModel) -> None:
-    train = df[df["split"] == "train"]
-    fig, ax = plt.subplots(figsize=(6.4, 4.0))
-    for _, p in profiles.iterrows():
-        c = int(p["condition_cluster"])
-        group = train[train["condition_cluster"] == c]
-        scale = np.linspace(0.92, 1.08, 80)
-        rows = []
-        u0 = group[U_COLS].median().to_numpy(float)
-        t0 = group[T_COLS].median().to_numpy(float)
-        for s in scale:
-            row = {col: val for col, val in zip(U_COLS, u0*s)}
-            row.update({col: val for col, val in zip(T_COLS, t0)})
-            row.update({"Temp_C":p["Temp_C"], "C_in_gNm3":p["C_in_gNm3"], "Q_Nm3h":p["Q_Nm3h"]})
-            rows.append(row)
-        y = model.predict(pd.DataFrame(rows))
-        ax.plot(100*(scale-1), y, color=PALETTE[c-1], marker=["o","s","^","D"][c-1], markevery=16,
-                label=COND_SHORT[c].replace("\n", " "))
-    ax.set_xlabel("四电场电压同步变化 (%)")
-    ax.set_ylabel("模型预测总功率 (kW)")
-    ax.axvline(0, color=GRAY, linewidth=0.8)
-    ax.legend(frameon=False, ncol=2)
-    finish_axes(ax, grid_axis="both")
-    fig.tight_layout()
-    save_figure(fig, OUT, "09_voltage_power_response")
-
 
 
 def grouped_controls(optimum: pd.DataFrame, cols: list[str], stem: str, ylabel: str) -> None:
@@ -674,20 +716,50 @@ def fig17_field_ablation(ablation: pd.DataFrame) -> None:
 
 
 def fig18_penalty(q4: pd.DataFrame) -> None:
-    x = np.arange(4)
-    weighted_p10 = float(np.sum(q4["share"] * q4["power_10_kW"]) / q4["share"].sum())
-    weighted_p5 = float(np.sum(q4["share"] * q4["power_5_kW"]) / q4["share"].sum())
-    weighted = 100.0 * (weighted_p5 / weighted_p10 - 1.0)
-    fig, ax = plt.subplots(figsize=(6.4, 3.8))
-    bars = ax.bar(x, q4.sort_values("condition_cluster")["increase_pct"], color=PALETTE[:4])
-    _label_bars(ax, bars, fmt="{:.2f}%", dy=0.12)
-    ax.axhline(weighted, color=PALETTE[4], linestyle="--", label=f"工况加权平均 {weighted:.2f}%")
-    ax.set_xticks(x, [COND_SHORT[i] for i in range(1,5)])
-    ax.set_ylabel("情景预测功率增幅 (%)")
-    ax.set_ylim(0, max(q4["increase_pct"])*1.22)
-    ax.legend(frameon=False)
+    """Does the closed-form estimate reproduce the full eight-variable optimum?
+
+    Four near-equal bars of ~6.7% carry little information; what is worth
+    showing is that the analytical approximation and the numerical optimum
+    agree to within 1%.
+    """
+    q4 = q4.sort_values("condition_cluster")
+    ana = q4["analytic_delta_power_kW"].to_numpy(float)
+    num = q4["numeric_delta_power_kW"].to_numpy(float)
+    rel = 100.0 * (ana - num) / num
+
+    fig, axes = plt.subplots(1, 2, figsize=(8.3, 3.5), gridspec_kw={"width_ratios": [1, 1.05]})
+
+    ax = axes[0]
+    add_subpanel_label(ax, "a")
+    lo, hi = min(ana.min(), num.min()) - 8, max(ana.max(), num.max()) + 8
+    ax.plot([lo, hi], [lo, hi], "--", color=GRAY, linewidth=1.2, label="$y=x$")
+    for idx in range(len(q4)):
+        ax.scatter(num[idx], ana[idx], s=70, color=PALETTE[idx], zorder=3,
+                   edgecolor="white", linewidth=0.8,
+                   label=COND_SHORT[int(q4["condition_cluster"].iloc[idx])].replace("\n", " "))
+    ax.set_xlim(lo, hi); ax.set_ylim(lo, hi)
+    ax.set_xlabel("数值最优解的 $\\Delta P$ (kW)")
+    ax.set_ylabel("闭式估计的 $\\Delta P$ (kW)")
+    ax.legend(frameon=False, fontsize=7.4, loc="upper left")
+    finish_axes(ax, grid_axis="both")
+
+    ax = axes[1]
+    add_subpanel_label(ax, "b")
+    x = np.arange(len(q4))
+    bars = ax.bar(x, rel, color=[PALETTE[i] for i in range(len(q4))], width=0.58)
+    for bar, value in zip(bars, rel):
+        ax.text(bar.get_x() + bar.get_width() / 2,
+                value + (0.04 if value >= 0 else -0.09),
+                f"{value:+.2f}%", ha="center",
+                va="bottom" if value >= 0 else "top", fontsize=8)
+    ax.axhline(0, color=GRAY, linewidth=0.8)
+    ax.axhspan(-1, 1, color=NEUTRAL_FILL, alpha=0.45, zorder=0)
+    ax.text(len(q4) - 0.5, 0.86, "±1% 带", ha="right", va="top", fontsize=7.8, color=GRAY)
+    ax.set_xticks(x, [COND_SHORT[int(c)] for c in q4["condition_cluster"]], fontsize=7.4)
+    ax.set_ylabel("闭式估计相对数值解的偏差 (%)")
+    ax.set_ylim(-1.2, 1.2)
     finish_axes(ax)
-    fig.tight_layout()
+    fig.tight_layout(w_pad=2.2)
     save_figure(fig, OUT, "18_condition_energy_penalty")
 
 
@@ -824,6 +896,7 @@ def main() -> None:
 
     fig01_outlet_diagnosis(df)
     fig02_timeseries(df)
+    fig22_roadmap()
     fig04b_operating_evidence(df, events, strategy)
     fig14_peak(profiles)
     fig03_cluster_selection(cluster_eval)
@@ -831,11 +904,9 @@ def main() -> None:
     fig07_power_prediction(df, model, baselines)
     fig08b_specification(df, model, linear_model, baselines)
     fig08_residuals(df, model)
-    fig09_voltage_response(df, profiles, model)
     fig05b_boundary_proximity(audit)
     fig19_frontier(frontier, frontier_w)
     grouped_controls(optimum, U_COLS, "11_optimal_voltage", "最优电压 (kV)")
-    grouped_controls(optimum, T_COLS, "12_optimal_rapping_period", "最优振打周期 (s)")
     fig18_penalty(q4)
     fig13_emission(optimum)
     fig15_optimizer_verification(verification)
