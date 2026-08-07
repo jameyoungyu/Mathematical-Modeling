@@ -552,8 +552,10 @@ def code_appendix(full: bool = True) -> str:
     for n, (module, names) in enumerate(CORE_EXTRACTS, start=1):
         snippet = BUILD / ("code_excerpt_%d.py" % n)
         snippet.write_text(_extract(module, names), encoding="utf-8")
-        out += [r"\subsection*{E.%d\quad \texttt{%s}\uff1a%s}"
-                % (n, esc(module), "\u3001".join(esc(x) for x in names)),
+        # the format string is raw, so the separator cannot be written as an
+        # escape inside it -- \uff1a would reach XeLaTeX as a control sequence
+        out += [r"\subsection*{E.%d\quad \texttt{%s}%s%s}"
+                % (n, esc(module), "\uff1a", "\u3001".join(esc(x) for x in names)),
                 r"\lstinputlisting[style=pycode]{%s}" % snippet.as_posix()]
     return "\n".join(out)
 
