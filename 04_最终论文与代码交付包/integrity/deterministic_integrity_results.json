@@ -649,8 +649,8 @@
     {
       "check": "abstract_fills_one_page",
       "passed": true,
-      "actual": 1251,
-      "expected": "700-1300 chars (one page)"
+      "actual": 1870,
+      "expected": "1400-2000 chars (one page)"
     },
     {
       "check": "anonymous_manuscript",

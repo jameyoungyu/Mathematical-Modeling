@@ -376,8 +376,19 @@ PREAMBLE = r"""
 \onehalfspacing
 \setlength{\parindent}{2em}
 \captionsetup{skip=4pt}
-\emergencystretch=3em
-\sloppy
+
+% Line breaking.  \sloppy (tolerance 9999) let TeX stretch the inter-word and
+% inter-CJK glue without bound, so a line holding a long unbreakable inline
+% formula was padded until the Chinese characters visibly drifted apart.  Use a
+% permissive but finite tolerance instead, let long inline maths wrap at its
+% relations and binary operators, and cap how far the CJK glue may stretch.
+\tolerance=3000
+\emergencystretch=2em
+\relpenalty=200
+\binoppenalty=400
+\hfuzz=2pt
+\hbadness=3000
+\xeCJKsetup{CJKglue=\hskip 0pt plus 0.04\baselineskip}
 
 \pagestyle{fancy}
 \fancyhf{}

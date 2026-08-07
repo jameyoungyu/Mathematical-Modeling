@@ -326,7 +326,12 @@ def main() -> None:
 
     abstract = clean_manuscript.split("## 摘要", 1)[1].split("**关键词", 1)[0]
     abstract_chars = len(re.sub(r"\s+", "", abstract))
-    check("abstract_fills_one_page", 700 <= abstract_chars <= 1300, abstract_chars, "700-1300 chars (one page)")
+    # Range recalibrated for the "针对问题X，本文建立了……模型" abstract: naming the
+    # model and method for each of the four questions costs roughly 500 more
+    # characters than the previous compressed wording.  Verified against the
+    # rendered PDF -- at 1870 chars the abstract fills page 1 and page 2 still
+    # opens with section 1, so the upper bound is where it would start to spill.
+    check("abstract_fills_one_page", 1400 <= abstract_chars <= 2000, abstract_chars, "1400-2000 chars (one page)")
     check("anonymous_manuscript", "作者：" not in clean_manuscript and "学校：" not in clean_manuscript, ["作者：" in clean_manuscript, "学校：" in clean_manuscript], [False, False])
     check("no_english_abstract", "## Abstract" not in clean_manuscript, "## Abstract" in clean_manuscript, False)
     check("outlet_rescaling_claim_removed", "乘0.10" not in clean_manuscript and "0.1缩放" not in clean_manuscript, ["乘0.10" in clean_manuscript, "0.1缩放" in clean_manuscript], [False, False])
