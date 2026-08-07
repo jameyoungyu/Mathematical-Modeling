@@ -1,7 +1,7 @@
 {
   "status": "PASS",
-  "total_checks": 68,
-  "passed": 68,
+  "total_checks": 71,
+  "passed": 71,
   "failed": 0,
   "checks": [
     {
@@ -393,6 +393,18 @@
       "expected": 5
     },
     {
+      "check": "scale_sensitivity_feasible_count",
+      "passed": true,
+      "actual": 15,
+      "expected": 15
+    },
+    {
+      "check": "analytic_vs_numeric_p_gap",
+      "passed": true,
+      "actual": 0.412,
+      "expected": "<0.5 percentage points"
+    },
+    {
       "check": "p_reference_monotone_decreasing",
       "passed": true,
       "actual": [
@@ -615,6 +627,24 @@
         ]
       },
       "expected": "8 rows matching optimal_controls_central_scenario.csv after displayed rounding"
+    },
+    {
+      "check": "p_table_matches_source_at_1dp",
+      "passed": true,
+      "actual": {
+        "1.0": "14.2%",
+        "1.5": "9.2%",
+        "2.0": "6.8%",
+        "2.5": "5.4%",
+        "3.0": "4.4%"
+      },
+      "expected": {
+        "1.0": "14.2%",
+        "1.5": "9.2%",
+        "2.0": "6.8%",
+        "2.5": "5.4%",
+        "3.0": "4.4%"
+      }
     },
     {
       "check": "abstract_fills_one_page",

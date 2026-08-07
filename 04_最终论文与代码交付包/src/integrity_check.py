@@ -220,6 +220,17 @@ def main() -> None:
     p_ref = pd.read_csv(RESULTS / "p_exponent_reference.csv")
     check("p_reference_rows", len(p_ref) == 5, len(p_ref), 5)
     check(
+        "scale_sensitivity_feasible_count",
+        int(sens["all_conditions_feasible"].sum()) == 15,
+        int(sens["all_conditions_feasible"].sum()), 15,
+    )
+    numeric = p_ref.dropna(subset=["numeric_increase_pct"])
+    gap = (numeric["analytic_increase_pct"] - numeric["numeric_increase_pct"]).abs().max()
+    check(
+        "analytic_vs_numeric_p_gap",
+        float(gap) < 0.5, round(float(gap), 3), "<0.5 percentage points",
+    )
+    check(
         "p_reference_monotone_decreasing",
         bool((p_ref.sort_values("p_exponent")["analytic_increase_pct"].diff().dropna() < 0).all()),
         p_ref.sort_values("p_exponent")["analytic_increase_pct"].round(3).tolist(),
@@ -300,6 +311,19 @@ def main() -> None:
         {f"condition_{key[0]}_target_{key[1]:g}": value for key, value in table6_rows.items()},
         "8 rows matching optimal_controls_central_scenario.csv after displayed rounding",
     )
+    p_table_segment = clean_manuscript.split("表15\u3000功率增幅对幂次", 1)[1].split("\n\n", 3)[1]
+    printed = {}
+    for line in p_table_segment.splitlines():
+        cells = [c.strip().strip("*") for c in line.strip().strip("|").split("|")]
+        if len(cells) == 4 and re.fullmatch(r"[\d.]+", cells[0]):
+            printed[float(cells[0])] = cells[2]
+    expected = {float(r["p_exponent"]): f"{r['analytic_increase_pct']:.1f}%"
+                for _, r in p_ref.iterrows()}
+    check(
+        "p_table_matches_source_at_1dp",
+        printed == expected, printed, expected,
+    )
+
     abstract = clean_manuscript.split("## 摘要", 1)[1].split("**关键词", 1)[0]
     abstract_chars = len(re.sub(r"\s+", "", abstract))
     check("abstract_fills_one_page", 700 <= abstract_chars <= 1300, abstract_chars, "700-1300 chars (one page)")
