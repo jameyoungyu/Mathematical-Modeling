@@ -19,8 +19,9 @@ ROOT = Path(__file__).resolve().parent.parent
 MANUSCRIPT = ROOT / "10_修订后完整论文_终稿.md"
 BUILD = ROOT / "build"
 SRC = ROOT / "src"
-CODE_MODULES = ["scenario_model.py", "paper_figures.py", "plot_utils.py",
-                "compute_frontier.py", "integrity_check.py", "build_paper_pdf.py"]
+CODE_MODULES = ["scenario_model.py", "outlet_diagnostics.py", "paper_figures.py",
+                "plot_utils.py", "compute_frontier.py", "integrity_check.py",
+                "build_paper_pdf.py"]
 
 # ---------------------------------------------------------------- inline text
 

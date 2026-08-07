@@ -27,10 +27,10 @@
 
 符合 CUMCM 国奖标准的终稿论文、全量 Python 源码及自动化核验工具：
 
-- **论文终稿**：[`10_修订后完整论文_终稿.md`](04_最终论文与代码交付包/10_修订后完整论文_终稿.md) — 唯一提交稿。含摘要、图1—图20、表1—表15 与附录A—E；PDF 83 页（正文 29 页＋附录E 完整源程序）。
+- **论文终稿**：[`10_修订后完整论文_终稿.md`](04_最终论文与代码交付包/10_修订后完整论文_终稿.md) — 唯一提交稿。含摘要、图1—图20、表1—表17 与附录A—E；PDF 89 页（正文 31 页＋附录E 完整源程序）。
 - **图表集 (`figures_paper/`)**：20 幅出版级图（图1为 TikZ 矢量源，其余 19 幅由绘图程序输出 PNG 预览与 PDF 矢量图），`figure_manifest.csv` 与 `图注清单.md` 按正文图号一一对应。
-- **核心源程序 (`src/`)**：6 个模块——情景模型与优化、图表生成、绘图样式、排放—功率前沿、确定性核验、LaTeX 提交稿装配。
-- **交付产物**：`水泥烧成系统电除尘器的协同优化控制_终稿.pdf`（83 页竞赛格式，含附录E完整源程序；`--core-code` 可生成 32 页节选版）与 `_支撑材料_匿名版.zip`；`header_cumcm.tex` 为备用 LaTeX 版式头。
+- **核心源程序 (`src/`)**：7 个模块——情景模型与优化、出口浓度截顶与振打周期性检验、图表生成、绘图样式、排放—功率前沿、确定性核验、LaTeX 提交稿装配。
+- **交付产物**：`水泥烧成系统电除尘器的协同优化控制_终稿.pdf`（89 页竞赛格式，含附录E完整源程序；`--core-code` 可生成约 34 页节选版）与 `_支撑材料_匿名版.zip`；`header_cumcm.tex` 为备用 LaTeX 版式头。
 - **求解数据 (`results/`) & 自动化核验 (`integrity/`)**。
 - **交付清单**：[`支撑材料文件清单.md`](04_最终论文与代码交付包/支撑材料文件清单.md)。
 
@@ -40,7 +40,7 @@
 
 - **摘要页位置待确认**：格式规范中「论文第三页为摘要专用页」与本仓库既有做法「电子版第一页为摘要」存在分歧，提交前请到官网核实；若需前置承诺书与编号页，改动很小。
 - `build_final_deliverables.py`（Word/DOCX 装配）未纳入本仓库；当前 PDF 由 `src/build_paper_pdf.py` 直接生成。
-- 复现全部结果与提交稿：`cd 04_最终论文与代码交付包 && python3 src/scenario_model.py && python3 src/compute_frontier.py && python3 src/paper_figures.py && python3 src/integrity_check.py && python3 src/build_paper_pdf.py`（约 15 min，需 numpy/pandas/scipy/scikit-learn/matplotlib 与 XeLaTeX）。
+- 复现全部结果与提交稿：`cd 04_最终论文与代码交付包 && python3 src/scenario_model.py && python3 src/outlet_diagnostics.py && python3 src/compute_frontier.py && python3 src/paper_figures.py && python3 src/integrity_check.py && python3 src/build_paper_pdf.py`（约 15 min，需 numpy/pandas/scipy/scikit-learn/matplotlib 与 XeLaTeX）。
 
 ---
 *版权所有 © 2026 参赛团队*

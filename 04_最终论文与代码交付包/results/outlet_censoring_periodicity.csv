@@ -1,0 +1,6 @@
+﻿test,target,statistic,reference,detail,verdict
+censored_normal_mle,C_out_mgNm3,0.5460557147310582,0.5474576271186441,"latent N(mu=50.036, sigma=0.313) censored at 50; latent CV 0.63% of level",censoring hypothesis reproduces the observed cap fraction to 0.0014
+epoch_folding,T1_s,0.028101010101010116,0.16964043174789895,median period 3.88 min (Nyquist limit 2 min); censoring-rate chi2 p=0.142,no rapping-synchronous component above 0.028 mg/Nm3 (16.6% of residual sd)
+epoch_folding,T2_s,0.028101010101010116,0.16964043174789895,median period 3.88 min (Nyquist limit 2 min); censoring-rate chi2 p=0.142,no rapping-synchronous component above 0.028 mg/Nm3 (16.6% of residual sd)
+epoch_folding,T3_s,0.010920103768910092,0.16964043174789895,median period 7.42 min (Nyquist limit 2 min); censoring-rate chi2 p=0.707,no rapping-synchronous component above 0.011 mg/Nm3 (6.4% of residual sd)
+epoch_folding,T4_s,0.010920103768910092,0.16964043174789895,median period 7.42 min (Nyquist limit 2 min); censoring-rate chi2 p=0.707,no rapping-synchronous component above 0.011 mg/Nm3 (6.4% of residual sd)
