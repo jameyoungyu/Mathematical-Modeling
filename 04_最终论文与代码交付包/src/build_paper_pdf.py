@@ -64,14 +64,17 @@ def _urlify(piece: str) -> str:
 _BOLD = "\x00"
 
 
-def _smart_quotes(piece: str) -> str:
-    """Straight double quotes in Chinese prose -> paired curly quotes."""
+def _smart_quotes(piece: str, state: list[bool]) -> str:
+    """Straight double quotes in Chinese prose -> paired curly quotes.
+
+    ``state`` carries the open/close flag across the whole line, so a quoted
+    phrase that wraps a maths span still gets a closing quote at its end.
+    """
     out = []
-    open_next = True
     for ch in piece:
         if ch == '"':
-            out.append("\u201c" if open_next else "\u201d")
-            open_next = not open_next
+            out.append("\u201c" if state[0] else "\u201d")
+            state[0] = not state[0]
         else:
             out.append(ch)
     return "".join(out)
@@ -80,6 +83,7 @@ def _smart_quotes(piece: str) -> str:
 def inline(text: str) -> str:
     """Convert inline Markdown to LaTeX, leaving $...$ math untouched."""
     out: list[str] = []
+    quote_open = [True]
     for i, seg in enumerate(re.split(r"(\$[^$]*\$)", text)):
         if i % 2:                       # math segment - pass through verbatim
             out.append(seg)
@@ -90,7 +94,7 @@ def inline(text: str) -> str:
                 out.append(r"\texttt{" + esc(piece[1:-1]) + "}")
             else:
                 piece = piece.replace("**", _BOLD)
-                out.append(_urlify(_smart_quotes(piece)))
+                out.append(_urlify(_smart_quotes(piece, quote_open)))
     rendered = "".join(out)
 
     # pair the sentinels; an unmatched trailing marker is dropped
