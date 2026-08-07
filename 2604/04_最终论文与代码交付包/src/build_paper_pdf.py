@@ -439,7 +439,11 @@ PREAMBLE = r"""
 #: has TeX Gyre Termes and Noto CJK; a bare TeX Live may not.
 FONT_CHOICES = {
     "main": ["TeX Gyre Termes", "Liberation Serif", "DejaVu Serif"],
-    "mono": ["Noto Sans Mono CJK SC", "DejaVu Sans Mono"],
+    # The Latin mono must NOT be a CJK font. "Noto Sans Mono CJK SC" renders
+    # ASCII correctly but tags its hyphen and pipe glyphs as U+2011 and U+FFE8,
+    # so the appendix listings looked right yet copied out as Python that will
+    # not parse. Chinese inside listings is covered by "cjkmono" below.
+    "mono": ["DejaVu Sans Mono", "Noto Sans Mono", "Liberation Mono"],
     "cjkmain": ["Noto Serif CJK SC", "Fandol Song", "Noto Sans CJK SC"],
     "cjksans": ["Noto Sans CJK SC", "Fandol Hei"],
     "cjkmono": ["Noto Sans Mono CJK SC", "Noto Sans CJK SC"],
