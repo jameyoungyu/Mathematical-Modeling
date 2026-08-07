@@ -385,6 +385,19 @@ PREAMBLE = r"""
 \setlength{\parindent}{2em}
 \captionsetup{skip=4pt}
 
+% The body has 20 figures, 17 tables and a dozen display equations, and at
+% 1.5 line spacing LaTeX's default separations around them are generous. The
+% competition caps the body at 30 pages, so the float and display gaps are
+% tightened here. Margins (2.5 cm), body size (5号) and 1.5 spacing are fixed
+% by the format specification and are left alone.
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\abovedisplayskip}{5pt plus 2pt minus 2pt}
+\setlength{\belowdisplayskip}{5pt plus 2pt minus 2pt}
+\setlength{\abovedisplayshortskip}{3pt plus 1pt minus 1pt}
+\setlength{\belowdisplayshortskip}{3pt plus 1pt minus 1pt}
+
 % Line breaking.  \sloppy (tolerance 9999) let TeX stretch the inter-word and
 % inter-CJK glue without bound, so a line holding a long unbreakable inline
 % formula was padded until the Chinese characters visibly drifted apart.  Use a
@@ -406,8 +419,10 @@ PREAMBLE = r"""
 \ctexset{
   section/format = {\centering\zihao{4}\bfseries},
   subsection/format = {\raggedright\zihao{5}\bfseries},
-  section/beforeskip = 12pt plus 2pt minus 2pt,
-  section/afterskip = 8pt,
+  section/beforeskip = 9pt plus 2pt minus 2pt,
+  section/afterskip = 6pt,
+  subsection/beforeskip = 7pt plus 2pt minus 2pt,
+  subsection/afterskip = 4pt,
 }
 
 \lstdefinestyle{pseudo}{

@@ -24,6 +24,19 @@
 \setlength{\parindent}{2em}
 \captionsetup{skip=4pt}
 
+% The body has 20 figures, 17 tables and a dozen display equations, and at
+% 1.5 line spacing LaTeX's default separations around them are generous. The
+% competition caps the body at 30 pages, so the float and display gaps are
+% tightened here. Margins (2.5 cm), body size (5号) and 1.5 spacing are fixed
+% by the format specification and are left alone.
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\abovedisplayskip}{5pt plus 2pt minus 2pt}
+\setlength{\belowdisplayskip}{5pt plus 2pt minus 2pt}
+\setlength{\abovedisplayshortskip}{3pt plus 1pt minus 1pt}
+\setlength{\belowdisplayshortskip}{3pt plus 1pt minus 1pt}
+
 % Line breaking.  \sloppy (tolerance 9999) let TeX stretch the inter-word and
 % inter-CJK glue without bound, so a line holding a long unbreakable inline
 % formula was padded until the Chinese characters visibly drifted apart.  Use a
@@ -45,8 +58,10 @@
 \ctexset{
   section/format = {\centering\zihao{4}\bfseries},
   subsection/format = {\raggedright\zihao{5}\bfseries},
-  section/beforeskip = 12pt plus 2pt minus 2pt,
-  section/afterskip = 8pt,
+  section/beforeskip = 9pt plus 2pt minus 2pt,
+  section/afterskip = 6pt,
+  subsection/beforeskip = 7pt plus 2pt minus 2pt,
+  subsection/afterskip = 4pt,
 }
 
 \lstdefinestyle{pseudo}{
@@ -1172,9 +1187,9 @@ $p$ & 物理含义 & 10$\rightarrow$5 mg/Nm³加权增幅 & 5 mg/Nm³在5\%电�
 输出：控制参数、功率代价、外推审计、敏感性、图表与运行摘要。
 \end{lstlisting}
 
-\textbf{源程序清单：} \texttt{src/scenario\_model.py}（功率模型、灰箱排放情景、支持域优化、活跃约束与敏感性）、\texttt{src/outlet\_diagnostics.py}（截顶假设的截尾似然检验与振打周期性检验）、\texttt{src/paper\_figures.py}（21幅正文图与图注追踪表）、\texttt{src/plot\_utils.py}（统一绘图样式）、\texttt{src/integrity\_check.py}（确定性核验）、\texttt{src/compute\_frontier.py}（排放—功率前沿）、\texttt{src/build\_paper\_pdf.py}（提交稿装配）。生成本文全部结果与图表的完整可运行源程序见附录E，与电子支撑材料 \texttt{src/} 目录逐字一致。
+\textbf{源程序清单：} \texttt{src/scenario\_model.py}（功率模型、灰箱排放情景、支持域优化、活跃约束与敏感性）、\texttt{src/outlet\_diagnostics.py}（截顶假设的截尾似然检验与振打周期性检验）、\texttt{src/paper\_figures.py}（20幅正文图与图注追踪表）、\texttt{src/plot\_utils.py}（统一绘图样式）、\texttt{src/integrity\_check.py}（确定性核验）、\texttt{src/compute\_frontier.py}（排放—功率前沿）、\texttt{src/build\_paper\_pdf.py}（提交稿装配）。生成本文全部结果与图表的完整可运行源程序见附录E，与电子支撑材料 \texttt{src/} 目录逐字一致。
 
-\textbf{支撑材料清单：} \texttt{data/}处理数据包；\texttt{results/}下功率基线、滚动验证、最优控制、活跃约束、振打周期上界敏感性、截顶与周期性检验、外推审计、电压裕度需求、求解对照、结构情景、场权重消融、幂次参考表、动态控制表和运行摘要；\texttt{figures\_paper/}下21幅正文图（20幅PNG/PDF由绘图程序生成，图1为TikZ源文件独立编译）及\texttt{figure\_manifest.csv}；\texttt{integrity/}下确定性核验结果。
+\textbf{支撑材料清单：} \texttt{data/}处理数据包；\texttt{results/}下功率基线、滚动验证、最优控制、活跃约束、振打周期上界敏感性、截顶与周期性检验、外推审计、电压裕度需求、求解对照、结构情景、场权重消融、幂次参考表、动态控制表和运行摘要；\texttt{figures\_paper/}下20幅正文图（19幅PNG/PDF由绘图程序生成，图1为TikZ源文件独立编译）及\texttt{figure\_manifest.csv}；\texttt{integrity/}下确定性核验结果。
 
 \textbf{AI工具使用声明（提交前由参赛队核验确认）：} 本稿坚持参赛队人工主导。题意分析、模型构建、公式推导、参数设定、程序审阅、结果复算和论文定稿由参赛队承担；AI编码助手仅用于代码排错、图表版式检查、文字校对与格式核验。AI输出均经人工筛选和复核，未替代现场数据，也未把不可识别的排放关系改写为实证结论。
 \clearpage
