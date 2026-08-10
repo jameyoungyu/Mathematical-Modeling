@@ -35,6 +35,7 @@
 | `src/sphere_mode_check.py` | 介质 B 越界处理口径对照 | `results/sphere_mode_check.json` |
 | `src/make_results_bundle.py` | 合并结果、装配论文附录 B | `results/results.json` |
 | `src/paper_figures.py` | 全部正文图件 | `figures_paper/` |
+| `src/build_paper_pdf.py` | 由 Markdown 终稿编译提交 PDF | `*_终稿.pdf` |
 
 ```bash
 cd 04_最终论文与代码交付包/src
@@ -43,9 +44,12 @@ python3 solve_p1.py && python3 solve_p2.py && python3 solve_p3.py && python3 sol
 python3 p4_backfill_probes.py && python3 p4_break_even.py && python3 theory_check.py
 python3 sensitivity.py && python3 sphere_mode_check.py
 python3 paper_figures.py && python3 make_results_bundle.py
+python3 build_paper_pdf.py                 # 提交稿 PDF（需 pandoc + texlive-xetex）
+python3 build_paper_pdf.py --ai-details    # 支撑材料《AI工具使用详情》PDF
 ```
 
-依赖：Python ≥3.11、numpy、scipy、matplotlib、openpyxl。
+依赖：Python ≥3.11、numpy、scipy、matplotlib、openpyxl；编译 PDF 另需 pandoc 与
+texlive-xetex / texlive-lang-chinese（字体用 texlive 自带的 Fandol 开源字族）。
 随机性全部来自 `numpy.random.SeedSequence`，按 worker 分叉，结果与并行度无关、可逐位复现。
 
 ## 三条影响结论的数据发现
