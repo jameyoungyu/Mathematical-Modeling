@@ -156,12 +156,10 @@ def main() -> int:
         print("  没有候选点通过验证")
         return 1
 
-    best = min(verified, key=lambda r: r["cost_yuan"])
-    print(f"\n最优：N_A={best['n_a']} N_B={best['n_b']}  "
-          f"φ_A={best['phi_a']:.3%} φ_B={best['phi_b']:.2%}  "
-          f"P={best['p']:.4f}  总成本={best['cost_yuan']:.4f} 元")
-
-    # 纯 A 参照：直接取问题三的答案根数，成本与混填最优做同口径比较
+    # 纯 A 方案（问题三的答案根数）本身就是一个可行候选，必须**参与竞争**而不是只作参照。
+    # 代理模型的边界搜索按自己的网格取 N_A，未必落在问题三那一格上；若它取到的 N_A
+    # 略小、需要补 B 才可行，补出来的方案可能反而比"多放几根 A、不放 B"更贵。
+    # 旧版先对 verified 取 min、之后才算纯 A 参照，于是把这个更便宜的可行点漏在比较之外。
     pure_a = None
     p3 = RESULTS / "p3_threshold.json"
     if p3.exists():
@@ -169,6 +167,14 @@ def main() -> int:
         if n3:
             pure_a = estimate_p(Config(n_a=int(n3), n_b=0, orientation=mode), VERIFY_TRIALS)
             print(f"  纯 A 参照 N_A={n3} P={pure_a['p']:.4f} 成本={pure_a['cost_yuan']:.4f} 元")
+            if pure_a["p"] >= TARGET and pure_a["ci_lo"] >= TARGET - 0.01:
+                pure_a["note"] = "纯 A 方案（问题三答案），按同一可行判据纳入候选比较"
+                verified.append(pure_a)
+
+    best = min(verified, key=lambda r: r["cost_yuan"])
+    print(f"\n最优：N_A={best['n_a']} N_B={best['n_b']}  "
+          f"φ_A={best['phi_a']:.3%} φ_B={best['phi_b']:.2%}  "
+          f"P={best['p']:.4f}  总成本={best['cost_yuan']:.4f} 元")
     out = {
         "target": TARGET, "mode": mode,
         "cost_per_rod_yuan": COST_A, "cost_per_sphere_yuan": COST_B,
