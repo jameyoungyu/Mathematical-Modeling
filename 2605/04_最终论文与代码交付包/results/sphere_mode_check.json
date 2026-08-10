@@ -1,0 +1,84 @@
+{
+  "trials": 4000,
+  "cases": [
+    {
+      "wrap": {
+        "n_a": 440,
+        "n_b": 1200,
+        "phi_a": 0.00622035345410779,
+        "phi_b": 0.04021238596594935,
+        "orientation": "polar_uniform",
+        "sphere_mode": "wrap",
+        "bond_fragments": false,
+        "trials": 4000,
+        "hits": 3551,
+        "p": 0.88775,
+        "ci_lo": 0.8775929431174431,
+        "ci_hi": 0.8971630086110446,
+        "half_width": 0.00978503274680076,
+        "cost_yuan": 8.541990425110647,
+        "seed": 20260810
+      },
+      "inside": {
+        "n_a": 440,
+        "n_b": 1200,
+        "phi_a": 0.00622035345410779,
+        "phi_b": 0.04021238596594935,
+        "orientation": "polar_uniform",
+        "sphere_mode": "inside",
+        "bond_fragments": false,
+        "trials": 4000,
+        "hits": 3640,
+        "p": 0.91,
+        "ci_lo": 0.9007334581976536,
+        "ci_hi": 0.9184797983044224,
+        "half_width": 0.008873170053384394,
+        "cost_yuan": 8.541990425110647,
+        "seed": 20260810
+      },
+      "delta_wrap_minus_inside": -0.022249999999999992,
+      "n_a": 440,
+      "n_b": 1200
+    },
+    {
+      "wrap": {
+        "n_a": 500,
+        "n_b": 700,
+        "phi_a": 0.007068583470577034,
+        "phi_b": 0.023457225146803786,
+        "orientation": "polar_uniform",
+        "sphere_mode": "wrap",
+        "bond_fragments": false,
+        "trials": 4000,
+        "hits": 3750,
+        "p": 0.9375,
+        "ci_lo": 0.9295706779439097,
+        "ci_hi": 0.9445898091772079,
+        "half_width": 0.0075095656166491165,
+        "cost_yuan": 8.594873901446075,
+        "seed": 20260810
+      },
+      "inside": {
+        "n_a": 500,
+        "n_b": 700,
+        "phi_a": 0.007068583470577034,
+        "phi_b": 0.023457225146803786,
+        "orientation": "polar_uniform",
+        "sphere_mode": "inside",
+        "bond_fragments": false,
+        "trials": 4000,
+        "hits": 3793,
+        "p": 0.94825,
+        "ci_lo": 0.9409448512354391,
+        "ci_hi": 0.9546950078549403,
+        "half_width": 0.006875078309750593,
+        "cost_yuan": 8.594873901446075,
+        "seed": 20260810
+      },
+      "delta_wrap_minus_inside": -0.010750000000000037,
+      "n_a": 500,
+      "n_b": 700
+    }
+  ],
+  "note": "问题四最优解 N_B=0，该口径不影响最终答案，仅影响可行边界位置。"
+}
