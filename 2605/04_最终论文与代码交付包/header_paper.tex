@@ -34,11 +34,15 @@
 \renewcommand{\headrulewidth}{0pt}
 \fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\thepage}\renewcommand{\headrulewidth}{0pt}}
 
-% 标题层级：一级居中，其余左对齐
-\titleformat{\section}[block]{\centering\fontsize{15pt}{18pt}\selectfont\bfseries\sffamily}{\thesection}{1em}{}
-\titlespacing*{\section}{0pt}{16pt}{10pt}
-\titleformat{\subsection}[block]{\fontsize{13pt}{16pt}\selectfont\bfseries\sffamily}{\thesubsection}{1em}{}
-\titlespacing*{\subsection}{0pt}{12pt}{6pt}
+% 标题层级。pandoc 以 --top-level-division=section 转换：
+%   Markdown #   -> \section      论文主标题
+%   Markdown ##  -> \subsection   一级标题（摘要 / 1 问题重述 / 2 数据审计 …）
+%   Markdown ### -> \subsubsection 二级标题（1.1、1.2 …）
+% 论文主标题与**全部一级标题**居中，二级及以下左对齐。
+\titleformat{\section}[block]{\centering\fontsize{16pt}{20pt}\selectfont\bfseries\sffamily}{\thesection}{1em}{}
+\titlespacing*{\section}{0pt}{16pt}{12pt}
+\titleformat{\subsection}[block]{\centering\fontsize{13.5pt}{17pt}\selectfont\bfseries\sffamily}{\thesubsection}{1em}{}
+\titlespacing*{\subsection}{0pt}{14pt}{8pt}
 \titleformat{\subsubsection}[block]{\fontsize{11.5pt}{14pt}\selectfont\bfseries\sffamily}{\thesubsubsection}{1em}{}
 \titlespacing*{\subsubsection}{0pt}{10pt}{4pt}
 

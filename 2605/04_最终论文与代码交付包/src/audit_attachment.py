@@ -33,6 +33,24 @@ def piece_lengths(pieces: np.ndarray) -> np.ndarray:
     return np.linalg.norm(pieces[:, 3:] - pieces[:, :3], axis=1)
 
 
+def wrap_evidence(pieces: np.ndarray, box: np.ndarray) -> dict:
+    """统计碎片端点精确落在各周期面上的次数。
+
+    这是判断周期盒尺寸的直接证据：碎片在边界处成对出现（前一碎片终点在 +h、
+    后一碎片起点在 −h），因此只要数一数端点恰好取到 ±h 的次数，就能读出回绕面在哪。
+    """
+    half = box / 2.0
+    out = {}
+    for j, axis in enumerate("XYZ"):
+        n = 0
+        for row in pieces:
+            for pt in (row[:3], row[3:]):
+                if abs(abs(pt[j]) - half[j]) < 1e-6:
+                    n += 1
+        out[axis] = {"half_extent_nm": float(half[j]), "endpoints_on_face": int(n)}
+    return out
+
+
 def audit_group(name: str, pieces: np.ndarray) -> dict:
     box = GROUP_BOX[name]
     media = group_by_medium(pieces)
@@ -61,6 +79,7 @@ def audit_group(name: str, pieces: np.ndarray) -> dict:
         "n_media": int(len(media)),
         "pieces_per_medium": float(len(pieces) / len(media)),
         "periodic_box_nm": box.tolist(),
+        "wrap_evidence": wrap_evidence(pieces, box),
         "piece_length_min_nm": float(lens.min()),
         "piece_length_max_nm": float(lens.max()),
         "total_axis_length_nm": float(lens.sum()),

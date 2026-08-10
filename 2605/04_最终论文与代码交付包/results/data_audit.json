@@ -21,6 +21,20 @@
         1000.0,
         1000.0
       ],
+      "wrap_evidence": {
+        "X": {
+          "half_extent_nm": 5000.0,
+          "endpoints_on_face": 7
+        },
+        "Y": {
+          "half_extent_nm": 500.0,
+          "endpoints_on_face": 2
+        },
+        "Z": {
+          "half_extent_nm": 500.0,
+          "endpoints_on_face": 4
+        }
+      },
       "piece_length_min_nm": 1019.1172545934198,
       "piece_length_max_nm": 5000.000000000005,
       "total_axis_length_nm": 34249.494016702396,
@@ -56,6 +70,20 @@
         1000.0,
         1000.0
       ],
+      "wrap_evidence": {
+        "X": {
+          "half_extent_nm": 5000.0,
+          "endpoints_on_face": 22
+        },
+        "Y": {
+          "half_extent_nm": 500.0,
+          "endpoints_on_face": 13
+        },
+        "Z": {
+          "half_extent_nm": 500.0,
+          "endpoints_on_face": 11
+        }
+      },
       "piece_length_min_nm": 577.4739501397556,
       "piece_length_max_nm": 5000.000000000008,
       "total_axis_length_nm": 139231.1652467687,
@@ -93,6 +121,20 @@
         10000.0,
         10000.0
       ],
+      "wrap_evidence": {
+        "X": {
+          "half_extent_nm": 5000.0,
+          "endpoints_on_face": 181
+        },
+        "Y": {
+          "half_extent_nm": 5000.0,
+          "endpoints_on_face": 118
+        },
+        "Z": {
+          "half_extent_nm": 5000.0,
+          "endpoints_on_face": 111
+        }
+      },
       "piece_length_min_nm": 525.6973820490682,
       "piece_length_max_nm": 5000.000000000008,
       "total_axis_length_nm": 1756025.3749422128,

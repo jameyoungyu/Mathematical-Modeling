@@ -33,6 +33,7 @@
 | `src/theory_check.py` | 排除体积判据、跃变中点、边际效率 | `results/theory_check.json` |
 | `src/sensitivity.py` | 灵敏度与收敛性 | `results/sensitivity.json` |
 | `src/sphere_mode_check.py` | 介质 B 越界处理口径对照 | `results/sphere_mode_check.json` |
+| `src/cluster_stats.py` | 最大团簇占比（渗流序参量） | `results/cluster_stats.json` |
 | `src/make_results_bundle.py` | 合并结果、装配论文附录 B | `results/results.json` |
 | `src/paper_figures.py` | 全部正文图件 | `figures_paper/` |
 | `src/build_paper_pdf.py` | 由 Markdown 终稿编译提交 PDF | `*_终稿.pdf` |
@@ -42,7 +43,7 @@ cd 04_最终论文与代码交付包/src
 python3 validate.py && python3 audit_attachment.py
 python3 solve_p1.py && python3 solve_p2.py && python3 solve_p3.py && python3 solve_p4.py
 python3 p4_backfill_probes.py && python3 p4_break_even.py && python3 theory_check.py
-python3 sensitivity.py && python3 sphere_mode_check.py
+python3 sensitivity.py && python3 sphere_mode_check.py && python3 cluster_stats.py
 python3 paper_figures.py && python3 make_results_bundle.py
 python3 build_paper_pdf.py                 # 提交稿 PDF（需 pandoc + texlive-xetex）
 python3 build_paper_pdf.py --ai-details    # 支撑材料《AI工具使用详情》PDF

@@ -82,9 +82,8 @@ def fig_orientation() -> None:
     ax.legend(fontsize=8)
     ax.set_title("介质明显偏向带电面法向（X）", fontsize=9)
     fig.tight_layout()
-    emit(fig, "01_orientation_audit",
-         "附件的介质方向并非各向同性，而是以带电面法向为极轴的极角均匀分布；"
-         "该偏向使同一体积分数下的导通概率显著升高。")
+    emit(fig, "03_orientation_audit",
+         "组 3 介质方向的经验分布与两种候选分布")
 
 
 # ------------------------------------------------------------------ 图2 碎片审计
@@ -111,7 +110,7 @@ def fig_fragments() -> None:
     ax.legend(fontsize=8)
     fig.tight_layout()
     emit(fig, "02_fragment_audit",
-         "附件系统性丢弃了长度小于约 500 nm 的碎片；补回这些碎片后问题一的三个判定结论不变。")
+         "附件保留碎片与反推出的缺失碎片的长度分布")
 
 
 # ------------------------------------------------------------------ 图3 问题一
@@ -123,7 +122,10 @@ def fig_p1() -> None:
     from microstructure import EDGE, GAP, R_A, DSU, contact_pairs
     data = load_pieces()
 
-    fig, axes = plt.subplots(3, 1, figsize=(7.4, 8.2))
+    # 组 1、组 2 的截面只有 1000 nm（长宽比 10:1），画成与组 3 等高的面板会浪费大量纵向空间，
+    # 整张图高达 8.2 in 时会独占一页。按各组真实长宽比分配高度，总高压到 5.8 in。
+    fig, axes = plt.subplots(3, 1, figsize=(7.1, 5.8),
+                             gridspec_kw={"height_ratios": [0.72, 0.72, 2.35]})
     for ax, name in zip(axes, ["组1", "组2", "组3"]):
         pieces = data[name]
         sp, sq = pieces[:, :3], pieces[:, 3:]
@@ -169,9 +171,8 @@ def fig_p1() -> None:
                Line2D([], [], color="0.78", lw=1.0, label="孤立团簇")]
     axes[0].legend(handles=handles, fontsize=7, ncol=2, loc="lower left", framealpha=0.9)
     fig.tight_layout()
-    emit(fig, "03_p1_connectivity",
-         "问题一三个微构体的接触图在 X–Y 平面的投影：组 1 的两端团簇之间存在断口，组 2、"
-         "组 3 则各有一个同时连到左右带电面的贯通团簇。")
+    emit(fig, "05_p1_connectivity",
+         "三个微构体的接触图在 X–Y 平面的投影")
 
 
 # ------------------------------------------------------------------ 图4 问题二/三
@@ -219,9 +220,8 @@ def fig_p2p3() -> None:
     ax.set_ylim(-0.03, 1.05)
     ax.legend(fontsize=8, loc="lower right")
     fig.tight_layout()
-    emit(fig, "04_p2_probability_curve",
-         "导通概率随介质 A 体积分数的上升呈典型渗流跃变；带误差棒的标记为问题二点名的四档"
-         "（Wilson 95% 区间），星号为问题三求得的使 P≥90% 的最低体积分数。")
+    emit(fig, "06_p2_probability_curve",
+         "导通概率随介质 A 体积分数的变化")
 
 
 # ------------------------------------------------------------------ 图5 问题四
@@ -269,9 +269,8 @@ def fig_p4() -> None:
     ax.set_xlim(ua.min() - 20, ua.max() + 30)
     ax.set_ylim(-160, ub.max() + 120)
     fig.tight_layout()
-    emit(fig, "05_p4_cost_optimum",
-         "P=90% 的可行边界（红线）与等成本线（白线）在 $N_B=0$ 处相切：给定价格下掺入介质 B "
-         "并不划算，最优方案就是纯介质 A。空心圆为经大样本直接验证的边界点。")
+    emit(fig, "07_p4_cost_optimum",
+         "$(N_A,N_B)$ 平面上的导通概率、可行边界与等成本线")
 
 
 # ------------------------------------------------------------------ 图6 灵敏度
@@ -317,15 +316,193 @@ def fig_sensitivity() -> None:
         ax.set_xlim(0, 1.05)
         ax.set_title("建模口径对结论的影响（同一 φ=0.70%）", fontsize=9)
     fig.tight_layout()
-    emit(fig, "06_sensitivity",
-         "两图同用 0–1 量程：判据阈值 δ 在 ±50% 内只挪动导通概率 0.048，"
-         "而方向分布这一建模口径的影响达 0.248，是前者的 5 倍以上。")
+    emit(fig, "08_sensitivity",
+         "导通概率对判据阈值与建模口径的敏感性")
+
+
+
+# ------------------------------------------------------------------ 图1 技术路线
+def fig_roadmap() -> None:
+    """技术路线图：四问共用一个判定内核，区别只在内核的用法。"""
+    from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
+
+    fig, ax = plt.subplots(figsize=(7.4, 4.5))
+    ax.set_xlim(0, 10); ax.set_ylim(0, 6.4); ax.axis("off")
+
+    def box(x, y, w, h, text, fc, fs=8.5, bold=False):
+        ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.10",
+                                    fc=fc, ec="0.35", lw=1.0))
+        ax.text(x + w / 2, y + h / 2, text, ha="center", va="center",
+                fontsize=fs, fontweight="bold" if bold else "normal", linespacing=1.5)
+
+    def arrow(x1, y1, x2, y2, style="-|>"):
+        ax.add_patch(FancyArrowPatch((x1, y1), (x2, y2), arrowstyle=style,
+                                     mutation_scale=11, lw=1.1, color="0.3",
+                                     shrinkA=2, shrinkB=2))
+
+    box(0.15, 5.15, 2.5, 0.95, "赛题与附件", "#dfe8f2", bold=True)
+    box(3.15, 5.15, 3.4, 0.95,
+        "数据审计\n周期盒 / 碎片口径 / 方向分布", "#dfe8f2")
+    box(7.05, 5.15, 2.8, 0.95, "建模口径确定\n（假设 A1–A5）", "#dfe8f2")
+    arrow(2.65, 5.62, 3.15, 5.62); arrow(6.55, 5.62, 7.05, 5.62)
+
+    box(2.0, 3.35, 6.0, 1.25,
+        "判定内核\n边界截断 → 表面最短距离 ≤ 1.8 nm 连边 → 并查集判贯通",
+        "#f6e3c8", fs=9, bold=True)
+    arrow(8.45, 5.15, 8.0, 4.60)
+
+    box(0.15, 1.55, 2.2, 1.1, "问题一\n单次判定", "#dceee4")
+    box(2.75, 1.55, 2.2, 1.1, "问题二\n频率估计 $\\hat P$", "#dceee4")
+    box(5.35, 1.55, 2.2, 1.1, "问题三\n反解 $P{=}0.9$", "#dceee4")
+    box(7.95, 1.55, 1.9, 1.1, "问题四\n带约束优化", "#dceee4")
+    for cx in (1.25, 3.85, 6.45, 8.9):
+        arrow(5.0, 3.35, cx, 2.65)
+    for x1, x2 in ((2.35, 2.75), (4.95, 5.35), (7.55, 7.95)):
+        arrow(x1, 2.10, x2, 2.10)
+
+    box(1.3, 0.10, 7.4, 0.85,
+        "校验：几何内核 6 项独立校验 · 灵敏度 · Wilson 区间 · 数字溯源",
+        "#eeeeee", fs=8.5)
+    for cx in (1.25, 3.85, 6.45, 8.9):
+        arrow(cx, 1.55, min(max(cx, 1.6), 8.4), 0.95)
+
+    fig.tight_layout()
+    emit(fig, "01_roadmap", "技术路线：四问共用同一个导通判定内核")
+
+
+# ------------------------------------------------------------------ 图4 截断示意
+def fig_schematic() -> None:
+    """边界截断规则与导通判据的示意图（非真实数据，比例已放大）。"""
+    from matplotlib.patches import Circle, FancyArrowPatch, Rectangle
+
+    fig = plt.figure(figsize=(9.4, 3.9))
+    gs = fig.add_gridspec(2, 2, width_ratios=[1.05, 1.35], hspace=0.55, wspace=0.22)
+
+    # ---- (a) 边界截断
+    ax = fig.add_subplot(gs[:, 0])
+    ax.add_patch(Rectangle((-5, -5), 10, 10, fc="#fbfbfb", ec="0.6", lw=1.0, ls="--"))
+    ax.plot([-5, -5], [-5, 5], color="k", lw=3.5)
+    ax.plot([5, 5], [-5, 5], color="k", lw=3.5)
+    ax.text(-5, 5.4, "带电面", ha="center", fontsize=8)
+    ax.text(5, 5.4, "带电面", ha="center", fontsize=8)
+    ax.plot([0.4, 5.0], [-1.2, 1.6], color=COLORS[0], lw=4, solid_capstyle="round")
+    ax.plot([-5.0, -3.1], [1.6, 2.75], color=COLORS[1], lw=4, ls=(0, (4, 2)),
+            solid_capstyle="round")
+    ax.add_patch(FancyArrowPatch((4.6, 2.5), (-4.4, 2.5), arrowstyle="-|>",
+                                 mutation_scale=12, lw=1.2, color=COLORS[1],
+                                 linestyle=":", shrinkA=0, shrinkB=0))
+    ax.text(0.1, 3.0, "平移一个边长 $L$", ha="center", fontsize=8, color=COLORS[1])
+    ax.text(3.1, -1.6, "主段", fontsize=8.5, color=COLORS[0])
+    ax.text(-4.6, 3.4, "折回段", fontsize=8.5, color=COLORS[1])
+    ax.text(0, -4.4, "两段是彼此独立的导体（假设 A2）", ha="center", fontsize=8)
+    ax.set_xlim(-6.6, 6.6); ax.set_ylim(-5.6, 6.0)
+    ax.set_aspect("equal"); ax.axis("off")
+    ax.set_title("(a) 边界截断规则", fontsize=9.5)
+
+    # ---- (b) 棒—棒接触
+    ax = fig.add_subplot(gs[0, 1])
+    ax.plot([-4.4, -0.35], [0.28, 0.02], color=COLORS[0], lw=7, solid_capstyle="round")
+    ax.plot([0.35, 4.4], [-0.02, -0.28], color=COLORS[0], lw=7, solid_capstyle="round")
+    ax.add_patch(FancyArrowPatch((-0.35, 0.02), (0.35, -0.02), arrowstyle="<|-|>",
+                                 mutation_scale=9, lw=1.2, color=COLORS[1]))
+    ax.text(0, 0.95, "表面最短距离 ≤ δ = 1.8 nm，判为导通",
+            ha="center", fontsize=8.5, color=COLORS[1])
+    ax.text(-4.4, -1.15, "介质 A：球柱体，r = 30 nm，轴长 5000 nm",
+            fontsize=8, color=COLORS[0])
+    ax.set_xlim(-5, 5); ax.set_ylim(-1.6, 1.5); ax.set_aspect("equal"); ax.axis("off")
+    ax.set_title("(b) 介质 A 之间的接触", fontsize=9.5)
+
+    # ---- (c) 球做桥
+    ax = fig.add_subplot(gs[1, 1])
+    ax.plot([-4.4, -1.25], [0.30, 0.10], color=COLORS[0], lw=7, solid_capstyle="round")
+    ax.plot([1.25, 4.4], [-0.10, -0.30], color=COLORS[0], lw=7, solid_capstyle="round")
+    ax.add_patch(Circle((0.0, 0.0), 1.05, fc=COLORS[3], ec="0.3", lw=0.9, alpha=0.9))
+    ax.add_patch(FancyArrowPatch((-1.25, 0.10), (1.25, -0.10), arrowstyle="<|-|>",
+                                 mutation_scale=9, lw=1.2, color=COLORS[1]))
+    ax.text(0, 1.45, "一颗 B 最多能跨接轴距 $2(R+r+\\delta)=463.6$ nm 的两根 A",
+            ha="center", fontsize=8.5, color=COLORS[1])
+    ax.text(1.35, -1.25, "介质 B：球，R = 200 nm", fontsize=8, color=COLORS[3])
+    ax.set_xlim(-5, 5); ax.set_ylim(-1.9, 2.1); ax.set_aspect("equal"); ax.axis("off")
+    ax.set_title("(c) 介质 B 充当棒间的桥", fontsize=9.5)
+
+    emit(fig, "04_schematic", "边界截断规则与导通判据示意")
+
+
+# ------------------------------------------------------------------ 图9 收敛性
+def fig_convergence() -> None:
+    s = load("sensitivity.json")
+    if not s or not s.get("convergence"):
+        return
+    conv = s["convergence"]
+    T = np.array([c["trials"] for c in conv], float)
+    p = np.array([c["p"] for c in conv])
+    lo = np.array([c["ci_lo"] for c in conv])
+    hi = np.array([c["ci_hi"] for c in conv])
+
+    fig, axes = plt.subplots(1, 2, figsize=(9.2, 3.6))
+    ax = axes[0]
+    ax.errorbar(T, p, yerr=[p - lo, hi - p], color=COLORS[0], marker="o",
+                capsize=3, lw=1.6)
+    ax.axhline(p[-1], color=COLORS[5], ls=LINESTYLES[3], lw=1.2)
+    ax.set_xscale("log"); ax.set_xlabel("试验次数 $T$"); ax.set_ylabel("导通概率 P")
+    ax.set_title("估计值随样本量的稳定过程（φ=0.70%）", fontsize=9)
+
+    ax = axes[1]
+    half = (hi - lo) / 2
+    ax.loglog(T, half, color=COLORS[0], marker="o", lw=1.6, label="Wilson 区间半宽")
+    ref = half[0] * np.sqrt(T[0] / T)
+    ax.loglog(T, ref, color=COLORS[1], ls=LINESTYLES[1], lw=1.4,
+              label=r"$\propto 1/\sqrt{T}$ 参考线")
+    ax.set_xlabel("试验次数 $T$"); ax.set_ylabel("区间半宽")
+    ax.legend(fontsize=8)
+    ax.set_title("半宽按 1/√T 收窄", fontsize=9)
+    fig.tight_layout()
+    emit(fig, "09_convergence", "蒙特卡洛估计的收敛性")
+
+
+# ------------------------------------------------------------------ 图10 团簇结构
+def fig_clusters() -> None:
+    c = load("cluster_stats.json")
+    if not c:
+        return
+    rows = c["rows"]
+    x = np.array([r["phi"] for r in rows]) * 100
+    smax = np.array([r["s_max_mean"] for r in rows])
+    sd = np.array([r["s_max_sd"] for r in rows])
+    pp = np.array([r["p_percolate"] for r in rows])
+
+    fig, ax = plt.subplots(figsize=(7.2, 4.0))
+    ax.errorbar(x, smax, yerr=sd, color=COLORS[0], marker="o", capsize=3, lw=1.8,
+                label="最大团簇占全部碎片的比例 $S_{\\max}$")
+    ax.set_xlabel("介质 A 体积分数 φ / %")
+    ax.set_ylabel("$S_{\\max}$", color=COLORS[0])
+    ax.tick_params(axis="y", labelcolor=COLORS[0])
+    ax.set_ylim(0, 1.02)
+
+    ax2 = ax.twinx()
+    ax2.plot(x, pp, color=COLORS[1], ls=LINESTYLES[1], marker="s", lw=1.8,
+             label="导通概率 P")
+    ax2.set_ylabel("导通概率 P", color=COLORS[1])
+    ax2.tick_params(axis="y", labelcolor=COLORS[1])
+    ax2.set_ylim(0, 1.02)
+    ax2.grid(False)
+
+    h1, l1 = ax.get_legend_handles_labels()
+    h2, l2 = ax2.get_legend_handles_labels()
+    ax.legend(h1 + h2, l1 + l2, fontsize=8.5, loc="upper left")
+    ax.annotate("P 已接近 1 时，最大团簇仍只占约 22% 的碎片",
+                xy=(1.0, smax[-1]), xytext=(0.55, 0.62), fontsize=8.5,
+                arrowprops=dict(arrowstyle="->", lw=1.1, color="0.35"))
+    fig.tight_layout()
+    emit(fig, "10_cluster_structure", "最大团簇占比与导通概率随体积分数的变化")
 
 
 def main() -> int:
     font = setup(font_size=10)
     print(f"中文字体：{font}")
-    for f in (fig_orientation, fig_fragments, fig_p1, fig_p2p3, fig_p4, fig_sensitivity):
+    for f in (fig_roadmap, fig_orientation, fig_fragments, fig_schematic,
+              fig_p1, fig_p2p3, fig_clusters, fig_p4, fig_sensitivity,
+              fig_convergence):
         try:
             f()
         except Exception as e:  # 单张图失败不该阻断其余图
