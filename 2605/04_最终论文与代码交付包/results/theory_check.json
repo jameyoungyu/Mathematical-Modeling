@@ -1,0 +1,18 @@
+{
+  "excluded_volume_estimate": {
+    "B_c": 1.4,
+    "d_eff_nm": 61.8,
+    "mean_excluded_volume_nm3": 2547853964.258364,
+    "critical_number_density_per_nm3": 5.494820423930833e-10,
+    "critical_n_rods": 549.4820423930832,
+    "critical_volume_fraction": 0.007768119364477315
+  },
+  "simulation_midpoint": {
+    "polar_uniform": {
+      "phi_at_P50": 0.006070571233311146
+    },
+    "isotropic": {
+      "phi_at_P50": 0.007050791654463918
+    }
+  }
+}
