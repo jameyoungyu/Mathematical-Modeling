@@ -85,11 +85,44 @@ def mode_contrast() -> dict | None:
     }
 
 
+def marginal_efficiency() -> dict | None:
+    """从问题四的网格算两种介质的"每元换来多少导通概率"。
+
+    这是问题四结论的机理：介质 B 单价便宜，但在必须达到 P≥0.90 的那一段
+    （N_A 接近渗流阈值），介质 A 的边际收益陡得多。两者的效率在 N_A≈400
+    附近交叉，而约束把可行解逼到交叉点右侧，于是最优解退化为纯 A。
+    """
+    p = RESULTS / "p4_cost_optimum.json"
+    if not p.exists():
+        return None
+    d = json.loads(p.read_text(encoding="utf-8"))
+    c_a, c_b = d["cost_per_rod_yuan"], d["cost_per_sphere_yuan"]
+    grid = {(g["n_a"], g["n_b"]): g["p"] for g in d["grid"]}
+    nas = sorted({k[0] for k in grid})
+    nbs = sorted({k[1] for k in grid})
+    out = {}
+    for i, na in enumerate(nas):
+        row = {}
+        if i > 0:                                   # dP/dN_A（沿 N_B=0）
+            prev = nas[i - 1]
+            dp = grid[(na, 0)] - grid[(prev, 0)]
+            row["dP_dNA_per_yuan"] = (dp / (na - prev)) / c_a
+        if len(nbs) > 1:                            # dP/dN_B（在 N_B=0 处）
+            nb1 = nbs[1]
+            dp = grid[(na, nb1)] - grid[(na, 0)]
+            row["dP_dNB_per_yuan"] = (dp / nb1) / c_b
+        if row:
+            row["P_at_NB0"] = grid[(na, 0)]
+            out[str(na)] = row
+    return out
+
+
 def main() -> int:
     ev = excluded_volume_threshold()
     mid = midpoint_from_simulation()
     out = {"excluded_volume_estimate": ev, "simulation_midpoint": mid,
-           "mode_contrast": mode_contrast()}
+           "mode_contrast": mode_contrast(),
+           "marginal_efficiency": marginal_efficiency()}
     print("排除体积判据（独立于仿真的理论估计）：")
     print(f"  平均排除体积 <V_ex> = {ev['mean_excluded_volume_nm3']:.4e} nm^3")
     print(f"  临界根数 N_c ≈ {ev['critical_n_rods']:.0f}，"
@@ -103,6 +136,13 @@ def main() -> int:
               {k: round(v, 4) for k, v in out["mode_contrast"]["gap_polar_minus_isotropic"].items()})
         print("主口径逐档增量：",
               {k: round(v, 4) for k, v in out["mode_contrast"]["increment_polar"].items()})
+    if out["marginal_efficiency"]:
+        print("每元边际收益（ΔP/元）：")
+        for na, v in out["marginal_efficiency"].items():
+            a = v.get("dP_dNA_per_yuan"); b = v.get("dP_dNB_per_yuan")
+            print(f"  N_A={na:>4}  P(N_B=0)={v['P_at_NB0']:.3f}  "
+                  f"介质A={'—' if a is None else f'{a:.3f}'}  "
+                  f"介质B={'—' if b is None else f'{b:.3f}'}")
     RESULTS.mkdir(parents=True, exist_ok=True)
     (RESULTS / "theory_check.json").write_text(
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")

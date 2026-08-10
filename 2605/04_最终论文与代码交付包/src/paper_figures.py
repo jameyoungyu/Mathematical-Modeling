@@ -246,26 +246,32 @@ def fig_p4() -> None:
 
     best = p4["best"]
     ca, cb = p4["cost_per_rod_yuan"], p4["cost_per_sphere_yuan"]
-    for c, ls in ((best["cost_yuan"], "-"), (best["cost_yuan"] * 1.15, ":")):
-        xs = np.linspace(ua.min(), ua.max(), 100)
-        ys = (c - xs * ca) / cb
-        ax.plot(xs, ys, color="w", ls=ls, lw=1.5)
-    ax.plot([best["n_a"]], [best["n_b"]], marker="*", ms=18, color=COLORS[3],
-            markeredgecolor="k", zorder=6)
-    ax.annotate(f"最优 N_A={best['n_a']}, N_B={best['n_b']}\n总成本 {best['cost_yuan']:.3f} 元",
-                (best["n_a"], best["n_b"]), textcoords="offset points", xytext=(10, 12),
+    xs = np.linspace(ua.min() - 20, ua.max() + 30, 120)
+    for c, ls, lab in ((best["cost_yuan"], "-", "最优等成本线"),
+                       (best["cost_yuan"] * 1.15, ":", "成本高 15%")):
+        ax.plot(xs, (c - xs * ca) / cb, color="w", ls=ls, lw=1.6, label=lab)
+    # 已直接验证过的边界点，说明最优不是拟合出来的
+    for v in p4.get("verified", []):
+        ax.plot([v["n_a"]], [v["n_b"]], marker="o", ms=5, mfc="none",
+                mec="w", mew=1.2, zorder=5)
+    ax.plot([best["n_a"]], [best["n_b"]], marker="*", ms=20, color=COLORS[3],
+            markeredgecolor="k", markeredgewidth=0.8, zorder=6)
+    ax.annotate(f"最优 $N_A$={best['n_a']}，$N_B$=0\n"
+                f"总成本 {best['cost_yuan']:.3f} 元，$P$={best['p']:.4f}",
+                xy=(best["n_a"], best["n_b"]), xycoords="data",
+                xytext=(0.03, 0.90), textcoords="axes fraction",
                 fontsize=8.5, color="w",
-                bbox=dict(boxstyle="round,pad=0.3", fc="0.25", ec="none", alpha=0.85))
-    ref = p4.get("pure_a_reference")
-    if ref:
-        ax.plot([ref["n_a"]], [0], marker="o", ms=8, color=COLORS[1], markeredgecolor="k")
+                arrowprops=dict(arrowstyle="->", color="w", lw=1.2),
+                bbox=dict(boxstyle="round,pad=0.35", fc="0.2", ec="none", alpha=0.9))
+    ax.legend(loc="upper right", fontsize=7.5, framealpha=0.85)
     ax.set_xlabel("介质 A 根数 $N_A$")
     ax.set_ylabel("介质 B 颗数 $N_B$")
-    ax.set_ylim(ub.min(), ub.max())
+    ax.set_xlim(ua.min() - 20, ua.max() + 30)
+    ax.set_ylim(-160, ub.max() + 120)
     fig.tight_layout()
     emit(fig, "05_p4_cost_optimum",
-         "P=90% 的可行边界与等成本线（白线）相切处即为最优配比；白色实线是最优等成本线，"
-         "虚线为高 15% 的等成本线。")
+         "P=90% 的可行边界（红线）与等成本线（白线）在 $N_B=0$ 处相切：给定价格下掺入介质 B "
+         "并不划算，最优方案就是纯介质 A。空心圆为经大样本直接验证的边界点。")
 
 
 # ------------------------------------------------------------------ 图6 灵敏度
