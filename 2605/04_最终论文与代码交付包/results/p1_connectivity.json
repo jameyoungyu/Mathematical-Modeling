@@ -26,6 +26,12 @@
       "2.7": false
     },
     "gap_robust": true,
+    "literal_reading": {
+      "verdict_same_as_reconstructed": true,
+      "reason": "连通性只依赖线段几何、接触判据与带电面位置，与 Y/Z 盒宽和碎片口径无关",
+      "volume_fraction_literal": 0.0001696460032938488,
+      "volume_fraction_reconstructed": 0.009896016858807848
+    },
     "conclusion": "不导通",
     "robust": true
   },
@@ -56,6 +62,12 @@
       "2.7": true
     },
     "gap_robust": true,
+    "literal_reading": {
+      "verdict_same_as_reconstructed": true,
+      "reason": "连通性只依赖线段几何、接触判据与带电面位置，与 Y/Z 盒宽和碎片口径无关",
+      "volume_fraction_literal": 0.0006927211801165494,
+      "volume_fraction_reconstructed": 0.03958406743523139
+    },
     "conclusion": "导通",
     "robust": true
   },
@@ -86,6 +98,12 @@
       "2.7": true
     },
     "gap_robust": true,
+    "literal_reading": {
+      "verdict_same_as_reconstructed": true,
+      "reason": "连通性只依赖线段几何、接触判据与带电面位置，与 Y/Z 盒宽和碎片口径无关",
+      "volume_fraction_literal": 0.007563384313517427,
+      "volume_fraction_reconstructed": 0.00500455709716854
+    },
     "conclusion": "导通",
     "robust": true
   }

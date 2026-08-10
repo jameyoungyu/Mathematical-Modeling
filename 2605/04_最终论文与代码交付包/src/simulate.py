@@ -18,7 +18,7 @@ from multiprocessing import Pool
 
 import numpy as np
 
-from microstructure import (EDGE, V_A, V_B, V_BOX, COST_A, COST_B,
+from microstructure import (EDGE, H_A, V_A, V_B, V_BOX, COST_A, COST_B,
                             percolates, sample_rods, sample_spheres)
 
 BOX = np.full(3, EDGE)
@@ -31,6 +31,9 @@ class Config:
     orientation: str = "polar_uniform"
     sphere_mode: str = "wrap"
     bond_fragments: bool = False
+    # 介质 A 的轴长。默认 5000 即题给圆柱；geometry_bracket.py 用 5000-2r 得到
+    # 内接球柱体，从而给出真实平端面圆柱的严格下界。
+    rod_length: float = H_A
 
     @property
     def phi_a(self) -> float:
@@ -51,7 +54,8 @@ def _run_chunk(args) -> int:
     rng = np.random.default_rng(seed_state)
     hits = 0
     for _ in range(n_trials):
-        sp, sq, own_r = sample_rods(cfg.n_a, rng, BOX, orientation=cfg.orientation)
+        sp, sq, own_r = sample_rods(cfg.n_a, rng, BOX, length=cfg.rod_length,
+                                    orientation=cfg.orientation)
         sc = own_s = None
         if cfg.n_b:
             sc, own_s = sample_spheres(cfg.n_b, rng, BOX, mode=cfg.sphere_mode)

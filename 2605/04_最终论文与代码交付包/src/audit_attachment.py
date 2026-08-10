@@ -74,6 +74,19 @@ def audit_group(name: str, pieces: np.ndarray) -> dict:
     polar_cdf = lambda t: np.clip((np.pi - 2 * np.arccos(np.clip(t, 0, 1))) / np.pi, 0, 1)
     pol = stats.kstest(dirs[:, 0], polar_cdf)
 
+    # 只检验 |u_x| 的边缘分布不足以确定整个方向分布：还要看方位角是否均匀、
+    # 以及方位角与极角是否独立。方向只到反号意义下确定（本文取 u_x≥0 的一支），
+    # 反号会把方位角平移 π，而均匀分布对平移不变，因此下面的检验仍然成立。
+    signed = []
+    for idx in media:
+        d = pieces[idx[0]][3:] - pieces[idx[0]][:3]
+        d = d / np.linalg.norm(d)
+        signed.append(-d if d[0] < 0 else d)
+    signed = np.array(signed)
+    azim = np.mod(np.arctan2(signed[:, 2], signed[:, 1]), 2 * np.pi)
+    ks_az = stats.kstest(azim / (2 * np.pi), "uniform")
+    rho, p_rho = stats.spearmanr(dirs[:, 0], azim)
+
     return {
         "n_pieces": int(len(pieces)),
         "n_media": int(len(media)),
@@ -94,6 +107,8 @@ def audit_group(name: str, pieces: np.ndarray) -> dict:
         "mean_abs_u": dirs.mean(axis=0).tolist(),
         "ks_isotropic": {"D": float(iso.statistic), "p": float(iso.pvalue)},
         "ks_polar_uniform": {"D": float(pol.statistic), "p": float(pol.pvalue)},
+        "ks_azimuth_uniform": {"D": float(ks_az.statistic), "p": float(ks_az.pvalue)},
+        "spearman_absux_vs_azimuth": {"rho": float(rho), "p": float(p_rho)},
     }
 
 
@@ -115,6 +130,9 @@ def main() -> int:
         print(f"   E|u| = ({g['mean_abs_u'][0]:.3f},{g['mean_abs_u'][1]:.3f},{g['mean_abs_u'][2]:.3f}); "
               f"KS 各向同性 p={g['ks_isotropic']['p']:.2e}, "
               f"KS 极角均匀 p={g['ks_polar_uniform']['p']:.3f}")
+        print(f"   方位角均匀 KS p={g['ks_azimuth_uniform']['p']:.3f}; "
+              f"|u_x| 与方位角 Spearman ρ={g['spearman_absux_vs_azimuth']['rho']:+.3f} "
+              f"(p={g['spearman_absux_vs_azimuth']['p']:.3f})")
 
     RESULTS.mkdir(parents=True, exist_ok=True)
     (RESULTS / "data_audit.json").write_text(

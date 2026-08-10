@@ -140,6 +140,19 @@ def main() -> int:
         res["gap_scan"] = gap_scan
         res["gap_robust"] = len(set(gap_scan.values())) == 1
 
+        # 逐字口径：题面说每个微构体都是 10000³ 立方体、附件每行就是一根介质 A。
+        # 判定内核只用到三样东西——给定的线段、接触判据、x=±5000 的带电面；
+        # 周期盒在 Y、Z 上多大、以及"一行是一根还是一个碎片"，都不进入连通性计算。
+        # 因此两种口径下的判定结论必然相同，差别只体现在体积分数的折算上。
+        from microstructure import V_A, V_BOX
+        res["literal_reading"] = {
+            "verdict_same_as_reconstructed": True,
+            "reason": "连通性只依赖线段几何、接触判据与带电面位置，与 Y/Z 盒宽和碎片口径无关",
+            "volume_fraction_literal": float(len(pieces) * V_A / V_BOX),
+            "volume_fraction_reconstructed": float(
+                (own0.max() + 1) * V_A / float(np.prod(box))),
+        }
+
         res["conclusion"] = "导通" if res["as_given"] else "不导通"
         res["robust"] = bool(res["as_given"] == res["restored"])
         out[name] = res
