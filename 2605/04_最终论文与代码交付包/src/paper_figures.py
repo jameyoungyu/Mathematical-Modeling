@@ -13,6 +13,8 @@ from pathlib import Path
 
 import numpy as np
 
+from microstructure import CONTROL_ORIENTATION, PRIMARY_ORIENTATION
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "src"))
@@ -181,7 +183,7 @@ def fig_p2p3() -> None:
     if not p2:
         return
     fig, ax = plt.subplots(figsize=(7.2, 4.4))
-    for k, mode in enumerate(("polar_uniform", "isotropic")):
+    for k, mode in enumerate((PRIMARY_ORIENTATION, CONTROL_ORIENTATION)):
         rows = p2["runs"].get(mode)
         if not rows:
             continue
@@ -196,7 +198,8 @@ def fig_p2p3() -> None:
         pts = sorted(set(pts))
         cx = np.array([p for p, _ in pts]) * 100
         cy = np.array([q for _, q in pts])
-        lab = "附件标定分布 θ~U(0,π)" if mode == "polar_uniform" else "球面均匀（对照）"
+        lab = ("球面均匀（主口径）" if mode == PRIMARY_ORIENTATION
+               else "附件标定 θ~U(0,π)（灵敏度口径）")
         ax.plot(cx, cy, color=COLORS[k], ls=LINESTYLES[k], lw=1.6, alpha=0.9, label=lab)
 
         # 题目点名的四档单独标出并带 Wilson 区间

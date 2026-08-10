@@ -19,7 +19,8 @@ from pathlib import Path
 
 import numpy as np
 
-from microstructure import (EDGE, GAP, R_A, DSU, contact_pairs, percolates,
+from microstructure import (EDGE, GAP, R_A, DSU, PRIMARY_ORIENTATION,
+                            contact_pairs, percolates,
                             sample_rods)
 from simulate import n_rods_for_phi
 
@@ -48,7 +49,7 @@ def main() -> int:
         n_a = n_rods_for_phi(phi)
         smax, ncl, hits = [], [], 0
         for _ in range(TRIALS):
-            sp, sq, _ = sample_rods(n_a, rng, BOX, orientation="polar_uniform")
+            sp, sq, _ = sample_rods(n_a, rng, BOX, orientation=PRIMARY_ORIENTATION)
             f, k = largest_cluster_fraction(sp, sq)
             smax.append(f)
             ncl.append(k)
@@ -66,7 +67,7 @@ def main() -> int:
 
     RESULTS.mkdir(parents=True, exist_ok=True)
     (RESULTS / "cluster_stats.json").write_text(
-        json.dumps({"trials": TRIALS, "orientation": "polar_uniform", "rows": rows},
+        json.dumps({"trials": TRIALS, "orientation": PRIMARY_ORIENTATION, "rows": rows},
                    ensure_ascii=False, indent=2), encoding="utf-8")
     return 0
 

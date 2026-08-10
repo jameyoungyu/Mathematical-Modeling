@@ -27,13 +27,13 @@ from pathlib import Path
 import numpy as np
 from scipy.optimize import minimize
 
-from microstructure import COST_A, COST_B, V_A, V_B, V_BOX
+from microstructure import COST_A, COST_B, PRIMARY_ORIENTATION, V_A, V_B, V_BOX
 from simulate import Config, estimate_p
 
 RESULTS = Path(__file__).resolve().parents[1] / "results"
 TARGET = 0.90
 
-GRID_A = [150, 250, 320, 380, 440, 500, 560]
+GRID_A = [150, 250, 320, 400, 480, 550, 610, 670]
 GRID_B = [0, 300, 700, 1200, 2000, 3200]
 GRID_TRIALS = 700
 VERIFY_TRIALS = 6000
@@ -92,7 +92,7 @@ def min_nb_for(w, na, nb_max=8000):
 
 
 def main() -> int:
-    mode = "polar_uniform"
+    mode = PRIMARY_ORIENTATION
     print("=== 阶段 A：网格取样，拟合代理模型 ===")
     grid = []
     for na, nb in itertools.product(GRID_A, GRID_B):
@@ -113,7 +113,7 @@ def main() -> int:
 
     print("\n=== 阶段 B：沿可行边界一维搜索 ===")
     cand = []
-    for a in range(120, 620, 4):
+    for a in range(120, 780, 4):
         b = min_nb_for(w, a)
         if b is None:
             continue

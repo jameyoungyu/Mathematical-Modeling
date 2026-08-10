@@ -186,7 +186,20 @@ class DSU:
 
 # ------------------------------------------------------------------ 生成配置
 
-def sample_orientations(n: int, rng: np.random.Generator, mode: str = "polar_uniform") -> np.ndarray:
+# 全文的方向分布口径集中在这两个常量上，改口径只需改这里。
+#
+# 主口径取**球面均匀**：题面对问题二至四只说"方向随机"，未指定分布，
+# 球面均匀是这句话的最少假设读法。
+# 对照口径取附件标定的极角均匀分布：附件组 3 的 354 根母介质以
+# KS 检验 p=6.8e-19 拒绝球面均匀、p=0.73 不拒绝极角均匀（第 2.4 节）。
+# 这一条只作为灵敏度分析出现——它刻画的是附件的生成过程，
+# 而题面并未说问题二至四必须沿用同一过程。
+PRIMARY_ORIENTATION = "isotropic"
+CONTROL_ORIENTATION = "polar_uniform"
+
+
+def sample_orientations(n: int, rng: np.random.Generator,
+                        mode: str = PRIMARY_ORIENTATION) -> np.ndarray:
     """生成 n 个单位方向向量。
 
     mode="isotropic"     ：球面均匀，即 |u_x| ~ U(0,1)。这是"任意方向、不考虑重力"
@@ -210,7 +223,7 @@ def sample_orientations(n: int, rng: np.random.Generator, mode: str = "polar_uni
 
 def sample_rods(n: int, rng: np.random.Generator, box: np.ndarray,
                 length: float = H_A,
-                orientation: str = "polar_uniform") -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+                orientation: str = PRIMARY_ORIENTATION) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """随机生成 n 根介质 A 并做边界截断。
 
     中心在盒内均匀；方向分布见 ``sample_orientations``。

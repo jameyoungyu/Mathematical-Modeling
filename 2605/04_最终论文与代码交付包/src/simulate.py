@@ -19,7 +19,8 @@ from multiprocessing import Pool
 import numpy as np
 
 from microstructure import (EDGE, H_A, V_A, V_B, V_BOX, COST_A, COST_B,
-                            percolates, sample_rods, sample_spheres)
+                            PRIMARY_ORIENTATION, percolates, sample_rods,
+                            sample_spheres)
 
 BOX = np.full(3, EDGE)
 
@@ -28,7 +29,7 @@ BOX = np.full(3, EDGE)
 class Config:
     n_a: int
     n_b: int = 0
-    orientation: str = "polar_uniform"
+    orientation: str = PRIMARY_ORIENTATION
     sphere_mode: str = "wrap"
     bond_fragments: bool = False
     # 介质 A 的轴长。默认 5000 即题给圆柱；geometry_bracket.py 用 5000-2r 得到

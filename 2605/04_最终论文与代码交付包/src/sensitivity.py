@@ -20,6 +20,7 @@ from pathlib import Path
 import numpy as np
 
 import microstructure as ms
+from microstructure import CONTROL_ORIENTATION
 from simulate import Config, estimate_p, n_rods_for_phi, wilson
 
 RESULTS = Path(__file__).resolve().parents[1] / "results"
@@ -54,8 +55,8 @@ def main() -> int:
 
     print("--- S2 建模口径 ---")
     variants = [
-        ("基准：附件标定方向 + 碎片各自独立", Config(n_a=n_a)),
-        ("方向改为球面均匀", Config(n_a=n_a, orientation="isotropic")),
+        ("基准：球面均匀方向 + 碎片各自独立", Config(n_a=n_a)),
+        ("方向改为附件标定的极角均匀分布", Config(n_a=n_a, orientation=CONTROL_ORIENTATION)),
         ("碎片粘合为同一导体（已否决）", Config(n_a=n_a, bond_fragments=True)),
     ]
     for name, cfg in variants:

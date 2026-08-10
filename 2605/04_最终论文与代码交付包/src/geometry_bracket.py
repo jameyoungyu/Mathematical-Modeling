@@ -38,7 +38,8 @@ from pathlib import Path
 
 import numpy as np
 
-from microstructure import EDGE, H_A, R_A, V_A, V_BOX, percolates, sample_rods
+from microstructure import (EDGE, H_A, R_A, V_A, V_BOX, PRIMARY_ORIENTATION,
+                            percolates, sample_rods)
 from simulate import Config, estimate_p, n_rods_for_phi, wilson
 
 RESULTS = Path(__file__).resolve().parents[1] / "results"
@@ -56,7 +57,7 @@ TARGET = 0.90
 
 def run(n_a: int, length: float, trials: int, seed: int = 20260810) -> dict:
     """内界/外界只差轴长，其余完全一致（同一套内核、同一组随机种子）。"""
-    r = estimate_p(Config(n_a=n_a, orientation="polar_uniform", rod_length=length),
+    r = estimate_p(Config(n_a=n_a, orientation=PRIMARY_ORIENTATION, rod_length=length),
                    trials, seed=seed)
     r["length_nm"] = length
     return r
