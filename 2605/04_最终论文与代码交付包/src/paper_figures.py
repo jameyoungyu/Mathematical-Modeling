@@ -290,9 +290,16 @@ def fig_sensitivity() -> None:
         ax.errorbar(x, y, yerr=[np.array(y) - lo, np.array(hi) - y], color=COLORS[0],
                     marker="o", capsize=3, lw=1.8)
         ax.axvline(1.8, color=COLORS[1], ls=LINESTYLES[1], lw=1.4)
+        ax.annotate("题给值 δ=1.8", xy=(1.8, 0.06), fontsize=8, color=COLORS[1],
+                    ha="center")
         ax.set_xlabel("导通判据阈值 δ / nm")
         ax.set_ylabel("导通概率 P")
-        ax.set_title("对判据阈值的敏感性（φ 固定）", fontsize=9)
+        # 纵轴按 0–1 全量程画：δ 变动 ±50% 只挪动 0.048，放大纵轴会把
+        # "不敏感"画成一条陡线，与结论相反。右图同样用 0–1 横轴，两图可直接对照。
+        ax.set_ylim(0, 1.05)
+        ax.annotate(f"δ 变动 ±50%，P 仅在 {min(y):.3f}–{max(y):.3f} 之间移动（极差 {max(y)-min(y):.3f}）",
+                    xy=(0.5, 0.93), xycoords="axes fraction", ha="center", fontsize=8)
+        ax.set_title("对判据阈值的敏感性（φ=0.70% 固定）", fontsize=9)
 
     ax = axes[1]
     rows = s.get("assumption_table", [])
@@ -307,10 +314,12 @@ def fig_sensitivity() -> None:
         ax.set_yticks(y, names, fontsize=8)
         ax.invert_yaxis()
         ax.set_xlabel("导通概率 P")
-        ax.set_title("建模口径对结论的影响", fontsize=9)
+        ax.set_xlim(0, 1.05)
+        ax.set_title("建模口径对结论的影响（同一 φ=0.70%）", fontsize=9)
     fig.tight_layout()
     emit(fig, "06_sensitivity",
-         "导通概率对判据阈值 δ 在 ±50% 范围内不敏感，但对方向分布这一建模口径高度敏感。")
+         "两图同用 0–1 量程：判据阈值 δ 在 ±50% 内只挪动导通概率 0.048，"
+         "而方向分布这一建模口径的影响达 0.248，是前者的 5 倍以上。")
 
 
 def main() -> int:

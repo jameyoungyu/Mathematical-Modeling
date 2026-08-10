@@ -28,14 +28,21 @@
 | `src/solve_p2.py` | 问题二：四档体积分数的导通概率 | `results/p2_probabilities.json` |
 | `src/solve_p3.py` | 问题三：P≥90% 的最低体积分数 | `results/p3_threshold.json` |
 | `src/solve_p4.py` | 问题四：A/B 混填的最低成本配比 | `results/p4_cost_optimum.json` |
+| `src/p4_backfill_probes.py` | 补记阶段 C 未通过的探测点 | 同上（追加字段） |
+| `src/p4_break_even.py` | 介质 B 的盈亏平衡单价 | `results/p4_break_even.json` |
+| `src/theory_check.py` | 排除体积判据、跃变中点、边际效率 | `results/theory_check.json` |
 | `src/sensitivity.py` | 灵敏度与收敛性 | `results/sensitivity.json` |
+| `src/sphere_mode_check.py` | 介质 B 越界处理口径对照 | `results/sphere_mode_check.json` |
+| `src/make_results_bundle.py` | 合并结果、装配论文附录 B | `results/results.json` |
 | `src/paper_figures.py` | 全部正文图件 | `figures_paper/` |
 
 ```bash
 cd 04_最终论文与代码交付包/src
 python3 validate.py && python3 audit_attachment.py
 python3 solve_p1.py && python3 solve_p2.py && python3 solve_p3.py && python3 solve_p4.py
-python3 sensitivity.py && python3 paper_figures.py
+python3 p4_backfill_probes.py && python3 p4_break_even.py && python3 theory_check.py
+python3 sensitivity.py && python3 sphere_mode_check.py
+python3 paper_figures.py && python3 make_results_bundle.py
 ```
 
 依赖：Python ≥3.11、numpy、scipy、matplotlib、openpyxl。

@@ -23,15 +23,17 @@ PAPER = ROOT / "论文_微构体中填充导电介质的仿真优化.md"
 PARTS = [
     "validation.json", "data_audit.json", "theory_check.json",
     "p1_connectivity.json", "p2_probabilities.json", "p3_threshold.json",
-    "p4_cost_optimum.json", "p4_frontier.json", "sensitivity.json",
+    "p4_cost_optimum.json", "p4_break_even.json", "sensitivity.json",
+    "sphere_mode_check.json",
 ]
 
 # 附录里源程序的呈现顺序：先内核，再各问求解，最后辅助脚本
 ORDER = [
     "microstructure.py", "load_attachment.py", "simulate.py",
     "audit_attachment.py", "validate.py", "theory_check.py",
-    "solve_p1.py", "solve_p2.py", "solve_p3.py", "solve_p4.py", "solve_p4_frontier.py",
-    "sensitivity.py", "paper_figures.py", "make_results_bundle.py",
+    "solve_p1.py", "solve_p2.py", "solve_p3.py", "solve_p4.py", "p4_break_even.py",
+    "sensitivity.py", "sphere_mode_check.py", "p4_backfill_probes.py",
+    "paper_figures.py", "make_results_bundle.py",
 ]
 
 APPENDIX_MARK = "### 附录 B 完整可运行源程序"

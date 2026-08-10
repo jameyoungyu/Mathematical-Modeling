@@ -1,0 +1,28 @@
+{
+  "boundary_points_verified": [
+    {
+      "n_a": 432,
+      "n_b": 1379
+    },
+    {
+      "n_a": 472,
+      "n_b": 886
+    },
+    {
+      "n_a": 512,
+      "n_b": 468
+    },
+    {
+      "n_a": 552,
+      "n_b": 0
+    }
+  ],
+  "slope_dNB_dNA": -11.387499999999992,
+  "intercept": 6285.899999999997,
+  "cost_per_rod_yuan": 0.014844025288211772,
+  "cost_per_sphere_yuan": 0.0016755160819145562,
+  "unit_price_now_yuan_per_um3": 0.05,
+  "break_even_cost_per_sphere_yuan": 0.0013035367980866548,
+  "break_even_unit_price_yuan_per_um3": 0.038899560922063696,
+  "required_price_cut_pct": 22.200878155872616
+}

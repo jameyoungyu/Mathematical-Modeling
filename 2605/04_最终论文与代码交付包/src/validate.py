@@ -76,6 +76,7 @@ def t2_statement_example() -> None:
 def t3_attachment_roundtrip() -> None:
     data = load_pieces()
     detail = {}
+    totals = {"matched": 0, "complete": 0}
     all_ok = True
     for name, pieces in data.items():
         box = GROUP_BOX[name]
@@ -95,6 +96,11 @@ def t3_attachment_roundtrip() -> None:
         ok = n_complete > 0 and n_match == n_complete
         all_ok &= ok
         detail[name] = f"{n_match}/{n_complete} 根完整介质的截断结果与附件逐坐标一致"
+        totals["matched"] += n_match
+        totals["complete"] += n_complete
+    detail["合计"] = f"{totals['matched']}/{totals['complete']}"
+    detail["matched_total"] = totals["matched"]
+    detail["complete_total"] = totals["complete"]
     check("T3_附件截断往返", all_ok, detail)
 
 

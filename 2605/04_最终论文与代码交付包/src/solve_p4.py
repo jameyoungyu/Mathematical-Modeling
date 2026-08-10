@@ -135,6 +135,7 @@ def main() -> int:
 
     print("\n=== 阶段 C：候选点大样本直接验证（含向上补 B 直到真正可行）===")
     verified = []
+    all_probes = []          # 未通过的探测点同样要留痕，否则论文里的表无从溯源
     seen = set()
     for c in cand:
         a = c["n_a"]
@@ -144,6 +145,7 @@ def main() -> int:
         b = c["n_b"]
         for _ in range(6):
             r = estimate_p(Config(n_a=a, n_b=b, orientation=mode), VERIFY_TRIALS)
+            all_probes.append(r)
             print(f"    N_A={a:4d} N_B={b:5d} P={r['p']:.4f} "
                   f"[{r['ci_lo']:.4f},{r['ci_hi']:.4f}] 成本={r['cost_yuan']:.4f} 元")
             if r["p"] >= TARGET and r["ci_lo"] >= TARGET - 0.01:
@@ -173,7 +175,8 @@ def main() -> int:
         "grid_trials": GRID_TRIALS, "verify_trials": VERIFY_TRIALS,
         "grid": grid, "surrogate_weights": w.tolist(),
         "surrogate_max_abs_resid": float(resid),
-        "candidates": cand[:12], "verified": verified, "best": best,
+        "candidates": cand[:12], "verified": verified, "all_probes": all_probes,
+        "best": best,
         "pure_a_reference": pure_a,
     }
     RESULTS.mkdir(parents=True, exist_ok=True)
