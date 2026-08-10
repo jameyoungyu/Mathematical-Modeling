@@ -39,12 +39,14 @@
 %   Markdown ##  -> \subsection   一级标题（摘要 / 1 问题重述 / 2 数据审计 …）
 %   Markdown ### -> \subsubsection 二级标题（1.1、1.2 …）
 % 论文主标题与**全部一级标题**居中，二级及以下左对齐。
-\titleformat{\section}[block]{\centering\fontsize{16pt}{20pt}\selectfont\bfseries\sffamily}{\thesection}{1em}{}
-\titlespacing*{\section}{0pt}{16pt}{12pt}
-\titleformat{\subsection}[block]{\centering\fontsize{13.5pt}{17pt}\selectfont\bfseries\sffamily}{\thesubsection}{1em}{}
-\titlespacing*{\subsection}{0pt}{14pt}{8pt}
-\titleformat{\subsubsection}[block]{\fontsize{11.5pt}{14pt}\selectfont\bfseries\sffamily}{\thesubsubsection}{1em}{}
-\titlespacing*{\subsubsection}{0pt}{10pt}{4pt}
+% 字号参照所给的获奖论文：标题三号(16pt)黑体居中，一级标题四号(14pt)黑体居中，
+% 二级标题小四(12pt)黑体左对齐，正文小四(12pt)宋体。
+\titleformat{\section}[block]{\centering\fontsize{16pt}{22pt}\selectfont\bfseries\sffamily}{\thesection}{1em}{}
+\titlespacing*{\section}{0pt}{10pt}{14pt}
+\titleformat{\subsection}[block]{\centering\fontsize{14pt}{18pt}\selectfont\bfseries\sffamily}{\thesubsection}{1em}{}
+\titlespacing*{\subsection}{0pt}{16pt}{10pt}
+\titleformat{\subsubsection}[block]{\fontsize{12pt}{15pt}\selectfont\bfseries\sffamily}{\thesubsubsection}{1em}{}
+\titlespacing*{\subsubsection}{0pt}{10pt}{5pt}
 
 % 图表题注：五号加粗居中，题注与图表间留白
 \captionsetup{justification=centering, font={small,bf}, labelfont=bf, skip=6pt}
