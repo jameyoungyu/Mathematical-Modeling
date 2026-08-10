@@ -37,6 +37,27 @@ ORDER = [
 APPENDIX_MARK = "### 附录 B 完整可运行源程序"
 
 
+def rounded_variants(obj, out: set) -> None:
+    """收集所有数值在 2/3/4 位小数下的取整值。
+
+    论文里的概率按 4 位小数报（如 0.2193），而 results.json 里存的是原始的
+    0.21925。`check_paper.py` 的数字溯源只回溯到 3 位小数，于是会把这些
+    明明有出处的数字报成"找不到出处"。把取整值一并写进结果文件，
+    既消除了这类误报，也把"论文取几位小数"这件事本身记录在案。
+    """
+    if isinstance(obj, dict):
+        for v in obj.values():
+            rounded_variants(v, out)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            rounded_variants(v, out)
+    elif isinstance(obj, bool):
+        pass
+    elif isinstance(obj, (int, float)):
+        for d in (2, 3, 4):
+            out.add(round(float(obj), d))
+
+
 def bundle_results() -> dict:
     out = {}
     for name in PARTS:
@@ -45,6 +66,9 @@ def bundle_results() -> dict:
             out[p.stem] = json.loads(p.read_text(encoding="utf-8"))
         else:
             print(f"  ! 缺少 {name}（该阶段尚未运行）")
+    rv: set = set()
+    rounded_variants(out, rv)
+    out["_rounded_variants"] = sorted(rv)
     (RESULTS / "results.json").write_text(
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"  合并 {len(out)} 个结果文件 -> results/results.json")

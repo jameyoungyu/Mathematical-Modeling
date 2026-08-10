@@ -184,33 +184,44 @@ def fig_p2p3() -> None:
         rows = p2["runs"].get(mode)
         if not rows:
             continue
+        # 曲线用全部可用的估计点（问题二四档 + 问题三的粗扫和细网格）连成，
+        # 只连问题二那四个点会得到一条直线段，在 0.7%–1.0% 之间明显低于真实曲线，
+        # 看上去像是细网格点和主曲线矛盾。
+        pts = [(r["phi_a"], r["p"]) for r in rows]
+        if p3 and p3["modes"].get(mode):
+            m3 = p3["modes"][mode]
+            pts += [(r["phi_a"], r["p"]) for r in m3["coarse"]]
+            pts += [(r["phi_a"], r["p"]) for r in m3["fine_grid"]]
+        pts = sorted(set(pts))
+        cx = np.array([p for p, _ in pts]) * 100
+        cy = np.array([q for _, q in pts])
+        lab = "附件标定分布 θ~U(0,π)" if mode == "polar_uniform" else "球面均匀（对照）"
+        ax.plot(cx, cy, color=COLORS[k], ls=LINESTYLES[k], lw=1.6, alpha=0.9, label=lab)
+
+        # 题目点名的四档单独标出并带 Wilson 区间
         x = np.array([r["phi_a"] for r in rows]) * 100
         y = np.array([r["p"] for r in rows])
         lo = np.array([r["ci_lo"] for r in rows])
         hi = np.array([r["ci_hi"] for r in rows])
-        lab = "附件标定分布 θ~U(0,π)" if mode == "polar_uniform" else "球面均匀（对照）"
         ax.errorbar(x, y, yerr=[y - lo, hi - y], color=COLORS[k], marker=MARKERS[k],
-                    ls=LINESTYLES[k], lw=1.8, capsize=3, label=lab)
+                    ms=7, ls="none", capsize=3, zorder=4)
         if p3 and p3["modes"].get(mode):
-            g = p3["modes"][mode]["fine_grid"]
-            gx = np.array([r["phi_grid"] for r in g]) * 100
-            gy = np.array([r["p"] for r in g])
-            ax.plot(gx, gy, color=COLORS[k], marker=".", ls=":", lw=1.0, alpha=0.8)
             ans = p3["modes"][mode]["answer_phi"]
             if ans:
-                ax.plot([ans * 100], [0.9], marker="*", ms=14, color=COLORS[k], zorder=5)
+                ax.plot([ans * 100], [0.9], marker="*", ms=15, color=COLORS[k],
+                        markeredgecolor="k", markeredgewidth=0.6, zorder=6)
                 ax.annotate(f"{ans:.2%}", (ans * 100, 0.9), textcoords="offset points",
-                            xytext=(6, -14), color=COLORS[k], fontsize=9)
+                            xytext=(4, -15), color=COLORS[k], fontsize=9)
     ax.axhline(0.9, color=COLORS[5], ls=LINESTYLES[3], lw=1.4)
-    ax.text(0.505, 0.915, "P = 90%", fontsize=8, color=COLORS[5])
+    ax.text(0.505, 0.915, "P = 90%（问题三的目标线）", fontsize=8, color=COLORS[5])
     ax.set_xlabel("介质 A 体积分数 φ / %")
     ax.set_ylabel("微构体导通概率 P")
     ax.set_ylim(-0.03, 1.05)
     ax.legend(fontsize=8, loc="lower right")
     fig.tight_layout()
     emit(fig, "04_p2_probability_curve",
-         "导通概率随介质 A 体积分数的上升呈典型渗流跃变；星号为使 P≥90% 的最低体积分数，"
-         "误差棒为 Wilson 95% 区间。")
+         "导通概率随介质 A 体积分数的上升呈典型渗流跃变；带误差棒的标记为问题二点名的四档"
+         "（Wilson 95% 区间），星号为问题三求得的使 P≥90% 的最低体积分数。")
 
 
 # ------------------------------------------------------------------ 图5 问题四

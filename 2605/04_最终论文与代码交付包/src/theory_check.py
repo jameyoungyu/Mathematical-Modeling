@@ -66,10 +66,30 @@ def midpoint_from_simulation() -> dict | None:
     return out
 
 
+def mode_contrast() -> dict | None:
+    """两套方向口径在各档体积分数上的概率差，以及主口径的逐档增量。
+
+    论文正文引用了这些差值；在这里算出来，它们才有出处，而不是正文里手推的数。
+    """
+    p = RESULTS / "p2_probabilities.json"
+    if not p.exists():
+        return None
+    d = json.loads(p.read_text(encoding="utf-8"))
+    pol = {r["phi_nominal"]: r["p"] for r in d["runs"]["polar_uniform"]}
+    iso = {r["phi_nominal"]: r["p"] for r in d["runs"]["isotropic"]}
+    phis = sorted(pol)
+    return {
+        "gap_polar_minus_isotropic": {f"{k:.2%}": pol[k] - iso[k] for k in phis},
+        "increment_polar": {f"{a:.2%}->{b:.2%}": pol[b] - pol[a]
+                            for a, b in zip(phis[:-1], phis[1:])},
+    }
+
+
 def main() -> int:
     ev = excluded_volume_threshold()
     mid = midpoint_from_simulation()
-    out = {"excluded_volume_estimate": ev, "simulation_midpoint": mid}
+    out = {"excluded_volume_estimate": ev, "simulation_midpoint": mid,
+           "mode_contrast": mode_contrast()}
     print("排除体积判据（独立于仿真的理论估计）：")
     print(f"  平均排除体积 <V_ex> = {ev['mean_excluded_volume_nm3']:.4e} nm^3")
     print(f"  临界根数 N_c ≈ {ev['critical_n_rods']:.0f}，"
@@ -78,6 +98,11 @@ def main() -> int:
         for m, v in mid.items():
             if v["phi_at_P50"]:
                 print(f"  仿真跃变中点 ({m}): φ(P=0.5) ≈ {v['phi_at_P50']:.4%}")
+    if out["mode_contrast"]:
+        print("两套方向口径的概率差：",
+              {k: round(v, 4) for k, v in out["mode_contrast"]["gap_polar_minus_isotropic"].items()})
+        print("主口径逐档增量：",
+              {k: round(v, 4) for k, v in out["mode_contrast"]["increment_polar"].items()})
     RESULTS.mkdir(parents=True, exist_ok=True)
     (RESULTS / "theory_check.json").write_text(
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
