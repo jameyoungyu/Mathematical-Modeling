@@ -344,48 +344,91 @@ def fig_sensitivity() -> None:
 
 # ------------------------------------------------------------------ 图1 技术路线
 def fig_roadmap() -> None:
-    """技术路线图：四问共用一个判定内核，区别只在内核的用法。"""
+    """技术路线图：四问共用一个判定内核，区别只在内核的用法。
+
+    版式要点（旧版的问题逐条对应）：
+    * **正交走线，不用斜线**。旧版从内核向四个问题拉四条放射状斜箭头，
+      互相交叉、还横穿整幅图；改为内核带与四个问题上下对齐，各走一条直下的短箭头。
+    * **同排等宽、按栅格对齐**。旧版每个框宽度都不同，边缘参差。
+    * **去掉深色描边**。旧版每个框都有炭灰描边＋浅填充，是默认流程图工具的观感；
+      改为无描边浅填充＋同色系深色文字，靠留白分隔。
+    * 内核的三个步骤拆成三枚 chip，用 → 串联，比一行长句好读。
+    """
     from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 
+    # 同色系的"浅底 + 深字"，底色不描边，层次靠明度而非边框
+    TONES = {
+        "in":     ("#e8eef7", "#1c4f8a"),   # 输入/审计
+        "kernel": ("#fceee0", "#a4501b"),   # 判定内核
+        "prob":   ("#e4f1ea", "#1d6b46"),   # 四个问题
+        "check":  ("#eeeeec", "#52514e"),   # 校验
+    }
+    ARROW = "#8a8984"
+
     fig, ax = plt.subplots(figsize=(7.4, 3.96))
-    ax.set_xlim(0, 10); ax.set_ylim(0, 6.4); ax.axis("off")
+    ax.set_xlim(0, 100); ax.set_ylim(0, 62); ax.axis("off")
 
-    def box(x, y, w, h, text, fc, fs=8.5, bold=False):
-        ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.10",
-                                    fc=fc, ec="0.35", lw=1.0))
-        ax.text(x + w / 2, y + h / 2, text, ha="center", va="center",
-                fontsize=fs, fontweight="bold" if bold else "normal", linespacing=1.5)
+    def box(x, y, w, h, text, tone, fs=8.5, bold=False):
+        fc, tc = TONES[tone]
+        ax.add_patch(FancyBboxPatch((x, y), w, h,
+                                    boxstyle="round,pad=0,rounding_size=1.6",
+                                    fc=fc, ec="none"))
+        ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", color=tc,
+                fontsize=fs, fontweight="bold" if bold else "normal",
+                linespacing=1.45)
 
-    def arrow(x1, y1, x2, y2, style="-|>"):
-        ax.add_patch(FancyArrowPatch((x1, y1), (x2, y2), arrowstyle=style,
-                                     mutation_scale=11, lw=1.1, color="0.3",
-                                     shrinkA=2, shrinkB=2))
+    def arrow(x1, y1, x2, y2):
+        ax.add_patch(FancyArrowPatch((x1, y1), (x2, y2), arrowstyle="-|>",
+                                     mutation_scale=9, lw=1.0, color=ARROW,
+                                     shrinkA=1, shrinkB=1))
 
-    box(0.15, 5.15, 2.5, 0.95, "赛题与附件", "#dfe8f2", bold=True)
-    box(3.15, 5.15, 3.4, 0.95,
-        "数据审计\n周期盒 / 碎片口径 / 方向分布", "#dfe8f2")
-    box(7.05, 5.15, 2.8, 0.95, "建模口径确定\n（假设 A1–A5）", "#dfe8f2")
-    arrow(2.65, 5.62, 3.15, 5.62); arrow(6.55, 5.62, 7.05, 5.62)
+    # ---- 第一排：输入 → 审计 → 口径（等高，横向直箭头）
+    row1_y, row1_h = 50.0, 10.0
+    xs = [(1, 24), (28, 40), (72, 27)]
+    labels = ["赛题与附件", "数据审计\n周期盒 / 碎片口径 / 方向分布",
+              "建模口径确定\n（假设 A1–A5）"]
+    for (x, w), t in zip(xs, labels):
+        box(x, row1_y, w, row1_h, t, "in", bold=(t == "赛题与附件"))
+    arrow(25, row1_y + row1_h / 2, 27.6, row1_y + row1_h / 2)
+    arrow(68.4, row1_y + row1_h / 2, 71.6, row1_y + row1_h / 2)
 
-    box(2.0, 3.35, 6.0, 1.25,
-        "判定内核\n边界截断 → 表面最短距离 ≤ 1.8 nm 连边 → 并查集判贯通",
-        "#f6e3c8", fs=9, bold=True)
-    arrow(8.45, 5.15, 8.0, 4.60)
+    # ---- 第二排：判定内核带（与下排四个问题同宽，居中直下）
+    k_x, k_w, k_y, k_h = 1.0, 98.0, 33.0, 11.5
+    box(k_x, k_y, k_w, k_h, "", "kernel")
+    ax.text(k_x + k_w / 2, k_y + k_h - 3.4, "判定内核（四问共用）",
+            ha="center", va="center", color=TONES["kernel"][1],
+            fontsize=9, fontweight="bold")
+    steps = ["边界截断", "表面最短距离 ≤ 1.8 nm 连边", "并查集判贯通"]
+    cx = [k_x + k_w * f for f in (0.19, 0.50, 0.81)]
+    for c, t in zip(cx, steps):
+        ax.text(c, k_y + 4.0, t, ha="center", va="center",
+                color=TONES["kernel"][1], fontsize=8.2)
+    for c0, c1 in zip(cx[:-1], cx[1:]):
+        ax.annotate("", xy=(c1 - 12.5, k_y + 4.0), xytext=(c0 + 12.5, k_y + 4.0),
+                    arrowprops=dict(arrowstyle="-|>", lw=0.9, color=ARROW,
+                                    mutation_scale=8))
+    # 口径 → 内核：先竖直下来再拐进带子，避免斜穿
+    arrow(85.5, row1_y, 85.5, k_y + k_h + 0.4)
 
-    box(0.15, 1.55, 2.2, 1.1, "问题一\n单次判定", "#dceee4")
-    box(2.75, 1.55, 2.2, 1.1, "问题二\n频率估计 $\\hat P$", "#dceee4")
-    box(5.35, 1.55, 2.2, 1.1, "问题三\n反解 $P{=}0.9$", "#dceee4")
-    box(7.95, 1.55, 1.9, 1.1, "问题四\n带约束优化", "#dceee4")
-    for cx in (1.25, 3.85, 6.45, 8.9):
-        arrow(5.0, 3.35, cx, 2.65)
-    for x1, x2 in ((2.35, 2.75), (4.95, 5.35), (7.55, 7.95)):
-        arrow(x1, 2.10, x2, 2.10)
+    # ---- 第三排：四个问题（等宽等距，各自从内核带正下方直落）
+    p_y, p_h, p_w = 15.0, 11.0, 22.5
+    gap = (98.0 - 4 * p_w) / 3
+    px = [1.0 + i * (p_w + gap) for i in range(4)]
+    ptexts = ["问题一\n单次判定", "问题二\n频率估计 $\\hat P$",
+              "问题三\n反解 $P{=}0.9$", "问题四\n带约束优化"]
+    for x, t in zip(px, ptexts):
+        box(x, p_y, p_w, p_h, t, "prob")
+        arrow(x + p_w / 2, k_y - 0.4, x + p_w / 2, p_y + p_h + 0.4)
+    for i in range(3):
+        arrow(px[i] + p_w + 0.4, p_y + p_h / 2, px[i + 1] - 0.4, p_y + p_h / 2)
 
-    box(1.3, 0.10, 7.4, 0.85,
+    # ---- 第四排：校验带
+    c_y, c_h = 1.0, 8.5
+    box(1.0, c_y, 98.0, c_h,
         "校验：几何内核 6 项独立校验 · 灵敏度 · Wilson 区间 · 数字溯源",
-        "#eeeeee", fs=8.5)
-    for cx in (1.25, 3.85, 6.45, 8.9):
-        arrow(cx, 1.55, min(max(cx, 1.6), 8.4), 0.95)
+        "check", fs=8.5)
+    for x in px:
+        arrow(x + p_w / 2, p_y - 0.4, x + p_w / 2, c_y + c_h + 0.4)
 
     fig.tight_layout()
     emit(fig, "01_roadmap", "技术路线：四问共用同一个导通判定内核")
