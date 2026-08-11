@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """介质 B 的盈亏平衡价：多便宜才值得掺？
 
-问题四的答案是"纯 A"，但这是**价格**的结论而不是几何的结论。把它说清楚需要一个数：
-介质 B 的单价降到多少，最优解才会从纯 A 变成混填。
+问题四当前推荐纯 A 配比。为解释这个候选排序，可估计一个局部价格敏感点：
+在当前近阈值拟合下，介质 B 的单价降到多少会使边界成本斜率变号。
 
 设可行边界为 $N_B=g(N_A)$（即达到 $P\\ge0.90$ 所需的最小球数），边界上的成本
 
@@ -11,8 +11,9 @@
 $g'<0$。若 $c_A+c_B g'<0$，成本随 $N_A$ 增大而下降，最优在边界右端点（纯 A）；
 反之应当少用 A、多用 B。盈亏平衡价即 $c_B^\\*=-c_A/g'$。
 
-$g'$ 直接由 `solve_p4.py` 阶段 C **已验证通过**的边界点线性拟合得到——
-这些点每个都用 6000 次试验确认了 $P\\ge0.90$，比再拟合一层代理模型可靠。
+$g'$ 由 `solve_p4.py` 阶段 C 中点估计达到阈值的探测点线性拟合得到。
+其中部分点的 Wilson 区间仍跨 0.90，且介质 B 的边界处理是近似，因此本结果只作
+局部敏感性描述，不是严格可行边界或全局最优证书。
 
 结果写入 results/p4_break_even.json。
 """
@@ -54,14 +55,14 @@ def main() -> int:
     unit_price_now = COST_B / (V_B / 1e9)          # 元/μm³，应为 0.05
 
     out = {
-        "boundary_points_verified": [{"n_a": int(a), "n_b": int(b)} for a, b in pts],
+        "boundary_points_probed": [{"n_a": int(a), "n_b": int(b)} for a, b in pts],
         "slope_dNB_dNA": float(slope),
         "intercept": float(intercept),
         "cost_per_rod_yuan": COST_A,
         "cost_per_sphere_yuan": COST_B,
         "unit_price_now_yuan_per_um3": float(unit_price_now),
     }
-    print(f"已验证的边界点：{[(int(a), int(b)) for a, b in pts]}")
+    print(f"近阈值探测点：{[(int(a), int(b)) for a, b in pts]}")
     print(f"边界斜率 g' = {slope:.4f} 颗/根（少用 1 根 A 需补约 {-slope:.1f} 颗 B）")
     if c_b_star:
         unit_star = c_b_star / (V_B / 1e9)

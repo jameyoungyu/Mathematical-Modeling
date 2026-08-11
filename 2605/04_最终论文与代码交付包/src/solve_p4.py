@@ -133,7 +133,7 @@ def main() -> int:
         print(f"    N_A={c['n_a']:4d} N_B={c['n_b']:5d} 成本={c['cost']:.4f} 元")
     cand = spread
 
-    print("\n=== 阶段 C：候选点大样本直接验证（含向上补 B 直到真正可行）===")
+    print("\n=== 阶段 C：候选点大样本筛选（含向上补 B 直到通过预设筛选规则）===")
     verified = []
     all_probes = []          # 未通过的探测点同样要留痕，否则论文里的表无从溯源
     seen = set()
@@ -172,17 +172,20 @@ def main() -> int:
                 verified.append(pure_a)
 
     best = min(verified, key=lambda r: r["cost_yuan"])
-    print(f"\n最优：N_A={best['n_a']} N_B={best['n_b']}  "
+    print(f"\n已筛选候选中成本最低：N_A={best['n_a']} N_B={best['n_b']}  "
           f"φ_A={best['phi_a']:.3%} φ_B={best['phi_b']:.2%}  "
           f"P={best['p']:.4f}  总成本={best['cost_yuan']:.4f} 元")
     out = {
         "target": TARGET, "mode": mode,
+        "verification_rule": "screening: p>=0.90 and ci_lo>=0.89; only ci_lo>=0.90 confirms feasibility",
+        "global_optimality_proved": False,
         "cost_per_rod_yuan": COST_A, "cost_per_sphere_yuan": COST_B,
         "grid_trials": GRID_TRIALS, "verify_trials": VERIFY_TRIALS,
         "grid": grid, "surrogate_weights": w.tolist(),
         "surrogate_max_abs_resid": float(resid),
         "candidates": cand[:12], "verified": verified, "all_probes": all_probes,
         "best": best,
+        "best_status": "lowest-cost screened candidate; global optimality requires a complete audit certificate",
         "pure_a_reference": pure_a,
     }
     RESULTS.mkdir(parents=True, exist_ok=True)

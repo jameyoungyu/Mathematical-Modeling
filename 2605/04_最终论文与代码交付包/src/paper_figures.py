@@ -284,7 +284,7 @@ def fig_p4() -> None:
               facecolor="w", edgecolor="none")
     ax.set_xlabel("介质 A 根数 $N_A$")
     ax.set_ylabel("介质 B 颗数 $N_B$")
-    ax.set_title("等成本线（虚线）与可行边界（实线）在 $N_B=0$ 处相切",
+    ax.set_title("等成本线（虚线）与可行边界（实线）在 $N_B=0$ 附近相交，形成角点候选",
                  fontsize=9.5, color="#52514e")
     ax.set_xlim(ua.min() - 20, ua.max() + 30)
     ax.set_ylim(-140, ub.max() + 80)
@@ -625,14 +625,14 @@ def fig_marginal() -> None:
                     xytext=(4, -12), textcoords="offset points",
                     fontsize=8.5, color="#52514e", va="top")
 
-    # 可行域（P≥0.90 所需的 N_A）整段落在交叉点右侧——这才是"用不上 B"的原因
+    # 这里只标纯 A 在球柱体口径下达到阈值的区段，不能把它误写成混填问题的可行域。
     p3 = load("p3_threshold.json")
     n_star = None
     if p3:
         n_star = p3["modes"].get("isotropic", {}).get("answer_n_a")
     if n_star:
         ax.axvspan(n_star, x.max() + 20, color=COLORS[0], alpha=0.07, lw=0)
-        ax.annotate(f"可行域 $N_A\\geq {n_star}$\n（A 占优区段）",
+        ax.annotate(f"纯 A 达标区 $N_A\\geq {n_star}$\n（非混填可行域）",
                     xy=(n_star + 6, ax.get_ylim()[1] * 0.72), fontsize=8.5,
                     color="#52514e")
 
@@ -647,7 +647,7 @@ def fig_marginal() -> None:
 
 # ------------------------------------------------- 图10 预算线审计的证据链
 def fig_budget_audit() -> None:
-    """预算线上每个点的 P 与 0.90 的关系——问题四结论的完整证据。
+    """预算线抽样点的 P 与 0.90 的关系——展示已算列及统计不确定性。
 
     表 11 有同样的数，但"哪些点被干净地排除、哪一个卡在 0.90 上"
     要对着置信区间逐行心算；画成带误差棒的图，0.90 这条线一穿而过，
@@ -710,10 +710,10 @@ def fig_budget_audit() -> None:
                 xytext=(-20, -52), textcoords="offset points", ha="right",
                 fontsize=8.5, color=COLORS[1],
                 arrowprops=dict(arrowstyle="->", color=COLORS[1], lw=1.1))
-    ax.set_title("除最右一点外，预算线上所有更便宜的配比都被严格排除",
+    ax.set_title("已抽样预算线列中，除最右一点外均被 Wilson 上界排除",
                  fontsize=9.5, color="#52514e")
     fig.tight_layout()
-    emit(fig, "10_budget_audit", "预算线上逐点审计：$P$ 的点估计与 Wilson 区间")
+    emit(fig, "10_budget_audit", "预算线上抽样审计：$P$ 的点估计与 Wilson 区间")
 
 
 # ------------------------------------------------- 图13 球柱体近似的双侧界

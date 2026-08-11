@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """介质 B 越界处理口径的对照（假设 D8）。
 
-球被边界切开后，碎片其实是球缺。实现里按"整球置于其所在周期像"近似
-（`sphere_mode="wrap"`），在距壁 200 nm 的薄层内会略微高估它的跨接能力。
-对照口径是把球心限制在 $[-(L/2-R),\\,L/2-R]$，保证整颗球都在盒内、不产生碎片
-（`sphere_mode="inside"`）。
+球被边界切开后，碎片其实是球缺。实现里的 `sphere_mode="wrap"` 用整球近似每个球缺；
+`sphere_mode="inside"` 则改变球心采样域，使整球不越界。两者都不是题面截断规则的精确实现，
+只能作为近似口径的包络式对照，不能据此声称球边界误差已被严格夹住。
 
-只在含介质 B 的配置上比较才有意义；问题四的最优解 $N_B=0$，这条假设对最终答案
-没有影响，但它影响可行边界的位置，因而影响搜索过程，所以仍要量化。
+只在含介质 B 的配置上比较才有意义；当前推荐方案 $N_B=0$，这条假设不影响该方案本身，
+但会影响混填可行边界、盈亏平衡价与全局最优性判断，所以仍要量化并明确局限。
 
 结果写入 results/sphere_mode_check.json。
 """
@@ -39,7 +38,8 @@ def main() -> int:
         print(f"    差值（wrap − inside）= {pair['delta_wrap_minus_inside']:+.4f}")
 
     out = {"trials": TRIALS, "cases": rows,
-           "note": "问题四最优解 N_B=0，该口径不影响最终答案，仅影响可行边界位置。"}
+           "note": ("wrap 与 inside 都不是题面球缺截断的精确实现；N_B=0 的推荐方案本身不受影响，"
+                    "但混填可行边界与盈亏平衡价受影响。")}
     RESULTS.mkdir(parents=True, exist_ok=True)
     (RESULTS / "sphere_mode_check.json").write_text(
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")

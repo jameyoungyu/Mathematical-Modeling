@@ -27,7 +27,7 @@
 | `src/solve_p1.py` | 问题一：三个微构体的导通判定 | `results/p1_connectivity.json` |
 | `src/solve_p2.py` | 问题二：四档体积分数的导通概率 | `results/p2_probabilities.json` |
 | `src/solve_p3.py` | 问题三：P≥90% 的最低体积分数 | `results/p3_threshold.json` |
-| `src/solve_p4.py` | 问题四：A/B 混填的最低成本配比 | `results/p4_cost_optimum.json` |
+| `src/solve_p4.py` | 问题四：A/B 混填候选搜索与直接验证 | `results/p4_cost_optimum.json` |
 | `src/p4_backfill_probes.py` | 补记阶段 C 未通过的探测点 | 同上（追加字段） |
 | `src/p4_break_even.py` | 介质 B 的盈亏平衡单价 | `results/p4_break_even.json` |
 | `src/theory_check.py` | 排除体积判据、跃变中点、边际效率 | `results/theory_check.json` |
@@ -35,7 +35,7 @@
 | `src/sphere_mode_check.py` | 介质 B 越界处理口径对照 | `results/sphere_mode_check.json` |
 | `src/cluster_stats.py` | 最大团簇占比（渗流序参量） | `results/cluster_stats.json` |
 | `src/geometry_bracket.py` | 球柱体近似的严格上下界 | `results/geometry_bracket.json` |
-| `src/p4_global_audit.py` | 问题四成本下界的穷举审计（预算线角点法） | `results/p4_global_audit.json` |
+| `src/p4_global_audit.py` | 问题四预算线角点审计与覆盖范围证书 | `results/p4_global_audit.json` |
 | `src/make_results_bundle.py` | 合并结果、装配论文附录 B | `results/results.json` |
 | `src/paper_figures.py` | 全部正文图件 | `figures_paper/` |
 | `src/build_paper_pdf.py` | 由 Markdown 终稿编译提交 PDF | `*_终稿.pdf` |
@@ -54,7 +54,8 @@ python3 build_paper_pdf.py --ai-details    # 支撑材料《AI工具使用详情
 
 依赖：Python ≥3.11、numpy、scipy、matplotlib、openpyxl；编译 PDF 另需 pandoc 与
 texlive-xetex / texlive-lang-chinese（字体用 texlive 自带的 Fandol 开源字族）。
-随机性全部来自 `numpy.random.SeedSequence`，按 worker 分叉，结果与并行度无关、可逐位复现。
+随机性全部来自 `numpy.random.SeedSequence`，固定分成 8 条随机流；worker 只负责调度。
+因此在 numpy 与算法版本相同的前提下，改变并行度仍可逐位复现。
 
 ## 三条影响结论的数据发现
 

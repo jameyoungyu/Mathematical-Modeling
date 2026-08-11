@@ -63,7 +63,7 @@ def preprocess(text: str, include_code: bool) -> str:
     out: list[str] = []
     i = 0
     img_re = re.compile(r"!\[([^\]]*)\]\((figures_paper/[^)]+)\)")
-    cap_re = re.compile(r"^(图|表)\s*\d+\s+\S")
+    cap_re = re.compile(r"^(图|表)\s*\d+(?:-\d+)?\s+\S")
 
     while i < len(lines):
         line = lines[i]

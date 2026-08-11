@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""问题四最优性的穷举式审计：把"代理模型选出来的最好点"升级成"可证的成本下界"。
+"""问题四预算线审计：记录已严格覆盖范围，并显式保留未形成证书的区段。
 
-原做法的漏洞（评审意见指出，属实）：代理模型只在 7×6 的稀疏网格上训练，
-训练点上的最大残差 0.036 并不能约束网格之外的误差；即使把代理模型排在前面的候选
+原做法的漏洞（评审意见指出，属实）：代理模型只在 8×6 的稀疏网格上训练，
+训练点上的最大残差 0.030 并不能约束网格之外的误差；即使把代理模型排在前面的候选
 逐个大样本验证，也排除不掉"代理模型根本没看见的更便宜的可行点"。
 
 严格做法只需要用到已经证明的单调性：**P 对 $N_A$、$N_B$ 都单调不减**。
@@ -136,19 +136,24 @@ def main() -> int:
            "budget_line_checks": line_checks,
            "incumbent": {"n_a": n_a_star, "n_b": best["n_b"], "cost_yuan": cost_star},
            "checks": checks}
-    line_ok = all(c["excluded"] for c in line_checks) if line_checks else True
-    out_all = excluded_all or (line_ok and bool(line_checks))
+    # 预算线离散取样只能排除被实际检查的列及其分量支配点，不能替代未取样整数列。
+    # 旧版把所有已取样列均排除误写成“整个未决区间均排除”，属于覆盖范围错误。
+    out_all = excluded_all
     out["all_cheaper_points_excluded"] = bool(out_all)
     if out_all:
         msg = ("成本低于最优值的整数点全部被排除，"
                f"成本 {cost_star:.4f} 元为全局最小，(N_A,N_B)=({n_a_star},{best['n_b']}) 达到该值。")
     else:
         bad = [c for c in line_checks if not c["excluded"]]
-        rng = f"N_A∈[{min(c['n_a'] for c in bad)},{max(c['n_a'] for c in bad)}]" if bad else "部分区间"
-        msg = (f"{rng} 上的预算线点无法排除：其 P 与 0.90 在统计上不可区分，"
-               f"而成本与 C*={cost_star:.4f} 元相差不到 0.002 元。"
-               f"结论应表述为：{cost_star:.2f} 元是已证明的成本下界，"
-               "达到该下界的配比不唯一（最优解退化）。")
+        msg = (f"角点法仅严格覆盖 N_A≤480；预算线离散检查另排除部分列。"
+               f"N_A∈[481,{n_a_star - 1}] 尚未逐列形成完整证书，"
+               f"且已检查点中有 {len(bad)} 个 Wilson 上界未低于 0.90。"
+               f"因此不能声称成本下界或全局最优；只能说 ({n_a_star},{best['n_b']})、"
+               f"成本 {cost_star:.4f} 元是当前可行性已确认的推荐方案。")
+        out["strictly_covered_n_a_max"] = 480
+        out["not_fully_certified_n_a_interval"] = [481, n_a_star - 1]
+        out["budget_line_sampled_columns"] = [c["n_a"] for c in line_checks]
+        out["budget_line_excluded_columns"] = [c["n_a"] for c in line_checks if c["excluded"]]
     print("\n结论：" + msg)
     out["verdict"] = msg
     RESULTS.mkdir(parents=True, exist_ok=True)

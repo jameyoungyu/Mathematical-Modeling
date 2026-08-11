@@ -5,8 +5,8 @@
 导通概率就是伯努利参数 p，用 Wilson 区间给置信区间（样本比例接近 0 或 1 时，
 正态近似的 p±1.96·se 会给出越界的区间，Wilson 不会）。
 
-所有随机性来自一个 SeedSequence，按 worker 分叉，因此结果与并行度无关，
-换机器重跑能逐位复现。
+所有随机性来自一个 SeedSequence，并固定分成 8 条随机流；worker 只负责调度，
+不参与随机流的生成。因此在 numpy 与算法版本相同的前提下，改变并行度仍可逐位复现。
 """
 
 from __future__ import annotations
@@ -23,6 +23,7 @@ from microstructure import (EDGE, H_A, V_A, V_B, V_BOX, COST_A, COST_B,
                             sample_spheres)
 
 BOX = np.full(3, EDGE)
+N_RANDOM_STREAMS = 8
 
 
 @dataclass(frozen=True)
@@ -78,8 +79,12 @@ def wilson(hits: int, n: int, z: float = 1.959963985) -> tuple[float, float]:
 def estimate_p(cfg: Config, trials: int, seed: int = 20260810,
                workers: int | None = None) -> dict:
     """返回 {p, lo, hi, hits, trials, ...}。"""
-    workers = workers or min(os.cpu_count() or 1, 8)
-    n_chunks = max(workers, 1)
+    if trials <= 0:
+        raise ValueError("trials 必须为正整数")
+    workers = max(1, workers or min(os.cpu_count() or 1, N_RANDOM_STREAMS))
+    # 随机流数固定，不随 workers 或机器核数变化。这样默认 8 核运行与历史结果完全一致，
+    # 1/2/4/8 个 worker 只是以不同并行度调度同一组 jobs。
+    n_chunks = min(N_RANDOM_STREAMS, trials)
     base = trials // n_chunks
     sizes = [base + (1 if i < trials - base * n_chunks else 0) for i in range(n_chunks)]
     sizes = [s for s in sizes if s > 0]
@@ -89,7 +94,7 @@ def estimate_p(cfg: Config, trials: int, seed: int = 20260810,
     if len(jobs) == 1:
         hits = _run_chunk(jobs[0])
     else:
-        with Pool(len(jobs)) as pool:
+        with Pool(min(workers, len(jobs))) as pool:
             hits = sum(pool.map(_run_chunk, jobs))
 
     lo, hi = wilson(hits, trials)
