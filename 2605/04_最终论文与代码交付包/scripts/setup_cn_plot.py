@@ -65,6 +65,26 @@ COLORS = [
 LINESTYLES = ["-", "--", "-.", ":", (0, (3, 1, 1, 1)), (0, (5, 1))]
 MARKERS = ["o", "s", "^", "D", "v", "P", "X", "*"]
 
+# 表示"大小"的连续量必须用**单色深浅**渐变，不能用彩虹型（如 viridis/jet）：
+# 多色渐变会把数值差异编码成色相差异，读者无法判断哪一端更大，
+# 且在灰度打印下不单调。下面是蓝色系单色梯度，亮→暗对应小→大。
+SEQ_BLUE_STOPS = [
+    "#eaf2fd", "#cde2fb", "#9ec5f4", "#6da7ec",
+    "#3987e5", "#2a78d6", "#1c5cab", "#104281", "#0d366b",
+]
+
+# 图面 chrome：网格与轴线用比背景仅深一档的实线细发丝线，不用虚线
+# （虚线会被误读成"阈值"或"外推"，而它只是网格）。
+INK_MUTED = "#898781"
+GRID = "#e1e0d9"
+AXIS = "#c3c2b7"
+
+
+def seq_cmap():
+    """单色蓝渐变 colormap（亮=小，暗=大）。"""
+    from matplotlib.colors import LinearSegmentedColormap
+    return LinearSegmentedColormap.from_list("seq_blue", SEQ_BLUE_STOPS)
+
 
 def find_chinese_font() -> str | None:
     """返回系统上第一个可用的中文字体名，找不到返回 None。"""
@@ -129,14 +149,22 @@ def setup(font_size: int = 11, dpi: int = 300, style: str = "paper") -> str | No
                 "ytick.labelsize": font_size - 1,
                 "legend.fontsize": font_size - 1,
                 "axes.grid": True,
-                "grid.alpha": 0.3,
-                "grid.linewidth": 0.6,
+                "grid.color": GRID,
+                "grid.alpha": 1.0,
+                "grid.linewidth": 0.5,
+                "grid.linestyle": "-",
+                "axes.edgecolor": AXIS,
+                "axes.linewidth": 0.8,
+                "xtick.color": INK_MUTED,
+                "ytick.color": INK_MUTED,
+                "xtick.labelcolor": "#52514e",
+                "ytick.labelcolor": "#52514e",
                 "axes.axisbelow": True,
                 "axes.spines.top": False,
                 "axes.spines.right": False,
                 "axes.prop_cycle": matplotlib.cycler(color=COLORS),
-                "lines.linewidth": 1.8,
-                "lines.markersize": 5,
+                "lines.linewidth": 1.6,
+                "lines.markersize": 4.5,
                 "legend.frameon": False,
                 "pdf.fonttype": 42,
                 "ps.fonttype": 42,

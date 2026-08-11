@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -19,7 +20,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT / "src"))
 
-from setup_cn_plot import COLORS, LINESTYLES, MARKERS, savefig_bundle, setup  # noqa: E402
+from setup_cn_plot import (COLORS, LINESTYLES, MARKERS, savefig_bundle,  # noqa: E402
+                           seq_cmap, setup)
 
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
@@ -60,7 +62,7 @@ def fig_orientation() -> None:
     cdf_iso = t
     cdf_pol = (np.pi - 2 * np.arccos(np.clip(t, 0, 1))) / np.pi
 
-    fig, axes = plt.subplots(1, 2, figsize=(9.6, 3.9))
+    fig, axes = plt.subplots(1, 2, figsize=(9.6, 3.43))
     ax = axes[0]
     ax.step(ux, emp, where="post", color=COLORS[5], lw=2.0, label="附件组 3 经验分布 (n=354)")
     ax.plot(t, cdf_iso, color=COLORS[1], ls=LINESTYLES[1], lw=1.8, label="球面均匀（各向同性）")
@@ -98,7 +100,7 @@ def fig_fragments() -> None:
     lens = np.linalg.norm(pieces[:, 3:] - pieces[:, :3], axis=1)
     dropped = np.array(audit["groups"]["组3"]["dropped_per_medium_nm"])
 
-    fig, ax = plt.subplots(figsize=(7.2, 3.9))
+    fig, ax = plt.subplots(figsize=(7.2, 3.43))
     bins = np.linspace(0, 5000, 51)
     ax.hist(lens, bins=bins, color=COLORS[0], alpha=0.85, label="附件中保留的碎片 (n=535)")
     ax.hist(dropped, bins=bins, color=COLORS[1], alpha=0.85,
@@ -126,7 +128,7 @@ def fig_p1() -> None:
 
     # 组 1、组 2 的截面只有 1000 nm（长宽比 10:1），画成与组 3 等高的面板会浪费大量纵向空间，
     # 整张图高达 8.2 in 时会独占一页。按各组真实长宽比分配高度，总高压到 5.8 in。
-    fig, axes = plt.subplots(3, 1, figsize=(7.1, 5.8),
+    fig, axes = plt.subplots(3, 1, figsize=(7.1, 5.1),
                              gridspec_kw={"height_ratios": [0.72, 0.72, 2.35]})
     for ax, name in zip(axes, ["组1", "组2", "组3"]):
         pieces = data[name]
@@ -182,7 +184,7 @@ def fig_p2p3() -> None:
     p2, p3 = load("p2_probabilities.json"), load("p3_threshold.json")
     if not p2:
         return
-    fig, ax = plt.subplots(figsize=(7.2, 4.4))
+    fig, ax = plt.subplots(figsize=(7.2, 3.87))
     for k, mode in enumerate((PRIMARY_ORIENTATION, CONTROL_ORIENTATION)):
         rows = p2["runs"].get(mode)
         if not rows:
@@ -229,6 +231,15 @@ def fig_p2p3() -> None:
 
 # ------------------------------------------------------------------ 图5 问题四
 def fig_p4() -> None:
+    """(N_A,N_B) 平面上的概率曲面、可行边界与等成本线。
+
+    改动三处：
+    1. 曲面改用**单色蓝渐变**。旧版用 viridis（紫—绿—黄多色），
+       读者无法从色相判断哪端概率更高，灰度打印也不单调；
+    2. 只画一条等成本线（最优成本）。旧版另画一条"成本高 15%"的白虚线，
+       与前者几乎平行且同色，除了让人误以为是可行边界之外没有信息；
+    3. 注记框移出数据区，星号缩小。
+    """
     p4 = load("p4_cost_optimum.json")
     if not p4:
         return
@@ -241,38 +252,45 @@ def fig_p4() -> None:
     for a, b, v in zip(na, nb, pp):
         P[np.searchsorted(ub, b), np.searchsorted(ua, a)] = v
 
-    fig, ax = plt.subplots(figsize=(7.4, 4.8))
-    im = ax.pcolormesh(ua, ub, P, cmap="viridis", shading="nearest", vmin=0, vmax=1)
-    cs = ax.contour(ua, ub, P, levels=[0.9], colors=[COLORS[1]], linewidths=2.2)
-    ax.clabel(cs, fmt={0.9: "P=90%"}, fontsize=8)
-    fig.colorbar(im, ax=ax, label="导通概率 P")
+    fig, ax = plt.subplots(figsize=(7.2, 3.87))
+    im = ax.pcolormesh(ua, ub, P, cmap=seq_cmap(), shading="gouraud",
+                       vmin=0, vmax=1, rasterized=True)
+    cb = fig.colorbar(im, ax=ax, label="导通概率 $P$", pad=0.02)
+    cb.outline.set_visible(False)
+
+    # 等高线自带的 clabel 会沿线旋转排版，中文竖着转 60° 基本没法读；
+    # 改为在曲线一端放一个水平标注。
+    cs = ax.contour(ua, ub, P, levels=[0.9], colors=[COLORS[1]], linewidths=1.8)
+    seg = cs.allsegs[0][0] if cs.allsegs and cs.allsegs[0] else None
+    if seg is not None and len(seg) > 2:
+        hx, hy = seg[0]
+        ax.annotate("$P=90\\%$ 可行边界", xy=(hx, hy), xytext=(10, -6),
+                    textcoords="offset points", fontsize=8.5, color=COLORS[1],
+                    ha="left", va="top")
 
     best = p4["best"]
-    ca, cb = p4["cost_per_rod_yuan"], p4["cost_per_sphere_yuan"]
+    ca, cb_ = p4["cost_per_rod_yuan"], p4["cost_per_sphere_yuan"]
     xs = np.linspace(ua.min() - 20, ua.max() + 30, 120)
-    for c, ls, lab in ((best["cost_yuan"], "-", "最优等成本线"),
-                       (best["cost_yuan"] * 1.15, ":", "成本高 15%")):
-        ax.plot(xs, (c - xs * ca) / cb, color="w", ls=ls, lw=1.6, label=lab)
-    # 已直接验证过的边界点，说明最优不是拟合出来的
+    ax.plot(xs, (best["cost_yuan"] - xs * ca) / cb_, color="w", ls="--", lw=1.4,
+            label=f"等成本线 {best['cost_yuan']:.2f} 元")
+
     for v in p4.get("verified", []):
-        ax.plot([v["n_a"]], [v["n_b"]], marker="o", ms=5, mfc="none",
-                mec="w", mew=1.2, zorder=5)
-    ax.plot([best["n_a"]], [best["n_b"]], marker="*", ms=20, color=COLORS[3],
-            markeredgecolor="k", markeredgewidth=0.8, zorder=6)
-    ax.annotate(f"最优 $N_A$={best['n_a']}，$N_B$=0\n"
-                f"总成本 {best['cost_yuan']:.3f} 元，$P$={best['p']:.4f}",
-                xy=(best["n_a"], best["n_b"]), xycoords="data",
-                xytext=(0.03, 0.90), textcoords="axes fraction",
-                fontsize=8.5, color="w",
-                arrowprops=dict(arrowstyle="->", color="w", lw=1.2),
-                bbox=dict(boxstyle="round,pad=0.35", fc="0.2", ec="none", alpha=0.9))
-    ax.legend(loc="upper right", fontsize=7.5, framealpha=0.85)
+        ax.plot([v["n_a"]], [v["n_b"]], marker="o", ms=4.5, mfc="none",
+                mec="w", mew=1.1, zorder=5)
+    ax.plot([best["n_a"]], [best["n_b"]], marker="*", ms=13, color=COLORS[3],
+            mec="w", mew=0.9, zorder=6, label="推荐配比 $(608,0)$")
+
+    ax.legend(loc="lower left", fontsize=8, framealpha=0.92,
+              facecolor="w", edgecolor="none")
     ax.set_xlabel("介质 A 根数 $N_A$")
     ax.set_ylabel("介质 B 颗数 $N_B$")
+    ax.set_title("等成本线（虚线）与可行边界（实线）在 $N_B=0$ 处相切",
+                 fontsize=9.5, color="#52514e")
     ax.set_xlim(ua.min() - 20, ua.max() + 30)
-    ax.set_ylim(-160, ub.max() + 120)
+    ax.set_ylim(-140, ub.max() + 80)
+    ax.grid(False)
     fig.tight_layout()
-    emit(fig, "07_p4_cost_optimum",
+    emit(fig, "08_p4_cost_optimum",
          "$(N_A,N_B)$ 平面上的导通概率、可行边界与等成本线")
 
 
@@ -281,7 +299,7 @@ def fig_sensitivity() -> None:
     s = load("sensitivity.json")
     if not s:
         return
-    fig, axes = plt.subplots(1, 2, figsize=(9.6, 3.9))
+    fig, axes = plt.subplots(1, 2, figsize=(9.6, 3.43))
     ax = axes[0]
     g = s.get("gap_scan", [])
     if g:
@@ -319,7 +337,7 @@ def fig_sensitivity() -> None:
         ax.set_xlim(0, 1.05)
         ax.set_title("建模口径对结论的影响（同一 φ=0.70%）", fontsize=9)
     fig.tight_layout()
-    emit(fig, "08_sensitivity",
+    emit(fig, "11_sensitivity",
          "导通概率对判据阈值与建模口径的敏感性")
 
 
@@ -329,7 +347,7 @@ def fig_roadmap() -> None:
     """技术路线图：四问共用一个判定内核，区别只在内核的用法。"""
     from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 
-    fig, ax = plt.subplots(figsize=(7.4, 4.5))
+    fig, ax = plt.subplots(figsize=(7.4, 3.96))
     ax.set_xlim(0, 10); ax.set_ylim(0, 6.4); ax.axis("off")
 
     def box(x, y, w, h, text, fc, fs=8.5, bold=False):
@@ -378,7 +396,7 @@ def fig_schematic() -> None:
     """边界截断规则与导通判据的示意图（非真实数据，比例已放大）。"""
     from matplotlib.patches import Circle, FancyArrowPatch, Rectangle
 
-    fig = plt.figure(figsize=(9.4, 3.9))
+    fig = plt.figure(figsize=(9.4, 3.43))
     gs = fig.add_gridspec(2, 2, width_ratios=[1.05, 1.35], hspace=0.55, wspace=0.22)
 
     # ---- (a) 边界截断
@@ -442,7 +460,7 @@ def fig_convergence() -> None:
     lo = np.array([c["ci_lo"] for c in conv])
     hi = np.array([c["ci_hi"] for c in conv])
 
-    fig, axes = plt.subplots(1, 2, figsize=(9.2, 3.6))
+    fig, axes = plt.subplots(1, 2, figsize=(9.2, 3.17))
     ax = axes[0]
     ax.errorbar(T, p, yerr=[p - lo, hi - p], color=COLORS[0], marker="o",
                 capsize=3, lw=1.6)
@@ -460,11 +478,19 @@ def fig_convergence() -> None:
     ax.legend(fontsize=8)
     ax.set_title("半宽按 1/√T 收窄", fontsize=9)
     fig.tight_layout()
-    emit(fig, "09_convergence", "蒙特卡洛估计的收敛性")
+    emit(fig, "12_convergence", "蒙特卡洛估计的收敛性")
 
 
 # ------------------------------------------------------------------ 图10 团簇结构
 def fig_clusters() -> None:
+    """最大团簇占比与导通概率。
+
+    两条曲线都是 [0,1] 上的无量纲比例，因此**共用同一根纵轴**。
+    旧版用了双纵轴（twinx）：两个刻度的对齐方式是任意的，会凭空制造出
+    "两条曲线在某处相交/分离"的假象，是图表最常见的误导性做法。
+    共轴之后，"P 已接近 1 而 S_max 仍在 0.2 附近"这一核心事实
+    由两条线的真实垂直距离直接读出，不再依赖刻度怎么摆。
+    """
     c = load("cluster_stats.json")
     if not c:
         return
@@ -474,38 +500,214 @@ def fig_clusters() -> None:
     sd = np.array([r["s_max_sd"] for r in rows])
     pp = np.array([r["p_percolate"] for r in rows])
 
-    fig, ax = plt.subplots(figsize=(7.2, 4.0))
-    ax.errorbar(x, smax, yerr=sd, color=COLORS[0], marker="o", capsize=3, lw=1.8,
-                label="最大团簇占全部碎片的比例 $S_{\\max}$")
+    fig, ax = plt.subplots(figsize=(7.0, 3.43))
+    ax.fill_between(x, np.clip(smax - sd, 0, 1), smax + sd,
+                    color=COLORS[0], alpha=0.15, lw=0)
+    ax.plot(x, pp, color=COLORS[1], ls=LINESTYLES[1], marker="s", ms=4.5,
+            lw=1.6, label="导通概率 $P$")
+    ax.plot(x, smax, color=COLORS[0], marker="o", ms=4.5, lw=1.6,
+            label="最大团簇占全部碎片的比例 $S_{\\max}$")
+
     ax.set_xlabel("介质 A 体积分数 φ / %")
-    ax.set_ylabel("$S_{\\max}$", color=COLORS[0])
-    ax.tick_params(axis="y", labelcolor=COLORS[0])
-    ax.set_ylim(0, 1.02)
+    ax.set_ylabel("比例（两者同为 [0,1] 无量纲量）")
+    ax.set_ylim(0, 1.04)
+    ax.set_xlim(x.min() - 0.03, x.max() + 0.09)
+    ax.legend(fontsize=8.5, loc="upper left")
 
-    ax2 = ax.twinx()
-    ax2.plot(x, pp, color=COLORS[1], ls=LINESTYLES[1], marker="s", lw=1.8,
-             label="导通概率 P")
-    ax2.set_ylabel("导通概率 P", color=COLORS[1])
-    ax2.tick_params(axis="y", labelcolor=COLORS[1])
-    ax2.set_ylim(0, 1.02)
-    ax2.grid(False)
-
-    h1, l1 = ax.get_legend_handles_labels()
-    h2, l2 = ax2.get_legend_handles_labels()
-    ax.legend(h1 + h2, l1 + l2, fontsize=8.5, loc="upper left")
-    ax.annotate("P 已接近 1 时，最大团簇仍只占约 22% 的碎片",
-                xy=(1.0, smax[-1]), xytext=(0.55, 0.62), fontsize=8.5,
-                arrowprops=dict(arrowstyle="->", lw=1.1, color="0.35"))
+    # 只在最右端直接标注两条线的落点，不给每个点标数字
+    ax.annotate(f"{pp[-1]:.2f}", (x[-1], pp[-1]), xytext=(6, -2),
+                textcoords="offset points", color=COLORS[1], fontsize=8.5,
+                va="center")
+    ax.annotate(f"{smax[-1]:.2f}", (x[-1], smax[-1]), xytext=(6, -2),
+                textcoords="offset points", color=COLORS[0], fontsize=8.5,
+                va="center")
+    # 用一段竖直标注把"同一体积分数下两者的差距"标出来，替代旧版横穿图面的箭头
+    ax.annotate("", xy=(x[-1], pp[-1]), xytext=(x[-1], smax[-1]),
+                arrowprops=dict(arrowstyle="<->", lw=1.0, color="#52514e"))
+    ax.text(x[-1] - 0.02, (pp[-1] + smax[-1]) / 2,
+            "P 已近 1，\n最大团簇仍只占约 %.0f%%" % (smax[-1] * 100),
+            fontsize=8.5, ha="right", va="center", color="#52514e")
     fig.tight_layout()
-    emit(fig, "10_cluster_structure", "最大团簇占比与导通概率随体积分数的变化")
+    emit(fig, "07_cluster_structure", "最大团簇占比与导通概率随体积分数的变化")
+
+
+# --------------------------------------------------- 图9 两种介质的边际效率
+def fig_marginal() -> None:
+    """每元钱买到多少 ΔP：两种介质的边际效率随 N_A 的变化。
+
+    这是问题四"为什么不掺 B"的机理图。表 10 给的是同样的数，
+    但交叉点的位置在表里要靠逐列比大小才看得出来，画成两条线一眼可辨。
+    """
+    t = load("theory_check.json")
+    if not t or "marginal_efficiency" not in t:
+        return
+    me = t["marginal_efficiency"]
+    ks = sorted(me, key=int)
+    x = np.array([int(k) for k in ks], float)
+    ea = np.array([me[k].get("dP_dNA_per_yuan", np.nan) for k in ks], float)
+    eb = np.array([me[k].get("dP_dNB_per_yuan", np.nan) for k in ks], float)
+
+    fig, ax = plt.subplots(figsize=(7.0, 3.34))
+    ax.plot(x, ea, color=COLORS[0], marker="o", ms=4.5, lw=1.6, label="加介质 A")
+    ax.plot(x, eb, color=COLORS[1], marker="s", ms=4.5, lw=1.6,
+            ls=LINESTYLES[1], label="加介质 B")
+
+    # 交叉点：A 的效率首次超过 B 的那一段
+    cross = None
+    for i in range(1, len(x)):
+        if np.isfinite(ea[i - 1]) and ea[i - 1] < eb[i - 1] and ea[i] > eb[i]:
+            cross = (x[i - 1] + x[i]) / 2
+            break
+    if cross is not None:
+        ax.axvline(cross, color="#898781", lw=0.9, ls=":")
+        ax.annotate(f"效率交叉 $N_A\\approx {cross:.0f}$", xy=(cross, ax.get_ylim()[1]),
+                    xytext=(4, -12), textcoords="offset points",
+                    fontsize=8.5, color="#52514e", va="top")
+
+    # 可行域（P≥0.90 所需的 N_A）整段落在交叉点右侧——这才是"用不上 B"的原因
+    p3 = load("p3_threshold.json")
+    n_star = None
+    if p3:
+        n_star = p3["modes"].get("isotropic", {}).get("answer_n_a")
+    if n_star:
+        ax.axvspan(n_star, x.max() + 20, color=COLORS[0], alpha=0.07, lw=0)
+        ax.annotate(f"可行域 $N_A\\geq {n_star}$\n（A 占优区段）",
+                    xy=(n_star + 6, ax.get_ylim()[1] * 0.72), fontsize=8.5,
+                    color="#52514e")
+
+    ax.set_xlabel("介质 A 根数 $N_A$")
+    ax.set_ylabel("每元钱换来的 $\\Delta P$")
+    ax.set_xlim(x.min() - 15, x.max() + 20)
+    ax.set_ylim(bottom=0)
+    ax.legend(fontsize=8.5, loc="upper left")
+    fig.tight_layout()
+    emit(fig, "09_marginal_efficiency", "两种介质每元钱的边际效率及其交叉点")
+
+
+# ------------------------------------------------- 图10 预算线审计的证据链
+def fig_budget_audit() -> None:
+    """预算线上每个点的 P 与 0.90 的关系——问题四结论的完整证据。
+
+    表 11 有同样的数，但"哪些点被干净地排除、哪一个卡在 0.90 上"
+    要对着置信区间逐行心算；画成带误差棒的图，0.90 这条线一穿而过，
+    退化点自己跳出来。
+    """
+    a = load("p4_global_audit.json")
+    if not a:
+        return
+    rows = list(a.get("budget_line_checks", []))
+    if not rows:
+        return
+    rc = load("p4_marginal_recheck.json")
+    big = {(r["n_a"], r["n_b"]): r for r in (rc or {}).get("points", [])}
+
+    # p4_global_audit.json 的预算线记录只存了 ci_hi（判据只用上界），
+    # 但误差棒必须两侧都有，否则棒子只朝上、把点在视觉上压到区间底部。
+    # Wilson 区间由 (p̂, 试验数) 唯一确定，这里按同一公式补出下界。
+    def wilson_pair(p_hat: float, n: int) -> tuple[float, float]:
+        z = 1.959964
+        den = 1.0 + z * z / n
+        c = (p_hat + z * z / (2 * n)) / den
+        h = z * math.sqrt(p_hat * (1 - p_hat) / n + z * z / (4 * n * n)) / den
+        return c - h, c + h
+
+    n_small = a.get("trials", 2500)
+    x = np.arange(len(rows))
+    fig, ax = plt.subplots(figsize=(7.4, 3.52))
+    ax.axhline(0.90, color=COLORS[1], lw=1.4, ls="--", zorder=1)
+    ax.annotate("$P=0.90$ 约束线", xy=(0, 0.90), xytext=(2, 5),
+                textcoords="offset points", ha="left", fontsize=8.5,
+                color=COLORS[1])
+
+    for i, r in enumerate(rows):
+        key = (r["n_a"], r["n_b"])
+        b = big.get(key)
+        if b:
+            pt, lo, hi = b["p"], b["ci_lo"], b["ci_hi"]
+        else:
+            pt = r["p"]
+            lo, hi = wilson_pair(pt, n_small)
+            hi = r.get("ci_hi", hi)          # 上界以文件里存的为准
+        undecided = not (hi < 0.90 or lo >= 0.90)
+        col = COLORS[1] if undecided else COLORS[0]
+        ax.errorbar([i], [pt], yerr=[[pt - lo], [hi - pt]], color=col,
+                    marker="o" if not b else "D", ms=5 if not b else 6,
+                    capsize=3, lw=1.4, zorder=3)
+        if b:
+            ax.annotate("$T$=20000", (i, lo), xytext=(0, -14),
+                        textcoords="offset points", ha="center",
+                        fontsize=7.5, color="#898781")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([f"({r['n_a']},{r['n_b']})" for r in rows],
+                       rotation=30, ha="right", fontsize=8)
+    ax.set_xlabel("预算线上的整数配比 $(N_A,\\,N_B)$，成本均低于 9.0252 元")
+    ax.set_ylabel("导通概率 $P$（误差棒为 Wilson 95% 区间）")
+    ax.set_xlim(-0.6, len(rows) - 0.4)
+    last = rows[-1]
+    ax.annotate("区间横跨 0.90：\n可行性无法判定", xy=(len(rows) - 1, 0.9003),
+                xytext=(-20, -52), textcoords="offset points", ha="right",
+                fontsize=8.5, color=COLORS[1],
+                arrowprops=dict(arrowstyle="->", color=COLORS[1], lw=1.1))
+    ax.set_title("除最右一点外，预算线上所有更便宜的配比都被严格排除",
+                 fontsize=9.5, color="#52514e")
+    fig.tight_layout()
+    emit(fig, "10_budget_audit", "预算线上逐点审计：$P$ 的点估计与 Wilson 区间")
+
+
+# ------------------------------------------------- 图13 球柱体近似的双侧界
+def fig_bracket() -> None:
+    """内接/外接球柱体给出的 P 双侧界，以及它如何把问题三的答案夹成区间。"""
+    g = load("geometry_bracket.json")
+    if not g:
+        return
+    p3 = g.get("problem3", [])
+    if not p3:
+        return
+    x = np.array([r["phi"] for r in p3]) * 100
+    lo = np.array([r["lower"]["p"] for r in p3])
+    hi = np.array([r["upper"]["p"] for r in p3])
+
+    fig, ax = plt.subplots(figsize=(7.0, 3.43))
+    ax.fill_between(x, lo, hi, color=COLORS[0], alpha=0.18, lw=0,
+                    label="真实平端面圆柱的 $P$ 必落在此带内")
+    ax.plot(x, hi, color=COLORS[0], marker="o", ms=4.5, lw=1.6,
+            label="外界 $P(K^+)$：球柱体（轴长 5000）")
+    ax.plot(x, lo, color=COLORS[2], marker="^", ms=4.5, lw=1.6,
+            ls=LINESTYLES[2], label="内界 $P(K^-)$：轴长 4940")
+    ax.axhline(0.90, color=COLORS[1], lw=1.4, ls="--")
+    ax.annotate("$P=0.90$", xy=(x.min(), 0.90), xytext=(2, 5),
+                textcoords="offset points", fontsize=8.5, color=COLORS[1])
+
+    lo_ok = [r["phi"] for r in p3 if r["lower_ok"]]
+    hi_ok = [r["phi"] for r in p3 if r["upper_ok"]]
+    if hi_ok and lo_ok:
+        a, b = min(hi_ok) * 100, min(lo_ok) * 100
+        ax.axvspan(a, b, color=COLORS[1], alpha=0.10, lw=0)
+        ax.annotate(f"答案被夹在 [{a:.2f}%, {b:.2f}%]",
+                    xy=((a + b) / 2, 0.97), xycoords=("data", "axes fraction"),
+                    ha="center", va="top", fontsize=8.5, color="#52514e")
+        ax.plot([b], [0.90], marker="*", ms=13, color=COLORS[1],
+                mec="w", mew=0.9, zorder=6)
+        ax.annotate(f"可证达标 {b:.2f}%", xy=(b, 0.90), xytext=(6, -16),
+                    textcoords="offset points", fontsize=8.5, color=COLORS[1])
+
+    ax.set_xlabel("介质 A 体积分数 φ / %")
+    ax.set_ylabel("导通概率 $P$")
+    ax.set_xlim(x.min() - 0.005, x.max() + 0.005)
+    ax.legend(fontsize=8, loc="lower right")
+    fig.tight_layout()
+    emit(fig, "13_geometry_bracket", "球柱体近似的严格双侧界与问题三答案的夹逼")
 
 
 def main() -> int:
     font = setup(font_size=10)
     print(f"中文字体：{font}")
+    # 顺序 = 正文中出现的先后。文件名前缀即图号，改动顺序时两者一起改，
+    # 避免出现"图 10 排在图 7 前面"这类编号与出现次序不一致的问题。
     for f in (fig_roadmap, fig_orientation, fig_fragments, fig_schematic,
-              fig_p1, fig_p2p3, fig_clusters, fig_p4, fig_sensitivity,
-              fig_convergence):
+              fig_p1, fig_p2p3, fig_clusters, fig_p4, fig_marginal,
+              fig_budget_audit, fig_sensitivity, fig_convergence, fig_bracket):
         try:
             f()
         except Exception as e:  # 单张图失败不该阻断其余图
