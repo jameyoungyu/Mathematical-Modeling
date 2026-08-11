@@ -147,7 +147,8 @@ def main() -> int:
         rng = f"N_A∈[{min(c['n_a'] for c in bad)},{max(c['n_a'] for c in bad)}]" if bad else "部分区间"
         msg = (f"{rng} 上的预算线点无法排除：其 P 与 0.90 在统计上不可区分，"
                f"而成本与 C*={cost_star:.4f} 元相差不到 0.002 元。"
-               "结论应表述为：8.19 元是已证明的成本下界，达到该下界的配比不唯一（最优解退化）。")
+               f"结论应表述为：{cost_star:.2f} 元是已证明的成本下界，"
+               "达到该下界的配比不唯一（最优解退化）。")
     print("\n结论：" + msg)
     out["verdict"] = msg
     RESULTS.mkdir(parents=True, exist_ok=True)
