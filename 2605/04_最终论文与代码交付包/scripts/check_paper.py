@@ -505,23 +505,27 @@ def normalize_number(x: float | int | str) -> str:
     return f"{v:.10g}"
 
 
-def number_matches(paper_num: float, known: set[str]) -> bool:
-    """论文里的数字能否在结果集合中找到出处（允许四舍五入）。"""
+def number_matches(token: str | float, known: set[str]) -> bool:
+    """论文数字能否由某个原始结果值按其书写精度直接得到。
+
+    不再把每个已知值任意舍入到 0--3 位后与任意论文数字碰撞，也不再忽略正负号。
+    只接受原值相等，或论文明确写出至少 3 位小数时按同样位数舍入相等。
+    """
+    token = str(token)
+    paper_num = float(token)
     if normalize_number(paper_num) in known:
         return True
+    decimals = len(token.rsplit(".", 1)[1]) if "." in token else 0
     for k in known:
         kv = float(k)
-        if kv == 0:
-            continue
-        # 论文常写成保留 1-2 位小数的版本
-        for digits in (0, 1, 2, 3):
-            if abs(round(kv, digits) - paper_num) < 1e-9:
-                return True
-        # 比例/百分号换算
-        if abs(kv * 100 - paper_num) < 1e-6 or abs(kv / 100 - paper_num) < 1e-12:
+        if decimals >= 3 and abs(round(kv, decimals) - paper_num) < 10 ** (-(decimals + 2)):
             return True
-        # 正负号：论文常写"系数绝对值 0.412"或把负号写进文字里
-        if abs(abs(kv) - abs(paper_num)) < 1e-9:
+        # 比例/百分数换算仍要求精确，或按论文至少 3 位小数的精度舍入。
+        scaled = (kv * 100, kv / 100)
+        if any(abs(v - paper_num) < 1e-10 for v in scaled):
+            return True
+        if decimals >= 3 and any(
+                abs(round(v, decimals) - paper_num) < 10 ** (-(decimals + 2)) for v in scaled):
             return True
     return False
 
@@ -586,13 +590,17 @@ def check_number_provenance(
         n_data = len(data_known - known)
         known |= data_known
 
-    # 只查最要命的区域：摘要和各问的结果/检验部分
-    targets = {
-        "摘要": find_section(sections, "摘要"),
-        "结果": find_section(sections, "结果", "求解", "检验", "灵敏度", "敏感性"),
-    }
-    if not any(targets.values()):
-        targets = {"全文": text}
+    # 扫描摘要到结论的全部正文；参考文献与附录代码不属于结果溯源范围。
+    masked = mask_code_blocks(text)
+    cuts = []
+    ref = REFERENCE_HEADING.search(masked)
+    app = APPENDIX_HEADING_RE.search(masked)
+    if ref:
+        cuts.append(ref.start())
+    if app:
+        cuts.append(app.start())
+    main_text = text[:min(cuts)] if cuts else text
+    targets = {"全文正文": main_text}
 
     unexplained: dict[str, list[str]] = {}
     for area, body in targets.items():
@@ -607,15 +615,14 @@ def check_number_provenance(
             tok = m.group(0)
             if "." not in tok and (len(tok.lstrip("-")) < 3 or YEAR_RE.match(tok)):
                 continue  # 小整数与年份不算结果型数字
-            val = float(tok)
-            if not number_matches(val, known):
+            if not number_matches(tok, known):
                 unexplained.setdefault(area, []).append(tok)
 
     for area, nums in unexplained.items():
         uniq = sorted(set(nums), key=lambda s: nums.index(s))
         # 自动匹配允许四舍五入但仍会误报题给常数、公式参数和排版编号；先要求人工核对，
         # 不能仅凭脚本把它定为资格问题。
-        severity = DEDUCT if area == "摘要" else HINT
+        severity = HINT
         report.add(
             severity,
             "数字溯源",
@@ -628,7 +635,9 @@ def check_number_provenance(
         src = f"results.json（{n_results} 个数值）"
         if n_data:
             src += f" + 题目附件（另 {n_data} 个数值）"
-        report.add(HINT, "数字溯源", f"通过：论文中的结果型数字均能在 {src} 中找到出处。")
+        report.add(HINT, "数字溯源",
+                   f"全文机械筛查通过：未发现无法由 {src} 直接匹配或按明确书写精度舍入得到的结果型数字。"
+                   "该检查用于发现遗漏，不等同于逐项来源证明。")
 
 
 # ---------------------------------------------------------------- 主流程

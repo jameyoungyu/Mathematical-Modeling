@@ -131,6 +131,9 @@ def fig_p1() -> None:
     同时触到左右两面的团簇才是真正的贯通团簇。按这个口径，组 3 的贯通团簇只有 17 个碎片
     （3.2%），组 2 只有 5 个（10.2%）——图与第 5.3 节这才是一致的。
     """
+    # 该函数常被单独调用来局部重绘。不能只依赖 main() 里的全局 setup()，
+    # 否则单独运行时 Matplotlib 会回退到不含中文字形的默认字体，输出方框乱码。
+    setup(font_size=10)
     res = load("p1_connectivity.json")
     if not res:
         return
@@ -296,7 +299,7 @@ def fig_p4() -> None:
         ax.plot([v["n_a"]], [v["n_b"]], marker="o", ms=4.5, mfc="none",
                 mec="w", mew=1.1, zorder=5)
     ax.plot([best["n_a"]], [best["n_b"]], marker="*", ms=13, color=COLORS[3],
-            mec="w", mew=0.9, zorder=6, label="推荐配比 $(608,0)$")
+            mec="w", mew=0.9, zorder=6, label="$K^+$ 低成本候选 $(608,0)$")
 
     ax.legend(loc="lower left", fontsize=8, framealpha=0.92,
               facecolor="w", edgecolor="none")
@@ -335,8 +338,9 @@ def fig_sensitivity() -> None:
         # 纵轴按 0–1 全量程画：δ 变动 ±50% 只挪动 0.048，放大纵轴会把
         # "不敏感"画成一条陡线，与结论相反。右图同样用 0–1 横轴，两图可直接对照。
         ax.set_ylim(0, 1.05)
-        ax.annotate(f"δ 变动 ±50%，P 仅在 {min(y):.3f}–{max(y):.3f} 之间移动（极差 {max(y)-min(y):.3f}）",
-                    xy=(0.5, 0.93), xycoords="axes fraction", ha="center", fontsize=8)
+        ax.annotate(f"δ±50%：\nP={min(y):.3f}–{max(y):.3f}（极差 {max(y)-min(y):.3f}）",
+                    xy=(0.05, 0.86), xycoords="axes fraction", ha="left", fontsize=8,
+                    bbox=dict(boxstyle="round,pad=0.18", fc="white", ec="none", alpha=0.9))
         ax.set_title("对判据阈值的敏感性（φ=0.70% 固定）", fontsize=9)
 
     ax = axes[1]

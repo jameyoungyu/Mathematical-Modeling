@@ -16,6 +16,10 @@
 \usepackage{fvextra}
 \usepackage{seqsplit}
 
+% 代码逐字环境必须覆盖希腊字母与常用校验符号。按文件名调用 TeX Live 随附的
+% DejaVu Sans Mono，避免系统字体差异，也避免 φ/δ/π/✓ 等字符被静默丢弃。
+\setmonofont{DejaVuSansMono.ttf}[Scale=MatchLowercase]
+
 % 页面：A4，四边留白不小于 2.5 cm
 \geometry{a4paper, top=2.6cm, bottom=2.6cm, left=2.7cm, right=2.7cm}
 

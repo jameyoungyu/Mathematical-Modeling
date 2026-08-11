@@ -19,7 +19,6 @@ from pathlib import Path
 
 import numpy as np
 
-import microstructure as ms
 from microstructure import CONTROL_ORIENTATION
 from simulate import Config, estimate_p, n_rods_for_phi, wilson
 
@@ -29,12 +28,8 @@ TRIALS = 4000
 
 
 def with_gap(gap: float, n_a: int, trials: int) -> dict:
-    old = ms.GAP
-    try:
-        ms.GAP = gap
-        r = estimate_p(Config(n_a=n_a), trials)
-    finally:
-        ms.GAP = old
+    # gap 随 Config 显式传给 worker；spawn/fork/forkserver 下结果一致。
+    r = estimate_p(Config(n_a=n_a, gap=gap), trials)
     r["gap"] = gap
     return r
 
@@ -46,8 +41,6 @@ def main() -> int:
     print(f"φ={PHI:.2%}, N_A={n_a}")
     print("--- S1 判据阈值 δ ---")
     for gap in (0.9, 1.35, 1.8, 2.25, 2.7):
-        # Linux 下 multiprocessing 默认 fork，子进程继承已改写的 ms.GAP；
-        # percolates 在调用时才查 microstructure 的模块全局，因此改写生效。
         # 样本量减半以控制时间。
         r = with_gap(gap, n_a, TRIALS // 2)
         out["gap_scan"].append(r)

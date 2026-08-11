@@ -1,6 +1,7 @@
 {
   "target": 0.9,
   "mode": "isotropic",
+  "model_scope": "spherocylinder outer-bound model K+; not a feasibility certificate for the real flat-ended cylinder",
   "verification_rule": "screening: p>=0.90 and ci_lo>=0.89; only ci_lo>=0.90 confirms feasibility",
   "global_optimality_proved": false,
   "cost_per_rod_yuan": 0.014844025288211772,
@@ -1138,7 +1139,7 @@
     "seed": 20260810,
     "note": "纯 A 方案（问题三答案），按同一可行判据纳入候选比较"
   },
-  "best_status": "lowest-cost screened candidate; global optimality requires a complete audit certificate",
+  "best_status": "lowest-cost screened K+ candidate; real-cylinder feasibility and global optimality are unproved",
   "pure_a_reference": {
     "n_a": 608,
     "n_b": 0,

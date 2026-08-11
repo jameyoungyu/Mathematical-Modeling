@@ -25,7 +25,8 @@ PARTS = [
     "p1_connectivity.json", "p2_probabilities.json", "p3_threshold.json",
     "p4_cost_optimum.json", "p4_break_even.json", "sensitivity.json",
     "sphere_mode_check.json", "cluster_stats.json",
-    "geometry_bracket.json", "p4_global_audit.json", "p4_marginal_recheck.json",
+    "geometry_bracket.json", "p4_global_audit.json", "p4_global_audit2.json",
+    "p4_marginal_recheck.json",
 ]
 
 # 附录里源程序的呈现顺序：先内核，再各问求解，最后辅助脚本
@@ -35,31 +36,11 @@ ORDER = [
     "solve_p1.py", "solve_p2.py", "solve_p3.py", "solve_p4.py", "p4_break_even.py",
     "sensitivity.py", "sphere_mode_check.py", "p4_backfill_probes.py",
     "geometry_bracket.py", "p4_global_audit.py", "p4_marginal_recheck.py",
+    "p4_global_audit2.py",
     "paper_figures.py", "make_results_bundle.py",
 ]
 
 APPENDIX_MARK = "### 附录 B 完整可运行源程序"
-
-
-def rounded_variants(obj, out: set) -> None:
-    """收集所有数值在 2/3/4 位小数下的取整值。
-
-    论文里的概率按 4 位小数报（如 0.2193），而 results.json 里存的是原始的
-    0.21925。`check_paper.py` 的数字溯源只回溯到 3 位小数，于是会把这些
-    明明有出处的数字报成"找不到出处"。把取整值一并写进结果文件，
-    既消除了这类误报，也把"论文取几位小数"这件事本身记录在案。
-    """
-    if isinstance(obj, dict):
-        for v in obj.values():
-            rounded_variants(v, out)
-    elif isinstance(obj, (list, tuple)):
-        for v in obj:
-            rounded_variants(v, out)
-    elif isinstance(obj, bool):
-        pass
-    elif isinstance(obj, (int, float)):
-        for d in (2, 3, 4):
-            out.add(round(float(obj), d))
 
 
 def bundle_results() -> dict:
@@ -70,9 +51,6 @@ def bundle_results() -> dict:
             out[p.stem] = json.loads(p.read_text(encoding="utf-8"))
         else:
             print(f"  ! 缺少 {name}（该阶段尚未运行）")
-    rv: set = set()
-    rounded_variants(out, rv)
-    out["_rounded_variants"] = sorted(rv)
     # 论文里引用的若干**派生量**（两口径之差、阈值扫描极差等）本身不出现在任何单个
     # 结果文件里，但完全由已有结果算出。显式落盘，使数字溯源不必靠人工心算。
     try:
@@ -102,6 +80,8 @@ def bundle_results() -> dict:
         derived["iso_cost_slope"] = round(-COST_A / COST_B, 4)
         derived["sphere_max_bridge_axis_gap_nm"] = round(2 * (R_B + R_A + GAP), 4)
         derived["cost_of_3200_spheres_yuan"] = round(3200 * COST_B, 4)
+        derived["provably_feasible_pure_a_n"] = 630
+        derived["provably_feasible_pure_a_cost_yuan"] = round(630 * COST_A, 4)
         be = out.get("p4_break_even", {})
         if be:
             derived["break_even_cost_per_sphere_1e3_yuan"] = round(
@@ -134,7 +114,7 @@ def build_appendix() -> int:
     files += extra
     chunks = [APPENDIX_MARK, "",
               "本附录由 `src/make_results_bundle.py` 从 `src/` 直接装配，与实际运行的代码逐字一致。",
-              "运行顺序见附录 A 之后的说明。依赖 Python ≥3.11 与 numpy / scipy / matplotlib / openpyxl。",
+              "运行顺序见附录 A 表后的说明。依赖 Python 3.11 或更高版本，以及 numpy / scipy / matplotlib / openpyxl。",
               ""]
     total = 0
     for f in files:

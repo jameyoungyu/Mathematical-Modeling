@@ -286,6 +286,7 @@ def percolates(seg_p: np.ndarray, seg_q: np.ndarray,
                owner_rod: np.ndarray | None = None,
                owner_sph: np.ndarray | None = None,
                bond_fragments: bool = False,
+               gap: float = GAP,
                edge: float = EDGE) -> bool:
     """判断微构体是否导通（左右带电面之间存在导电通路）。
 
@@ -306,19 +307,19 @@ def percolates(seg_p: np.ndarray, seg_q: np.ndarray,
     if n_rod:
         lo = np.minimum(seg_p[:, 0], seg_q[:, 0]) - R_A
         hi = np.maximum(seg_p[:, 0], seg_q[:, 0]) + R_A
-        for i in np.nonzero(lo <= -half + GAP)[0]:
+        for i in np.nonzero(lo <= -half + gap)[0]:
             dsu.union(LEFT, int(i))
-        for i in np.nonzero(hi >= half - GAP)[0]:
+        for i in np.nonzero(hi >= half - gap)[0]:
             dsu.union(RIGHT, int(i))
     if n_sph:
-        for i in np.nonzero(sph_c[:, 0] - R_B <= -half + GAP)[0]:
+        for i in np.nonzero(sph_c[:, 0] - R_B <= -half + gap)[0]:
             dsu.union(LEFT, n_rod + int(i))
-        for i in np.nonzero(sph_c[:, 0] + R_B >= half - GAP)[0]:
+        for i in np.nonzero(sph_c[:, 0] + R_B >= half - gap)[0]:
             dsu.union(RIGHT, n_rod + int(i))
 
     # --- 棒-棒
     if n_rod > 1:
-        for a, b in contact_pairs(seg_p, seg_q, 2 * R_A + GAP):
+        for a, b in contact_pairs(seg_p, seg_q, 2 * R_A + gap):
             dsu.union(int(a), int(b))
 
     # --- 球-球 与 球-棒（介质 B 数量可达上万，用 KD 树做邻域检索）
@@ -326,12 +327,12 @@ def percolates(seg_p: np.ndarray, seg_q: np.ndarray,
         from scipy.spatial import cKDTree
         tree = cKDTree(sph_c)
         if n_sph > 1:
-            for a, b in tree.query_pairs(2 * R_B + GAP, output_type="ndarray"):
+            for a, b in tree.query_pairs(2 * R_B + gap, output_type="ndarray"):
                 dsu.union(n_rod + int(a), n_rod + int(b))
         if n_rod:
             # 沿每根碎片轴线按 STEP 采样，查半径 = 接触半径 + 半个采样步长，
             # 保证不漏掉任何真实接触；再用精确的点—线段距离过滤候选。
-            reach = R_A + R_B + GAP
+            reach = R_A + R_B + gap
             step = 200.0
             samples, tags = [], []
             for i in range(n_rod):

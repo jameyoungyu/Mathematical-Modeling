@@ -2,8 +2,8 @@
 """把终稿 Markdown 编译成提交用 PDF（pandoc + XeLaTeX）。
 
 排版规范照搬竞赛论文的通行要求：A4、四边留白 ≥2.5 cm、页脚居中连续页码、
-正文无目录、图题在图下方、表题在表上方。字体用 texlive 自带的 Fandol 开源字族，
-不依赖任何私有字体，换台装了 texlive 的机器能编出同样的版面。
+正文无目录、图题在图下方、表题在表上方。中文正文用 TeX Live 自带的 Fandol，
+代码逐字环境用 DejaVu Sans Mono 覆盖希腊字母与校验符号；均不依赖私有字体。
 
 用法：
     python3 src/build_paper_pdf.py              # 完整版（含附录 B 全部源程序）

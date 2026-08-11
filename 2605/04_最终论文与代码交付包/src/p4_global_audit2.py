@@ -88,11 +88,13 @@ def load_state() -> dict:
     if DST.exists():
         try:
             s = json.loads(DST.read_text(encoding="utf-8"))
+            s.setdefault("model_scope", "spherocylinder outer-bound model K+")
             s.setdefault("corners", {}); s.setdefault("columns", {})
             return s
         except Exception:
             pass
-    return {"corners": {}, "columns": {}}
+    return {"model_scope": "spherocylinder outer-bound model K+",
+            "corners": {}, "columns": {}}
 
 
 def save(state: dict) -> None:
@@ -100,25 +102,55 @@ def save(state: dict) -> None:
     DST.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def summarize(state: dict, cost_star: float) -> None:
-    """由已完成的判定给出当前能主张的成本下界。"""
+def coverage_status(state: dict, n_a_star: int) -> dict:
+    """检查审计是否覆盖了待证区域；覆盖不完整时不得生成成本下界。"""
+    columns = state["columns"]
+
+    # [COL_FROM, N_A*) 必须逐列完成。
+    missing_high = [a for a in range(COL_FROM, n_a_star) if str(a) not in columns]
+
+    # [LOW_COVERED, COL_FROM] 的每段要么被角点排除，要么该段已逐列完成。
+    grid = list(range(LOW_COVERED, COL_FROM + 1, CORNER_STEP))
+    if grid[-1] != COL_FROM:
+        grid.append(COL_FROM)
+    missing_ranges = []
+    for a1, a2 in zip(grid[:-1], grid[1:]):
+        corner = state["corners"].get(f"{a1}-{a2}")
+        if corner and corner.get("excluded"):
+            continue
+        missing = [a for a in range(a1, a2 + 1) if str(a) not in columns]
+        if missing:
+            missing_ranges.append({"a1": a1, "a2": a2, "missing_columns": missing})
+
+    complete = not missing_high and not missing_ranges
+    return {"complete": complete, "missing_high_columns": missing_high,
+            "missing_corner_ranges": missing_ranges}
+
+
+def summarize(state: dict, cost_star: float, n_a_star: int) -> None:
+    """由已完成的判定生成摘要；覆盖不完整时只报告进度，不声称下界。"""
     done = list(state["columns"].values())
     open_pts = [c for c in done if not c["excluded"]]
     cheaper_ok = [c for c in open_pts
                   if c.get("feasible_confirmed") and c["cost"] < cost_star]
     undecided = [c for c in open_pts if not c.get("feasible_confirmed")]
+    coverage = coverage_status(state, n_a_star)
     bound = min([c["cost"] for c in open_pts], default=cost_star)
     state["summary"] = {
         "columns_done": len(done),
         "corners_done": len(state["corners"]),
-        "proved_lower_bound_yuan": bound,
+        "coverage": coverage,
+        "proved_lower_bound_yuan": bound if coverage["complete"] else None,
         "undecided": sorted([{k: c[k] for k in ("n_a", "n_b", "cost", "p",
                                                 "ci99_lo", "ci99_hi", "trials")}
                              for c in undecided], key=lambda z: z["cost"]),
         "confirmed_cheaper": sorted([{k: c[k] for k in ("n_a", "n_b", "cost", "p")}
                                      for c in cheaper_ok], key=lambda z: z["cost"]),
     }
-    if cheaper_ok:
+    if not coverage["complete"]:
+        v = (f"审计尚未完成：已完成 {len(done)} 列、{len(state['corners'])} 个角点；"
+             "未覆盖区域仍可能存在更便宜的可行整数点，因此当前结果不得用于主张成本下界或全局最优。")
+    elif cheaper_ok:
         v = (f"存在比 C*={cost_star:.4f} 元更便宜且可行性已确认的点，"
              f"最低 {min(c['cost'] for c in cheaper_ok):.4f} 元 —— C* 不是最优。")
     elif undecided:
@@ -155,7 +187,7 @@ def main() -> int:
                 t0 = time.time()
                 state["columns"][key] = judge(a, nb)
                 state["columns"][key]["secs"] = round(time.time() - t0, 1)
-            summarize(state, cost_star); save(state)
+            summarize(state, cost_star, n_a_star); save(state)
         c = state["columns"][key]
         tag = ("已排除" if c["excluded"] else
                "★可行(更便宜)" if c.get("feasible_confirmed") else "★无法判定")
@@ -191,7 +223,7 @@ def main() -> int:
                 t0 = time.time()
                 state["columns"][k2] = judge(a, nb2)
                 state["columns"][k2]["secs"] = round(time.time() - t0, 1)
-                summarize(state, cost_star); save(state)
+                summarize(state, cost_star, n_a_star); save(state)
                 c2 = state["columns"][k2]
                 print(f"    ↳ 列 {a:3d}: ({a:3d},{nb2:4d}) 成本={c2['cost']:.4f} "
                       f"P={c2['p']:.4f} {'已排除' if c2['excluded'] else '★未排除'}", flush=True)
@@ -211,7 +243,7 @@ def main() -> int:
               f"→ {'排除' if c['excluded'] else '可行性已确认' if c['feasible_confirmed'] else '无法判定'}",
               flush=True)
 
-    summarize(state, cost_star); save(state)
+    summarize(state, cost_star, n_a_star); save(state)
     print("\n结论：" + state["summary"]["verdict"])
     return 0
 

@@ -128,15 +128,9 @@ def main() -> int:
             "graph_as_given": contact_stats(sp0, sq0),
         }
         # 判据阈值扰动：δ 是题目给死的，扫一遍是为了说明结论不是卡在阈值上
-        import microstructure as ms
         gap_scan = {}
-        old = ms.GAP
-        try:
-            for g in (0.9, 1.35, 1.8, 2.25, 2.7):
-                ms.GAP = g
-                gap_scan[f"{g:g}"] = bool(percolates(sp0, sq0))
-        finally:
-            ms.GAP = old
+        for g in (0.9, 1.35, 1.8, 2.25, 2.7):
+            gap_scan[f"{g:g}"] = bool(percolates(sp0, sq0, gap=g))
         res["gap_scan"] = gap_scan
         res["gap_robust"] = len(set(gap_scan.values())) == 1
 

@@ -156,7 +156,7 @@ def main() -> int:
         print("  没有候选点通过验证")
         return 1
 
-    # 纯 A 方案（问题三的答案根数）本身就是一个可行候选，必须**参与竞争**而不是只作参照。
+    # 纯 A 方案（问题三在同一 K+ 口径下的答案根数）必须参与候选比较，而不是只作参照。
     # 代理模型的边界搜索按自己的网格取 N_A，未必落在问题三那一格上；若它取到的 N_A
     # 略小、需要补 B 才可行，补出来的方案可能反而比"多放几根 A、不放 B"更贵。
     # 旧版先对 verified 取 min、之后才算纯 A 参照，于是把这个更便宜的可行点漏在比较之外。
@@ -168,7 +168,7 @@ def main() -> int:
             pure_a = estimate_p(Config(n_a=int(n3), n_b=0, orientation=mode), VERIFY_TRIALS)
             print(f"  纯 A 参照 N_A={n3} P={pure_a['p']:.4f} 成本={pure_a['cost_yuan']:.4f} 元")
             if pure_a["p"] >= TARGET and pure_a["ci_lo"] >= TARGET - 0.01:
-                pure_a["note"] = "纯 A 方案（问题三答案），按同一可行判据纳入候选比较"
+                pure_a["note"] = "纯 A 方案（问题三 K+ 口径答案），按同一口径纳入候选比较"
                 verified.append(pure_a)
 
     best = min(verified, key=lambda r: r["cost_yuan"])
@@ -185,7 +185,8 @@ def main() -> int:
         "surrogate_max_abs_resid": float(resid),
         "candidates": cand[:12], "verified": verified, "all_probes": all_probes,
         "best": best,
-        "best_status": "lowest-cost screened candidate; global optimality requires a complete audit certificate",
+        "model_scope": "spherocylinder outer-bound model K+; not a feasibility certificate for the real flat-ended cylinder",
+        "best_status": "lowest-cost screened K+ candidate; real-cylinder feasibility and global optimality are unproved",
         "pure_a_reference": pure_a,
     }
     RESULTS.mkdir(parents=True, exist_ok=True)

@@ -1,7 +1,6 @@
 # 2605 · 微构体中填充导电介质的仿真优化
 
-2026 年第七届"华数杯"大学生数学建模竞赛 A 题（截止 2026-08-10 18:00）。
-本目录为**赛后完整复现**，非赛内提交稿。
+本项目用于校内数学建模练习，包含题目材料、建模记录、终稿、源程序与可复现结果。
 
 ## 交付索引
 
@@ -36,6 +35,8 @@
 | `src/cluster_stats.py` | 最大团簇占比（渗流序参量） | `results/cluster_stats.json` |
 | `src/geometry_bracket.py` | 球柱体近似的严格上下界 | `results/geometry_bracket.json` |
 | `src/p4_global_audit.py` | 问题四预算线角点审计与覆盖范围证书 | `results/p4_global_audit.json` |
+| `src/p4_global_audit2.py` | 问题四未覆盖整数列的可断点续跑审计 | `results/p4_global_audit2.json` |
+| `src/p4_marginal_recheck.py` | 预算线擦边点的大样本复核 | `results/p4_marginal_recheck.json` |
 | `src/make_results_bundle.py` | 合并结果、装配论文附录 B | `results/results.json` |
 | `src/paper_figures.py` | 全部正文图件 | `figures_paper/` |
 | `src/build_paper_pdf.py` | 由 Markdown 终稿编译提交 PDF | `*_终稿.pdf` |
@@ -46,15 +47,16 @@ python3 validate.py && python3 audit_attachment.py
 python3 solve_p1.py && python3 solve_p2.py && python3 solve_p3.py && python3 solve_p4.py
 python3 p4_backfill_probes.py && python3 p4_break_even.py && python3 theory_check.py
 python3 sensitivity.py && python3 sphere_mode_check.py && python3 cluster_stats.py
-python3 geometry_bracket.py && python3 p4_global_audit.py
+python3 geometry_bracket.py && python3 p4_global_audit.py && python3 p4_marginal_recheck.py
+python3 p4_global_audit2.py  # 可断点续跑；完整逐列审计耗时较长
 python3 paper_figures.py && python3 make_results_bundle.py
 python3 build_paper_pdf.py                 # 提交稿 PDF（需 pandoc + texlive-xetex）
 python3 build_paper_pdf.py --ai-details    # 支撑材料《AI工具使用详情》PDF
 ```
 
 依赖：Python ≥3.11、numpy、scipy、matplotlib、openpyxl；编译 PDF 另需 pandoc 与
-texlive-xetex / texlive-lang-chinese（字体用 texlive 自带的 Fandol 开源字族）。
-随机性全部来自 `numpy.random.SeedSequence`，固定分成 8 条随机流；worker 只负责调度。
+texlive-xetex / texlive-lang-chinese（正文用 Fandol，代码用 DejaVu Sans Mono，均由 TeX Live 提供）。
+随机性全部来自 `numpy.random.SeedSequence`，固定分成 4 条随机流；worker 只负责调度。
 因此在 numpy 与算法版本相同的前提下，改变并行度仍可逐位复现。
 
 ## 三条影响结论的数据发现

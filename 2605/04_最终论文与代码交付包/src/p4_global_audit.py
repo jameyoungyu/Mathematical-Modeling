@@ -141,21 +141,24 @@ def main() -> int:
     out_all = excluded_all
     out["all_cheaper_points_excluded"] = bool(out_all)
     if out_all:
-        msg = ("成本低于最优值的整数点全部被排除，"
-               f"成本 {cost_star:.4f} 元为全局最小，(N_A,N_B)=({n_a_star},{best['n_b']}) 达到该值。")
+        msg = ("在球柱体外界 K+ 口径下，成本低于候选值的整数点全部被排除，"
+               f"成本 {cost_star:.4f} 元为该口径的全局最小，(N_A,N_B)=({n_a_star},{best['n_b']}) 达到该值。"
+               "该结论不构成真实平端面圆柱的可行性证明。")
     else:
         bad = [c for c in line_checks if not c["excluded"]]
         msg = (f"角点法仅严格覆盖 N_A≤480；预算线离散检查另排除部分列。"
                f"N_A∈[481,{n_a_star - 1}] 尚未逐列形成完整证书，"
                f"且已检查点中有 {len(bad)} 个 Wilson 上界未低于 0.90。"
                f"因此不能声称成本下界或全局最优；只能说 ({n_a_star},{best['n_b']})、"
-               f"成本 {cost_star:.4f} 元是当前可行性已确认的推荐方案。")
+               f"成本 {cost_star:.4f} 元是球柱体外界 K+ 下经抽样确认的候选。"
+               "真实平端面圆柱的可行性须另看几何双侧界。")
         out["strictly_covered_n_a_max"] = 480
         out["not_fully_certified_n_a_interval"] = [481, n_a_star - 1]
         out["budget_line_sampled_columns"] = [c["n_a"] for c in line_checks]
         out["budget_line_excluded_columns"] = [c["n_a"] for c in line_checks if c["excluded"]]
     print("\n结论：" + msg)
     out["verdict"] = msg
+    out["model_scope"] = "spherocylinder outer-bound model K+"
     RESULTS.mkdir(parents=True, exist_ok=True)
     (RESULTS / "p4_global_audit.json").write_text(
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")

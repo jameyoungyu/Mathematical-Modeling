@@ -25,7 +25,7 @@ from multiprocessing import Pool
 
 import numpy as np
 
-from microstructure import (EDGE, H_A, V_A, V_B, V_BOX, COST_A, COST_B,
+from microstructure import (EDGE, GAP, H_A, V_A, V_B, V_BOX, COST_A, COST_B,
                             PRIMARY_ORIENTATION, percolates, sample_rods,
                             sample_spheres)
 
@@ -40,6 +40,8 @@ class Config:
     orientation: str = PRIMARY_ORIENTATION
     sphere_mode: str = "wrap"
     bond_fragments: bool = False
+    # 显式随任务序列化到子进程，避免依赖 multiprocessing 的 fork 全局继承语义。
+    gap: float = GAP
     # 介质 A 的轴长。默认 5000 即题给圆柱；geometry_bracket.py 用 5000-2r 得到
     # 内接球柱体，从而给出真实平端面圆柱的严格下界。
     rod_length: float = H_A
@@ -69,7 +71,7 @@ def _run_chunk(args) -> int:
         if cfg.n_b:
             sc, own_s = sample_spheres(cfg.n_b, rng, BOX, mode=cfg.sphere_mode)
         hits += bool(percolates(sp, sq, sph_c=sc, owner_rod=own_r, owner_sph=own_s,
-                                bond_fragments=cfg.bond_fragments))
+                                bond_fragments=cfg.bond_fragments, gap=cfg.gap))
     return hits
 
 
