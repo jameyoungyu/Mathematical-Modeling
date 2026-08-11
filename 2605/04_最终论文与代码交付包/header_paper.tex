@@ -22,10 +22,11 @@
 \renewcommand{\figurename}{图}
 \renewcommand{\tablename}{表}
 
-% 段落：小四号、1.4 倍行距、首行缩进两字
+% 段落：小四号、1.28 倍行距、首行缩进两字。该设置在保持可读性的同时，
+% 确保正文（含 AI 声明与参考文献、不含附录）不超过 30 页。
 \setlength{\parindent}{2em}
-\setstretch{1.38}
-\setlength{\parskip}{3pt plus 1pt minus 0.5pt}
+\setstretch{1.28}
+\setlength{\parskip}{1.5pt plus 0.8pt minus 0.4pt}
 
 % 页脚居中页码，无页眉横线（页眉不得出现任何身份信息）
 \pagestyle{fancy}
@@ -44,9 +45,9 @@
 \titleformat{\section}[block]{\centering\fontsize{16pt}{22pt}\selectfont\bfseries\sffamily}{\thesection}{1em}{}
 \titlespacing*{\section}{0pt}{10pt}{14pt}
 \titleformat{\subsection}[block]{\centering\fontsize{14pt}{18pt}\selectfont\bfseries\sffamily}{\thesubsection}{1em}{}
-\titlespacing*{\subsection}{0pt}{16pt}{10pt}
+\titlespacing*{\subsection}{0pt}{13pt}{8pt}
 \titleformat{\subsubsection}[block]{\fontsize{12pt}{15pt}\selectfont\bfseries\sffamily}{\thesubsubsection}{1em}{}
-\titlespacing*{\subsubsection}{0pt}{10pt}{5pt}
+\titlespacing*{\subsubsection}{0pt}{8pt}{4pt}
 
 % 图表题注：五号加粗居中，题注与图表间留白
 \captionsetup{justification=centering, font={small,bf}, labelfont=bf, skip=6pt}
