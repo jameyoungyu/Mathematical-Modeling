@@ -73,6 +73,27 @@ def bundle_results() -> dict:
     rv: set = set()
     rounded_variants(out, rv)
     out["_rounded_variants"] = sorted(rv)
+    # 论文里引用的若干**派生量**（两口径之差、阈值扫描极差等）本身不出现在任何单个
+    # 结果文件里，但完全由已有结果算出。显式落盘，使数字溯源不必靠人工心算。
+    try:
+        sens = out.get("sensitivity", {})
+        rows = {r["name"]: r["p"] for r in sens.get("assumption_table", [])}
+        base = next((v for k, v in rows.items() if k.startswith("基准")), None)
+        derived = {}
+        if base is not None:
+            derived["base_p"] = base
+            for k, v in rows.items():
+                if not k.startswith("基准"):
+                    derived[f"delta_vs_base::{k}"] = round(v - base, 6)
+        gaps = [g["p"] for g in sens.get("gap_scan", [])]
+        if gaps:
+            derived["gap_scan_range"] = round(max(gaps) - min(gaps), 6)
+        if derived:
+            out["derived"] = derived
+            print(f"  派生量 {len(derived)} 项 -> results.json 的 derived 段")
+    except Exception as e:
+        print(f"  ! 派生量计算跳过：{e}")
+
     (RESULTS / "results.json").write_text(
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"  合并 {len(out)} 个结果文件 -> results/results.json")
