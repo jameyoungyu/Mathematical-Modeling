@@ -119,64 +119,82 @@ def fig_fragments() -> None:
 
 # ------------------------------------------------------------------ 图3 问题一
 def fig_p1() -> None:
+    """三组接触图在 X–Y 平面的投影，按**真实的棒—棒团簇**着色。
+
+    这里的着色口径必须讲清楚，早先的版本在这上面出过错。判定导通时会往并查集里加两个
+    虚拟电极节点 L、R，凡触及同一带电面的碎片都会被它们合并成一个连通块——那是**判定用的
+    辅助结构，不是物理团簇**。若按那个口径着色，组 3 会有 258/535（48.2%）的碎片被涂成
+    同一个"贯通团簇"，看上去像一个吞掉半个盒子的巨团簇，与第 5.3 节"贯通靠短链、
+    此时尚未形成巨团簇"的结论正好相反。
+
+    本函数只用**碎片之间的接触**建团簇（不含电极节点），再看每个团簇是否触到带电面：
+    同时触到左右两面的团簇才是真正的贯通团簇。按这个口径，组 3 的贯通团簇只有 17 个碎片
+    （3.2%），组 2 只有 5 个（10.2%）——图与第 5.3 节这才是一致的。
+    """
     res = load("p1_connectivity.json")
     if not res:
         return
+    from collections import Counter
     from load_attachment import GROUP_BOX, load_pieces
     from microstructure import EDGE, GAP, R_A, DSU, contact_pairs
     data = load_pieces()
 
-    # 组 1、组 2 的截面只有 1000 nm（长宽比 10:1），画成与组 3 等高的面板会浪费大量纵向空间，
-    # 整张图高达 8.2 in 时会独占一页。按各组真实长宽比分配高度，总高压到 5.8 in。
-    fig, axes = plt.subplots(3, 1, figsize=(7.1, 5.1),
+    # 组 1、组 2 的截面只有 1000 nm（长宽比 10:1），按各组真实长宽比分配面板高度。
+    # 注意由此三个面板的纵轴量程相差 10 倍，题注里已注明。
+    fig, axes = plt.subplots(3, 1, figsize=(7.1, 5.4),
                              gridspec_kw={"height_ratios": [0.72, 0.72, 2.35]})
     for ax, name in zip(axes, ["组1", "组2", "组3"]):
         pieces = data[name]
         sp, sq = pieces[:, :3], pieces[:, 3:]
         n = len(sp)
-        dsu = DSU(n + 2)
-        L, R = n, n + 1
         half = EDGE / 2
-        lo = np.minimum(sp[:, 0], sq[:, 0]) - R_A
-        hi = np.maximum(sp[:, 0], sq[:, 0]) + R_A
-        for i in np.nonzero(lo <= -half + GAP)[0]:
-            dsu.union(L, int(i))
-        for i in np.nonzero(hi >= half - GAP)[0]:
-            dsu.union(R, int(i))
+
+        # 只用碎片之间的接触建团簇——不加电极节点
+        dsu = DSU(n)
         for a, b in contact_pairs(sp, sq, 2 * R_A + GAP):
             dsu.union(int(a), int(b))
-        span = dsu.find(L) == dsu.find(R)
+        root = [dsu.find(i) for i in range(n)]
+        lo = np.minimum(sp[:, 0], sq[:, 0]) - R_A
+        hi = np.maximum(sp[:, 0], sq[:, 0]) + R_A
+        touch_l = {root[i] for i in np.nonzero(lo <= -half + GAP)[0]}
+        touch_r = {root[i] for i in np.nonzero(hi >= half - GAP)[0]}
+        spanning = touch_l & touch_r            # 同时触到两面 = 真正的贯通团簇
+        n_span = sum(Counter(root)[r] for r in spanning)
 
         for i in range(n):
-            rl, rr = dsu.find(i) == dsu.find(L), dsu.find(i) == dsu.find(R)
-            if span and rl and rr:
-                c, lw, z = COLORS[2], 2.4, 3
-            elif rl:
+            r = root[i]
+            if r in spanning:
+                c, lw, z = COLORS[2], 2.6, 4
+            elif r in touch_l:
                 c, lw, z = COLORS[1], 1.2, 2
-            elif rr:
+            elif r in touch_r:
                 c, lw, z = COLORS[0], 1.2, 2
             else:
-                c, lw, z = "0.78", 0.7, 1
+                c, lw, z = "0.80", 0.7, 1
             ax.plot([sp[i, 0], sq[i, 0]], [sp[i, 1], sq[i, 1]], color=c, lw=lw, zorder=z)
         ax.axvline(-half, color="k", lw=2.2)
         ax.axvline(half, color="k", lw=2.2)
         hy = GROUP_BOX[name][1] / 2
         ax.set_ylim(-hy * 1.05, hy * 1.05)
         ax.set_xlim(-half * 1.04, half * 1.04)
-        r = res[name]
-        ax.set_title(f"{name}：{r['n_media']} 根介质 A（{r['n_pieces_in_attachment']} 个碎片），"
+        g = res[name]
+        span_txt = (f"贯通团簇 {n_span}/{n} 个碎片" if spanning else "无贯通团簇")
+        ax.set_title(f"{name}：{g['n_media']} 根介质 A（{g['n_pieces_in_attachment']} 个碎片），"
                      f"截面 {int(GROUP_BOX[name][1])}×{int(GROUP_BOX[name][2])} nm —— "
-                     f"{'导通' if r['as_given'] else '不导通'}", fontsize=9)
+                     f"{'导通' if g['as_given'] else '不导通'}（{span_txt}）", fontsize=8.5)
         ax.set_ylabel("Y / nm")
-    axes[-1].set_xlabel("X / nm（左右两条粗黑线为带电面）")
-    handles = [Line2D([], [], color=COLORS[2], lw=2.4, label="贯通团簇（同时连到左右带电面）"),
-               Line2D([], [], color=COLORS[1], lw=1.2, label="与左带电面连通"),
-               Line2D([], [], color=COLORS[0], lw=1.2, label="与右带电面连通"),
-               Line2D([], [], color="0.78", lw=1.0, label="孤立团簇")]
-    axes[0].legend(handles=handles, fontsize=7, ncol=2, loc="lower left", framealpha=0.9)
-    fig.tight_layout()
+    axes[-1].set_xlabel("X / nm（左右两条粗黑线为带电面；三个面板的纵轴量程不同）")
+
+    # 图例放到整张图下方，避免像旧版那样压住组 1 面板里本就稀疏的碎片
+    handles = [Line2D([], [], color=COLORS[2], lw=2.6, label="贯通团簇（同一团簇同时触及左右带电面）"),
+               Line2D([], [], color=COLORS[1], lw=1.2, label="仅触及左带电面的团簇"),
+               Line2D([], [], color=COLORS[0], lw=1.2, label="仅触及右带电面的团簇"),
+               Line2D([], [], color="0.80", lw=1.0, label="两面都不触及的团簇")]
+    fig.legend(handles=handles, fontsize=7.5, ncol=2, loc="lower center",
+               bbox_to_anchor=(0.5, -0.005), frameon=False)
+    fig.tight_layout(rect=(0, 0.075, 1, 1))
     emit(fig, "05_p1_connectivity",
-         "三个微构体的接触图在 X–Y 平面的投影")
+         "三个微构体的接触图在 X–Y 平面的投影（按真实棒—棒团簇着色）")
 
 
 # ------------------------------------------------------------------ 图4 问题二/三
@@ -596,7 +614,7 @@ def fig_clusters() -> None:
 def fig_marginal() -> None:
     """每元钱买到多少 ΔP：两种介质的边际效率随 N_A 的变化。
 
-    这是问题四"为什么不掺 B"的机理图。表 10 给的是同样的数，
+    这是问题四"为什么不掺 B"的机理图。表 13 给的是同样的数，
     但交叉点的位置在表里要靠逐列比大小才看得出来，画成两条线一眼可辨。
     """
     t = load("theory_check.json")
@@ -649,7 +667,7 @@ def fig_marginal() -> None:
 def fig_budget_audit() -> None:
     """预算线上每个点的 P 与 0.90 的关系——问题四结论的完整证据。
 
-    表 11 有同样的数，但"哪些点被干净地排除、哪一个卡在 0.90 上"
+    表 15 有同样的数，但"哪些点被干净地排除、哪一个卡在 0.90 上"
     要对着置信区间逐行心算；画成带误差棒的图，0.90 这条线一穿而过，
     退化点自己跳出来。
     """

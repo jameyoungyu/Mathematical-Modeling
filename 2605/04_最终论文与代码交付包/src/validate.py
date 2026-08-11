@@ -8,8 +8,11 @@ T1 线段最短距离 vs 暴力采样；
 T2 题面图 2 给出的截断算例，逐坐标对照；
 T3 用附件真实数据做往返测试：把碎片还原成母介质轴线，再按本模块的规则重新截断，
    看能不能一模一样地还原出附件里的碎片（这同时校验了附件的周期盒尺寸判断）；
-T4 球柱体近似相对平端面圆柱的误差量级；
-T5 并查集导通判定在人工构造的通/断算例上的行为。
+T4 并查集导通判定在人工构造的通/断算例上的行为；
+T5 分块加速的接触检索与朴素两两比较逐位一致。
+
+另附一项**非校验**的量级参考（球柱体近似），它没有通过标准，不计入退出码；
+该近似的严格处理见 geometry_bracket.py 给出的双侧界。
 
 退出码 0 表示全部通过。
 """
@@ -104,9 +107,21 @@ def t3_attachment_roundtrip() -> None:
     check("T3_附件截断往返", all_ok, detail)
 
 
-# ---------------------------------------------------------------- T4 球柱近似
-def t4_capsule_approximation() -> None:
-    """平端面圆柱与球柱体只在端帽处不同，估计它由此多判/少判接触的概率量级。"""
+# ------------------------------------------------- 附：球柱体近似的粗略量级（非校验）
+def note_capsule_scale() -> None:
+    """球柱体与平端面圆柱只在端帽处不同，这里给一个**极粗略**的量级参考。
+
+    **这不是一项校验，不参与通过/不通过的判定**，原因有二：
+
+    1. 采样分布是人造的——第一根棒恒沿 X 轴过原点，第二根棒的中心被限制在其轴线周围
+       一根半径 2r+δ 的细管里。算出的比例依赖这个人为设定，不是物理构型下的概率。
+    2. 它统计的是"第二根棒的中心落在端帽所在的 x 带内"的频率，只是"最近点落在端帽附近"
+       的一个粗代理，且完全没有计入第二根棒自身的端帽。
+
+    球柱体近似的**正确**处理方式是几何包含关系给出的严格双侧界（geometry_bracket.py，
+    论文第 8.4 节）：K⁻ ⊆ 真实圆柱 ⊆ K⁺，于是 P(K⁻) ≤ P(真实) ≤ P(K⁺)。
+    论文结论以那组界为准，本函数只作为背景量级保留。
+    """
     rng = np.random.default_rng(7)
     n = 200000
     # 在"轴线距离刚好落在判定阈值附近"的壳层里采样，看端帽区域占多大比例
@@ -124,12 +139,17 @@ def t4_capsule_approximation() -> None:
     frac_end = float(np.mean(near & (np.abs(c2[:, 0]) > L / 2 - r)))
     frac_near = float(np.mean(near))
     ratio = frac_end / max(frac_near, 1e-12)
-    check("T4_球柱体近似", ratio < 0.05,
-          f"临界接触中受端帽形状影响的比例 ≈ {ratio:.2%}（体积差 4r/3h = {4*r/(3*5000):.2%}）")
+    # 只记录，不判定：severity 为 note，不进入 failures
+    report["NOTE_球柱体近似量级"] = {
+        "pass": None, "is_check": False,
+        "detail": (f"人造采样下端帽相关比例 ≈ {ratio:.2%}；体积差 4r/3h = {4*r/(3*5000):.2%}。"
+                   "仅为量级参考，严格结论见 geometry_bracket.py 的双侧界")}
+    print(f"[NOTE] 球柱体近似量级: 人造采样下端帽相关比例 ≈ {ratio:.2%}"
+          f"（非校验；严格结论见 geometry_bracket.py）")
 
 
-# ---------------------------------------------------------------- T5 导通判定
-def t5_percolation_logic() -> None:
+# ---------------------------------------------------------------- T4 导通判定
+def t4_percolation_logic() -> None:
     half = EDGE / 2
     # (a) 一根横贯左右的棒：必导通
     p = np.array([[-half + 1.0, 0.0, 0.0]]); q = np.array([[half - 1.0, 0.0, 0.0]])
@@ -150,12 +170,12 @@ def t5_percolation_logic() -> None:
     sp = np.array([s[0] for s in segs]); sq = np.array([s[1] for s in segs])
     own = np.zeros(len(segs), dtype=int)
     e = (not percolates(sp, sq)) and percolates(sp, sq, owner_rod=own, bond_fragments=True)
-    check("T5_导通判定逻辑", all([a, b, c, d, e]),
+    check("T4_导通判定逻辑", all([a, b, c, d, e]),
           f"贯通={a} 断开={b} 间隙1nm导通={c} 单边不通={d} 碎片粘合开关={e}")
 
 
-# ---------------------------------------------------------------- T6 加速等价
-def t6_blocked_equals_naive() -> None:
+# ---------------------------------------------------------------- T5 加速等价
+def t5_blocked_equals_naive() -> None:
     """分块+包围盒预筛的接触检索必须与朴素两两比较逐位一致。
 
     加速实现如果漏掉一条边，导通概率会系统性偏低，而这种偏差在结果里看不出来——
@@ -175,16 +195,16 @@ def t6_blocked_equals_naive() -> None:
         fast = set(map(tuple, contact_pairs(sp, sq, 2 * R_A + GAP).tolist()))
         ok &= naive == fast
         detail.append(f"N_A={n}: {len(naive)} 条边，一致={naive == fast}")
-    check("T6_加速实现等价", ok, "；".join(detail))
+    check("T5_加速实现等价", ok, "；".join(detail))
 
 
 if __name__ == "__main__":
     t1_segment_distance()
     t2_statement_example()
     t3_attachment_roundtrip()
-    t4_capsule_approximation()
-    t5_percolation_logic()
-    t6_blocked_equals_naive()
+    t4_percolation_logic()
+    t5_blocked_equals_naive()
+    note_capsule_scale()          # 量级参考，放在最后，不参与通过判定
     RESULTS.mkdir(parents=True, exist_ok=True)
     (RESULTS / "validation.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

@@ -25,7 +25,8 @@ PARTS = [
     "p1_connectivity.json", "p2_probabilities.json", "p3_threshold.json",
     "p4_cost_optimum.json", "p4_break_even.json", "sensitivity.json",
     "sphere_mode_check.json", "cluster_stats.json",
-    "geometry_bracket.json", "p4_global_audit.json", "p4_marginal_recheck.json",
+    "geometry_bracket.json", "p4_global_audit.json", "p4_global_audit2.json",
+    "p4_marginal_recheck.json",
 ]
 
 # 附录里源程序的呈现顺序：先内核，再各问求解，最后辅助脚本
@@ -88,6 +89,41 @@ def bundle_results() -> dict:
         gaps = [g["p"] for g in sens.get("gap_scan", [])]
         if gaps:
             derived["gap_scan_range"] = round(max(gaps) - min(gaps), 6)
+            derived["gap_scan_p_min"] = round(min(gaps), 6)
+            derived["gap_scan_p_max"] = round(max(gaps), 6)
+
+        # 正文里若干**派生量**：它们由结果文件换算而来，本身不是任何一个文件里的字段，
+        # 于是数字溯源会把它们当成"查无出处"。在这里显式算出并落盘，
+        # 既消除误报，也让"这个数是怎么来的"有一处可查。
+        from microstructure import COST_A, COST_B, GAP, R_A, R_B, V_B
+        th = out.get("theory_check", {})
+        if th:
+            derived["excluded_volume_1e9_nm3"] = round(
+                th["excluded_volume_estimate"]["mean_excluded_volume_nm3"] / 1e9, 4)
+            derived["phi_c_excluded_volume_percent"] = round(
+                th["excluded_volume_estimate"]["critical_volume_fraction"] * 100, 4)
+            mid = th.get("simulation_midpoint", {})
+            for k, v in mid.items():
+                derived[f"phi_at_P50_percent::{k}"] = round(v["phi_at_P50"] * 100, 4)
+        derived["cost_ratio_cA_over_cB"] = round(COST_A / COST_B, 4)
+        derived["iso_cost_slope"] = round(-COST_A / COST_B, 4)
+        derived["sphere_max_bridge_axis_gap_nm"] = round(2 * (R_B + R_A + GAP), 4)
+        derived["cost_of_3200_spheres_yuan"] = round(3200 * COST_B, 4)
+        be = out.get("p4_break_even", {})
+        if be:
+            derived["break_even_cost_per_sphere_1e3_yuan"] = round(
+                be["break_even_cost_per_sphere_yuan"] * 1e3, 4)
+            derived["price_premium_over_break_even_percent"] = round(
+                (be["unit_price_now_yuan_per_um3"] / be["break_even_unit_price_yuan_per_um3"]
+                 - 1) * 100, 4)
+        derived["mc_seeds_used"] = {"default": 20260810, "p3_final": 987654321,
+                                    "convergence": 13579, "p4_recheck": 20260811}
+        # 灵敏度口径的可行边界斜率：正文用它说明"边界的斜率对方向分布不敏感，
+        # 敏感的是边界的位置"。它在对照口径目录下，不在主口径的结果文件里。
+        ctrl = RESULTS / "对照口径_polar_uniform" / "p4_break_even.json"
+        if ctrl.exists():
+            derived["boundary_slope_control_caliber"] = round(
+                json.loads(ctrl.read_text(encoding="utf-8"))["slope_dNB_dNA"], 4)
         if derived:
             out["derived"] = derived
             print(f"  派生量 {len(derived)} 项 -> results.json 的 derived 段")

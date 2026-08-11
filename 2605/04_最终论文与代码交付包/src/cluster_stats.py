@@ -48,22 +48,31 @@ def main() -> int:
     for phi in FRACTIONS:
         n_a = n_rods_for_phi(phi)
         smax, ncl, hits = [], [], 0
+        smax_on, smax_off = [], []      # 分别记录导通/不导通实现的 S_max
         for _ in range(TRIALS):
             sp, sq, _ = sample_rods(n_a, rng, BOX, orientation=PRIMARY_ORIENTATION)
             f, k = largest_cluster_fraction(sp, sq)
             smax.append(f)
             ncl.append(k)
-            hits += bool(percolates(sp, sq))
+            on = bool(percolates(sp, sq))
+            hits += on
+            (smax_on if on else smax_off).append(f)
+        # 论文第 5.3 节要论证的是"导通时内部长什么样"，需要的是条件期望而非无条件均值：
+        # 无条件均值里混着大量未导通的实现，在跃变段会把 S_max 拉低。
         row = {
             "phi": phi, "n_a": n_a, "trials": TRIALS,
             "s_max_mean": float(np.mean(smax)), "s_max_sd": float(np.std(smax, ddof=1)),
+            "s_max_mean_given_percolating": float(np.mean(smax_on)) if smax_on else None,
+            "s_max_mean_given_not": float(np.mean(smax_off)) if smax_off else None,
+            "n_percolating": len(smax_on),
             "n_clusters_mean": float(np.mean(ncl)),
             "p_percolate": hits / TRIALS,
         }
         rows.append(row)
+        cond = row["s_max_mean_given_percolating"]
         print(f"  φ={phi:.2%} N_A={n_a:4d}  S_max={row['s_max_mean']:.3f}"
-              f"±{row['s_max_sd']:.3f}  团簇数={row['n_clusters_mean']:.1f}"
-              f"  P={row['p_percolate']:.3f}")
+              f"±{row['s_max_sd']:.3f}  (导通时 {cond if cond is None else round(cond, 3)})"
+              f"  团簇数={row['n_clusters_mean']:.1f}  P={row['p_percolate']:.3f}")
 
     RESULTS.mkdir(parents=True, exist_ok=True)
     (RESULTS / "cluster_stats.json").write_text(

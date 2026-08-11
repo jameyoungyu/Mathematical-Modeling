@@ -18,16 +18,17 @@
       "complete_total": 334
     }
   },
-  "T4_球柱体近似": {
-    "pass": true,
-    "detail": "临界接触中受端帽形状影响的比例 ≈ 3.33%（体积差 4r/3h = 0.80%）"
-  },
-  "T5_导通判定逻辑": {
+  "T4_导通判定逻辑": {
     "pass": true,
     "detail": "贯通=True 断开=True 间隙1nm导通=True 单边不通=True 碎片粘合开关=True"
   },
-  "T6_加速实现等价": {
+  "T5_加速实现等价": {
     "pass": true,
-    "detail": "N_A=50: 3 条边，一致=True；N_A=150: 27 条边，一致=True；N_A=400: 240 条边，一致=True"
+    "detail": "N_A=50: 1 条边，一致=True；N_A=150: 25 条边，一致=True；N_A=400: 191 条边，一致=True"
+  },
+  "NOTE_球柱体近似量级": {
+    "pass": null,
+    "is_check": false,
+    "detail": "人造采样下端帽相关比例 ≈ 3.33%；体积差 4r/3h = 0.80%。仅为量级参考，严格结论见 geometry_bracket.py 的双侧界"
   }
 }

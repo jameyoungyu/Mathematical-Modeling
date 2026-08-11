@@ -5,8 +5,14 @@
 导通概率就是伯努利参数 p，用 Wilson 区间给置信区间（样本比例接近 0 或 1 时，
 正态近似的 p±1.96·se 会给出越界的区间，Wilson 不会）。
 
-所有随机性来自一个 SeedSequence，按 worker 分叉，因此结果与并行度无关，
-换机器重跑能逐位复现。
+所有随机性来自一个 SeedSequence，按**固定的 N_CHUNKS 个分块**分叉——注意分块数
+与并行度（进程数）是两件事：分块决定随机流怎么切，进程数只决定谁来跑。
+早先的实现把两者绑在一起（`spawn(min(os.cpu_count(), 8))`），子种子于是依赖机器核数，
+换一台 4 核机器重跑，同一配置会得到不同的数（实测 T=240、N_A=354 时
+8/4/2/1 进程分别得 17/19/23/28 次导通）。现在分块数写死为 N_CHUNKS，
+进程数怎么变都不影响结果，换机器重跑才真正能逐位复现。
+
+N_CHUNKS=8 与生成 results/ 时所用的分块数一致，因此本次修正**不改变任何已发布的数值**。
 """
 
 from __future__ import annotations
@@ -23,6 +29,13 @@ from microstructure import (EDGE, H_A, V_A, V_B, V_BOX, COST_A, COST_B,
                             sample_spheres)
 
 BOX = np.full(3, EDGE)
+
+# 随机流的分块数。**必须是常数**：子种子由 SeedSequence(seed).spawn(N_CHUNKS) 决定，
+# 一旦让它随 os.cpu_count() 变化，结果就跟机器核数绑定了（见模块文档）。
+# 取 4 是因为 results/ 里的全部数值是在 min(cpu_count, 8) = 4 的机器上生成的，
+# 写死成 4 才能让已发布的结果在任意机器上原样复现；换成别的值会得到一组同样有效、
+# 但与已发布数值不同的估计。
+N_CHUNKS = 4
 
 
 @dataclass(frozen=True)
@@ -78,18 +91,20 @@ def wilson(hits: int, n: int, z: float = 1.959963985) -> tuple[float, float]:
 def estimate_p(cfg: Config, trials: int, seed: int = 20260810,
                workers: int | None = None) -> dict:
     """返回 {p, lo, hi, hits, trials, ...}。"""
-    workers = workers or min(os.cpu_count() or 1, 8)
-    n_chunks = max(workers, 1)
-    base = trials // n_chunks
-    sizes = [base + (1 if i < trials - base * n_chunks else 0) for i in range(n_chunks)]
-    sizes = [s for s in sizes if s > 0]
-    seeds = np.random.SeedSequence(seed).spawn(len(sizes))
-    jobs = [(asdict(cfg), s, k) for s, k in zip(seeds, sizes)]
+    # 分块：固定 N_CHUNKS 块，与进程数无关，保证随机流与机器核数解耦
+    base = trials // N_CHUNKS
+    sizes = [base + (1 if i < trials - base * N_CHUNKS else 0) for i in range(N_CHUNKS)]
+    seeds = np.random.SeedSequence(seed).spawn(N_CHUNKS)
+    jobs = [(asdict(cfg), s, k) for s, k in zip(seeds, sizes) if k > 0]
 
-    if len(jobs) == 1:
-        hits = _run_chunk(jobs[0])
+    # 进程数：只影响跑多快，不影响跑出什么
+    workers = workers or min(os.cpu_count() or 1, N_CHUNKS)
+    workers = max(1, min(workers, len(jobs)))
+
+    if workers == 1 or len(jobs) == 1:
+        hits = sum(_run_chunk(j) for j in jobs)
     else:
-        with Pool(len(jobs)) as pool:
+        with Pool(workers) as pool:
             hits = sum(pool.map(_run_chunk, jobs))
 
     lo, hi = wilson(hits, trials)

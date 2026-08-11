@@ -54,7 +54,10 @@ python3 build_paper_pdf.py --ai-details    # 支撑材料《AI工具使用详情
 
 依赖：Python ≥3.11、numpy、scipy、matplotlib、openpyxl；编译 PDF 另需 pandoc 与
 texlive-xetex / texlive-lang-chinese（字体用 texlive 自带的 Fandol 开源字族）。
-随机性全部来自 `numpy.random.SeedSequence`，按 worker 分叉，结果与并行度无关、可逐位复现。
+随机性全部来自 `numpy.random.SeedSequence`，按**固定的 4 个分块**分叉（`simulate.N_CHUNKS`），
+分块数与进程数解耦，因此结果与并行度、机器核数都无关，换机器重跑可逐位复现。
+（早先的实现把分块数取成 `min(os.cpu_count(), 8)`，随机流会跟着机器核数变；
+现已修正，并已验证三组已发布数值在 1 进程与 4 进程下均逐位复现。）
 
 ## 三条影响结论的数据发现
 
