@@ -1,0 +1,66 @@
+% 论文排版样式（XeLaTeX + ctex）。字体用 texlive-lang-chinese 自带的 Fandol 开源字族，
+% 不依赖 macOS/Windows 私有字体，任何装了 texlive 的机器都能复现同样的版面。
+\usepackage[fontset=fandol]{ctex}
+\usepackage{geometry}
+\usepackage{indentfirst}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{setspace}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{amsmath,amssymb}
+\usepackage{fvextra}
+\usepackage{seqsplit}
+
+% 页面：A4，四边留白不小于 2.5 cm
+\geometry{a4paper, top=2.6cm, bottom=2.6cm, left=2.7cm, right=2.7cm}
+
+% 图表前缀中文化
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+
+% 段落：小四号、1.4 倍行距、首行缩进两字
+\setlength{\parindent}{2em}
+\setstretch{1.38}
+\setlength{\parskip}{3pt plus 1pt minus 0.5pt}
+
+% 页脚居中页码，无页眉横线（页眉不得出现任何身份信息）
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\thepage}\renewcommand{\headrulewidth}{0pt}}
+
+% 标题层级。pandoc 以 --top-level-division=section 转换：
+%   Markdown #   -> \section      论文主标题
+%   Markdown ##  -> \subsection   一级标题（摘要 / 1 问题重述 / 2 数据审计 …）
+%   Markdown ### -> \subsubsection 二级标题（1.1、1.2 …）
+% 论文主标题与**全部一级标题**居中，二级及以下左对齐。
+% 字号参照所给的获奖论文：标题三号(16pt)黑体居中，一级标题四号(14pt)黑体居中，
+% 二级标题小四(12pt)黑体左对齐，正文小四(12pt)宋体。
+\titleformat{\section}[block]{\centering\fontsize{16pt}{22pt}\selectfont\bfseries\sffamily}{\thesection}{1em}{}
+\titlespacing*{\section}{0pt}{10pt}{14pt}
+\titleformat{\subsection}[block]{\centering\fontsize{14pt}{18pt}\selectfont\bfseries\sffamily}{\thesubsection}{1em}{}
+\titlespacing*{\subsection}{0pt}{16pt}{10pt}
+\titleformat{\subsubsection}[block]{\fontsize{12pt}{15pt}\selectfont\bfseries\sffamily}{\thesubsubsection}{1em}{}
+\titlespacing*{\subsubsection}{0pt}{10pt}{5pt}
+
+% 图表题注：五号加粗居中，题注与图表间留白
+\captionsetup{justification=centering, font={small,bf}, labelfont=bf, skip=6pt}
+
+% 公式编号右对齐
+\makeatletter
+\def\tagform@#1{\maketag@@@{(#1\@@italiccorr)}}
+\makeatother
+
+% 附录源程序：允许在任意位置断行，避免长行溢出版心；字号压到 7.5pt 以控制篇幅
+\fvset{breaklines=true, breakanywhere=true, fontsize=\fontsize{7.5pt}{9pt}\selectfont}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true, breakanywhere=true,
+  commandchars=\\\{\}, fontsize=\fontsize{7.5pt}{9pt}\selectfont}
+
+% 表格整体缩小一档，宽表不至于顶出版心
+\AtBeginEnvironment{longtable}{\small}
+\AtBeginEnvironment{tabular}{\small}

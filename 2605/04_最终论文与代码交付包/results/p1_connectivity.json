@@ -1,0 +1,110 @@
+{
+  "组1": {
+    "n_pieces_in_attachment": 12,
+    "n_media": 7,
+    "n_fragments_restored": 15,
+    "box_nm": [
+      10000.0,
+      1000.0,
+      1000.0
+    ],
+    "as_given": false,
+    "restored": false,
+    "bonded": true,
+    "graph_as_given": {
+      "n_fragments": 12,
+      "n_contact_edges": 2,
+      "n_touch_left": 3,
+      "n_touch_right": 4,
+      "min_pair_surface_gap_nm": -25.35634507848149
+    },
+    "gap_scan": {
+      "0.9": false,
+      "1.35": false,
+      "1.8": false,
+      "2.25": false,
+      "2.7": false
+    },
+    "gap_robust": true,
+    "literal_reading": {
+      "verdict_same_as_reconstructed": true,
+      "reason": "连通性只依赖线段几何、接触判据与带电面位置，与 Y/Z 盒宽和碎片口径无关",
+      "volume_fraction_literal": 0.0001696460032938488,
+      "volume_fraction_reconstructed": 0.009896016858807848
+    },
+    "conclusion": "不导通",
+    "robust": true
+  },
+  "组2": {
+    "n_pieces_in_attachment": 49,
+    "n_media": 28,
+    "n_fragments_restored": 53,
+    "box_nm": [
+      10000.0,
+      1000.0,
+      1000.0
+    ],
+    "as_given": true,
+    "restored": true,
+    "bonded": true,
+    "graph_as_given": {
+      "n_fragments": 49,
+      "n_contact_edges": 27,
+      "n_touch_left": 11,
+      "n_touch_right": 11,
+      "min_pair_surface_gap_nm": -58.55886543028693
+    },
+    "gap_scan": {
+      "0.9": true,
+      "1.35": true,
+      "1.8": true,
+      "2.25": true,
+      "2.7": true
+    },
+    "gap_robust": true,
+    "literal_reading": {
+      "verdict_same_as_reconstructed": true,
+      "reason": "连通性只依赖线段几何、接触判据与带电面位置，与 Y/Z 盒宽和碎片口径无关",
+      "volume_fraction_literal": 0.0006927211801165494,
+      "volume_fraction_reconstructed": 0.03958406743523139
+    },
+    "conclusion": "导通",
+    "robust": true
+  },
+  "组3": {
+    "n_pieces_in_attachment": 535,
+    "n_media": 354,
+    "n_fragments_restored": 589,
+    "box_nm": [
+      10000.0,
+      10000.0,
+      10000.0
+    ],
+    "as_given": true,
+    "restored": true,
+    "bonded": true,
+    "graph_as_given": {
+      "n_fragments": 535,
+      "n_contact_edges": 166,
+      "n_touch_left": 92,
+      "n_touch_right": 90,
+      "min_pair_surface_gap_nm": -59.77431374264981
+    },
+    "gap_scan": {
+      "0.9": true,
+      "1.35": true,
+      "1.8": true,
+      "2.25": true,
+      "2.7": true
+    },
+    "gap_robust": true,
+    "literal_reading": {
+      "verdict_same_as_reconstructed": true,
+      "reason": "连通性只依赖线段几何、接触判据与带电面位置，与 Y/Z 盒宽和碎片口径无关",
+      "volume_fraction_literal": 0.007563384313517427,
+      "volume_fraction_reconstructed": 0.00500455709716854
+    },
+    "conclusion": "导通",
+    "robust": true
+  }
+}

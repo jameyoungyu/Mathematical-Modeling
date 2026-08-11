@@ -25,3 +25,11 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+
+# 2605 PDF 编译中间产物
+2605/**/build/paper.md
+2605/**/build/pandoc_error.log
+
+# 2605 PDF 编译中间产物
+2605/**/build/paper.md
+2605/**/build/pandoc_error.log
