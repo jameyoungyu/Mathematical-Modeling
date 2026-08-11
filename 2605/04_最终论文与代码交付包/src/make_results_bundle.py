@@ -26,6 +26,7 @@ PARTS = [
     "p4_cost_optimum.json", "p4_break_even.json", "sensitivity.json",
     "sphere_mode_check.json", "cluster_stats.json",
     "geometry_bracket.json", "p4_global_audit.json", "p4_global_audit2.json",
+    "p4_real_geometry.json",
     "p4_marginal_recheck.json",
 ]
 
@@ -36,7 +37,7 @@ ORDER = [
     "solve_p1.py", "solve_p2.py", "solve_p3.py", "solve_p4.py", "p4_break_even.py",
     "sensitivity.py", "sphere_mode_check.py", "p4_backfill_probes.py",
     "geometry_bracket.py", "p4_global_audit.py", "p4_marginal_recheck.py",
-    "p4_global_audit2.py",
+    "p4_global_audit2.py", "p4_real_geometry.py",
     "paper_figures.py", "make_results_bundle.py",
 ]
 
@@ -82,6 +83,13 @@ def bundle_results() -> dict:
         derived["cost_of_3200_spheres_yuan"] = round(3200 * COST_B, 4)
         derived["provably_feasible_pure_a_n"] = 630
         derived["provably_feasible_pure_a_cost_yuan"] = round(630 * COST_A, 4)
+        real_p4 = out.get("p4_real_geometry", {}).get("recommended", {})
+        if real_p4:
+            derived["p4_exact_geometry_recommended_n_a"] = real_p4["n_a"]
+            derived["p4_exact_geometry_recommended_n_b"] = real_p4["n_b"]
+            derived["p4_exact_geometry_recommended_cost_yuan"] = round(
+                real_p4["cost_yuan"], 4)
+            derived["p4_exact_geometry_recommended_p"] = real_p4["p"]
         be = out.get("p4_break_even", {})
         if be:
             derived["break_even_cost_per_sphere_1e3_yuan"] = round(

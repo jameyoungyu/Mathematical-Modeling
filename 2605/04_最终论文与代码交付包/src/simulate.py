@@ -5,6 +5,9 @@
 导通概率就是伯努利参数 p，用 Wilson 区间给置信区间（样本比例接近 0 或 1 时，
 正态近似的 p±1.96·se 会给出越界的区间，Wilson 不会）。
 
+``Config.rod_geometry`` 可取 ``capsule``（历史主结果）或 ``cylinder``（平端圆柱终核）；
+其余随机流、并行和统计逻辑完全相同。
+
 所有随机性来自一个 SeedSequence，并固定分成 N_RANDOM_STREAMS 条随机流；
 worker 只负责调度，不参与随机流的生成。因此在 numpy 与算法版本相同的前提下，
 改变并行度仍可逐位复现。
@@ -45,6 +48,8 @@ class Config:
     # 介质 A 的轴长。默认 5000 即题给圆柱；geometry_bracket.py 用 5000-2r 得到
     # 内接球柱体，从而给出真实平端面圆柱的严格下界。
     rod_length: float = H_A
+    # capsule 保留既有球柱体结果；cylinder 使用平端实心圆柱的支撑映射精确判定。
+    rod_geometry: str = "capsule"
 
     @property
     def phi_a(self) -> float:
@@ -71,7 +76,8 @@ def _run_chunk(args) -> int:
         if cfg.n_b:
             sc, own_s = sample_spheres(cfg.n_b, rng, BOX, mode=cfg.sphere_mode)
         hits += bool(percolates(sp, sq, sph_c=sc, owner_rod=own_r, owner_sph=own_s,
-                                bond_fragments=cfg.bond_fragments, gap=cfg.gap))
+                                bond_fragments=cfg.bond_fragments,
+                                rod_geometry=cfg.rod_geometry, gap=cfg.gap))
     return hits
 
 
@@ -112,6 +118,7 @@ def estimate_p(cfg: Config, trials: int, seed: int = 20260810,
         "phi_a": cfg.phi_a, "phi_b": cfg.phi_b,
         "orientation": cfg.orientation, "sphere_mode": cfg.sphere_mode,
         "bond_fragments": cfg.bond_fragments,
+        "rod_geometry": cfg.rod_geometry,
         "trials": trials, "hits": hits,
         "p": hits / trials, "ci_lo": lo, "ci_hi": hi,
         "half_width": (hi - lo) / 2,

@@ -19,7 +19,7 @@
 
 | 脚本 | 作用 | 产物 |
 |---|---|---|
-| `src/microstructure.py` | 几何与渗流内核（边界截断、最短距离、并查集判定） | — |
+| `src/microstructure.py` | 几何与渗流内核（球柱体/平端圆柱距离、边界截断、并查集判定） | — |
 | `src/load_attachment.py` | 读附件、把碎片还原为母介质 | — |
 | `src/audit_attachment.py` | 数据审计（周期盒、丢弃碎片、方向分布检验） | `results/data_audit.json` |
 | `src/validate.py` | 几何内核的 6 项独立校验 | `results/validation.json` |
@@ -36,6 +36,7 @@
 | `src/geometry_bracket.py` | 球柱体近似的严格上下界 | `results/geometry_bracket.json` |
 | `src/p4_global_audit.py` | 问题四预算线角点审计与覆盖范围证书 | `results/p4_global_audit.json` |
 | `src/p4_global_audit2.py` | 问题四未覆盖整数列的可断点续跑审计 | `results/p4_global_audit2.json` |
+| `src/p4_real_geometry.py` | 问题四平端圆柱成本线终核 | `results/p4_real_geometry.json` |
 | `src/p4_marginal_recheck.py` | 预算线擦边点的大样本复核 | `results/p4_marginal_recheck.json` |
 | `src/make_results_bundle.py` | 合并结果、装配论文附录 B | `results/results.json` |
 | `src/paper_figures.py` | 全部正文图件 | `figures_paper/` |
@@ -49,6 +50,7 @@ python3 p4_backfill_probes.py && python3 p4_break_even.py && python3 theory_chec
 python3 sensitivity.py && python3 sphere_mode_check.py && python3 cluster_stats.py
 python3 geometry_bracket.py && python3 p4_global_audit.py && python3 p4_marginal_recheck.py
 python3 p4_global_audit2.py  # 可断点续跑；完整逐列审计耗时较长
+python3 p4_real_geometry.py --cost 9.10 --a 580 600 608 612 --trials 3000
 python3 paper_figures.py && python3 make_results_bundle.py
 python3 build_paper_pdf.py                 # 提交稿 PDF（需 pandoc + texlive-xetex）
 python3 build_paper_pdf.py --ai-details    # 支撑材料《AI工具使用详情》PDF

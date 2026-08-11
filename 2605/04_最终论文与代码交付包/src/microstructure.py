@@ -9,16 +9,17 @@
 
 几何约定
 --------
-介质 A 建模为**球柱体（spherocylinder / capsule）**：半径 r=30 nm 的圆柱两端各加一个
-半球帽。这样两个介质 A 的表面最短距离就精确等于两条轴线段的最短距离减去 2r，
-判定可以完全向量化。题目里的介质 A 是平端面直圆柱，与球柱体的差别只出现在
-端面附近，且体积仅相差 (4/3)πr³ / (πr²h) = 4r/(3h) = 0.8%。
-`validate.py` 里量化了这一近似对导通判定的影响。
+介质 A 支持两种口径。``rod_geometry="capsule"`` 保留既有球柱体结果，轴线距离判定可完全
+向量化；``rod_geometry="cylinder"`` 按题面的平端面直圆柱计算，圆柱—圆柱采用支撑映射
+Gilbert/GJK 距离，圆柱—球与圆柱—带电面使用解析距离。平端模式先用内外球柱体筛掉绝大多数
+显然接触/不接触的介质对，只在端缘临界窄带调用 GJK，因此可用于问题四的真实几何终核。
 
 介质 B 是半径 200 nm 的正球体，本身就是球，无需近似。
 """
 
 from __future__ import annotations
+
+from itertools import combinations
 
 import numpy as np
 
@@ -163,6 +164,144 @@ def point_seg_dist(pts: np.ndarray, p: np.ndarray, q: np.ndarray) -> np.ndarray:
     return np.sqrt(np.maximum(np.sum(diff * diff, axis=-1), 0.0))
 
 
+def point_cylinder_dist(pts: np.ndarray, p: np.ndarray, q: np.ndarray,
+                        radius: float = R_A) -> np.ndarray:
+    """点到平端实心圆柱的欧氏距离。
+
+    ``pts`` 为 ``(..., 3)``；``p,q`` 可广播到相同前缀形状。圆柱轴线是 ``p→q``，
+    半径为 ``radius``。点在圆柱内部时返回 0。该公式同时覆盖侧壁、端面和端缘三类
+    最近点，比点—轴线段距离减半径的球柱体公式少了端帽处的系统性高估。
+    """
+    axis = q - p
+    length = np.linalg.norm(axis, axis=-1)
+    safe = np.maximum(length, 1e-12)
+    u = axis / safe[..., None]
+    c = 0.5 * (p + q)
+    w = pts - c
+    axial = np.abs(np.sum(w * u, axis=-1)) - 0.5 * length
+    radial_vec = w - np.sum(w * u, axis=-1)[..., None] * u
+    radial = np.linalg.norm(radial_vec, axis=-1) - radius
+    return np.hypot(np.maximum(axial, 0.0), np.maximum(radial, 0.0))
+
+
+def cylinder_support(p: np.ndarray, q: np.ndarray, direction: np.ndarray,
+                     radius: float = R_A) -> np.ndarray:
+    """平端实心圆柱在 ``direction`` 方向的支撑点。"""
+    axis = q - p
+    length = float(np.linalg.norm(axis))
+    if length <= 1e-12:
+        # 极短碎片退化为球，避免方向未定义；正常数据不会走到这里。
+        n = float(np.linalg.norm(direction))
+        return 0.5 * (p + q) if n <= 1e-15 else 0.5 * (p + q) + radius * direction / n
+    u = axis / length
+    c = 0.5 * (p + q)
+    du = float(np.dot(direction, u))
+    perp = direction - du * u
+    pn = float(np.linalg.norm(perp))
+    radial = np.zeros(3) if pn <= 1e-15 else radius * perp / pn
+    return c + (0.5 * length if du >= 0.0 else -0.5 * length) * u + radial
+
+
+def _closest_origin_on_hull(points: list[np.ndarray]) -> tuple[np.ndarray, list[np.ndarray]]:
+    """求有限点集凸包中离原点最近的点，并只保留其活动单纯形。
+
+    三维 Carathéodory 定理保证最多只需 4 个点。枚举至多 4 点的子集后解带
+    ``sum(lambda)=1`` 的最小二乘；负权重的候选丢弃。点数很小（GJK 通常 2–4 个），
+    这种写法比手写四面体分支更容易核验，也避开退化共面情形。
+    """
+    best_v: np.ndarray | None = None
+    best_pts: list[np.ndarray] | None = None
+    best_norm2 = float("inf")
+    n = len(points)
+    for size in range(1, min(4, n) + 1):
+        for idx in combinations(range(n), size):
+            sub = np.asarray([points[i] for i in idx], dtype=float)
+            if size == 1:
+                lam = np.ones(1)
+            else:
+                gram = sub @ sub.T
+                one = np.ones(size)
+                # 直接解 KKT 系统；增广约束在点集跨过原点、G 奇异时仍能给出零距离解。
+                kkt = np.block([[2.0 * gram, one[:, None]],
+                                [one[None, :], np.zeros((1, 1))]])
+                rhs = np.r_[np.zeros(size), 1.0]
+                lam = np.linalg.lstsq(kkt, rhs, rcond=1e-13)[0][:size]
+            if np.min(lam) < -1e-10:
+                continue
+            lam = np.maximum(lam, 0.0)
+            lam /= np.sum(lam)
+            v = lam @ sub
+            norm2 = float(v @ v)
+            if norm2 < best_norm2:
+                active = [points[i] for i, w in zip(idx, lam) if w > 1e-9]
+                best_v, best_pts, best_norm2 = v, active or [points[idx[0]]], norm2
+    if best_v is None or best_pts is None:
+        norms = [float(p @ p) for p in points]
+        i = int(np.argmin(norms))
+        return points[i], [points[i]]
+    return best_v, best_pts
+
+
+def cylinder_cylinder_dist(p1: np.ndarray, q1: np.ndarray,
+                           p2: np.ndarray, q2: np.ndarray,
+                           radius: float = R_A,
+                           max_iter: int = 64) -> float:
+    """两个平端实心圆柱的欧氏距离（Gilbert/GJK 支撑映射算法）。
+
+    返回 0 表示相交。调用方先用外接球柱体做候选预筛，因此本函数只处理端帽形状
+    可能改变结论的少量临界对。停止条件使用 Frank–Wolfe 对偶间隙；坐标量级为 nm，
+    最终误差远小于 1.8 nm 导通阈值。
+    """
+    c1, c2 = 0.5 * (p1 + q1), 0.5 * (p2 + q2)
+
+    def support(direction: np.ndarray) -> np.ndarray:
+        return (cylinder_support(p1, q1, direction, radius)
+                - cylinder_support(p2, q2, -direction, radius))
+
+    direction = c2 - c1
+    if float(direction @ direction) <= 1e-18:
+        direction = np.array([1.0, 0.0, 0.0])
+    simplex = [support(direction)]
+    v = simplex[0]
+    for _ in range(max_iter):
+        norm2 = float(v @ v)
+        if norm2 <= 1e-18:
+            return 0.0
+        w = support(-v)
+        dual_gap = norm2 - float(v @ w)
+        if dual_gap <= 1e-11 * max(1.0, norm2):
+            return float(np.sqrt(norm2))
+        if any(float((w - s) @ (w - s)) <= 1e-20 for s in simplex):
+            return float(np.sqrt(norm2))
+        v, simplex = _closest_origin_on_hull(simplex + [w])
+    return float(np.linalg.norm(v))
+
+
+def cylinder_x_extent(p: np.ndarray, q: np.ndarray,
+                      radius: float = R_A) -> tuple[float, float]:
+    """平端圆柱在 X 轴上的精确投影区间。"""
+    axis = q - p
+    length = float(np.linalg.norm(axis))
+    if length <= 1e-12:
+        x = float(0.5 * (p[0] + q[0]))
+        return x - radius, x + radius
+    ux = float(axis[0] / length)
+    half_width = 0.5 * length * abs(ux) + radius * np.sqrt(max(0.0, 1.0 - ux * ux))
+    cx = float(0.5 * (p[0] + q[0]))
+    return cx - half_width, cx + half_width
+
+
+def _inner_capsule_axis(p: np.ndarray, q: np.ndarray,
+                        radius: float = R_A) -> tuple[np.ndarray, np.ndarray] | None:
+    """返回平端圆柱的内接球柱体轴线；碎片短于直径时不使用该快捷判据。"""
+    d = q - p
+    length = float(np.linalg.norm(d))
+    if length <= 2.0 * radius + 1e-12:
+        return None
+    u = d / length
+    return p + radius * u, q - radius * u
+
+
 # ------------------------------------------------------------------ 并查集
 
 class DSU:
@@ -286,6 +425,7 @@ def percolates(seg_p: np.ndarray, seg_q: np.ndarray,
                owner_rod: np.ndarray | None = None,
                owner_sph: np.ndarray | None = None,
                bond_fragments: bool = False,
+               rod_geometry: str = "capsule",
                gap: float = GAP,
                edge: float = EDGE) -> bool:
     """判断微构体是否导通（左右带电面之间存在导电通路）。
@@ -303,10 +443,17 @@ def percolates(seg_p: np.ndarray, seg_q: np.ndarray,
     dsu = DSU(n + 2)
     LEFT, RIGHT = n, n + 1
 
+    if rod_geometry not in {"capsule", "cylinder"}:
+        raise ValueError(f"未知介质 A 几何：{rod_geometry}")
+
     # --- 介质与带电面
     if n_rod:
-        lo = np.minimum(seg_p[:, 0], seg_q[:, 0]) - R_A
-        hi = np.maximum(seg_p[:, 0], seg_q[:, 0]) + R_A
+        if rod_geometry == "capsule":
+            lo = np.minimum(seg_p[:, 0], seg_q[:, 0]) - R_A
+            hi = np.maximum(seg_p[:, 0], seg_q[:, 0]) + R_A
+        else:
+            ext = np.asarray([cylinder_x_extent(a, b) for a, b in zip(seg_p, seg_q)])
+            lo, hi = ext[:, 0], ext[:, 1]
         for i in np.nonzero(lo <= -half + gap)[0]:
             dsu.union(LEFT, int(i))
         for i in np.nonzero(hi >= half - gap)[0]:
@@ -320,7 +467,18 @@ def percolates(seg_p: np.ndarray, seg_q: np.ndarray,
     # --- 棒-棒
     if n_rod > 1:
         for a, b in contact_pairs(seg_p, seg_q, 2 * R_A + gap):
-            dsu.union(int(a), int(b))
+            hit = rod_geometry == "capsule"
+            if not hit:
+                ia = _inner_capsule_axis(seg_p[a], seg_q[a])
+                ib = _inner_capsule_axis(seg_p[b], seg_q[b])
+                # 绝大多数接触也被 K^- 捕获，只对端缘窄带调用较贵的 GJK。
+                hit = (ia is not None and ib is not None
+                       and float(seg_seg_dist(ia[0], ia[1], ib[0], ib[1])) <= 2 * R_A + gap)
+            if not hit and rod_geometry == "cylinder":
+                hit = cylinder_cylinder_dist(
+                    seg_p[a], seg_q[a], seg_p[b], seg_q[b]) <= gap + 1e-8
+            if hit:
+                dsu.union(int(a), int(b))
 
     # --- 球-球 与 球-棒（介质 B 数量可达上万，用 KD 树做邻域检索）
     if n_sph:
@@ -345,15 +503,24 @@ def percolates(seg_p: np.ndarray, seg_q: np.ndarray,
             pts = np.concatenate(samples)
             tags = np.concatenate(tags)
             radius = reach + step / 2.0 + 1e-9
+            # 同一棒—球对常被相邻多个轴线采样点重复命中。先编码去重，再一次性做精确
+            # 距离过滤；混填边界上可把这部分耗时降低一个数量级。
+            codes: list[np.ndarray] = []
             for pt_idx, sph_list in enumerate(tree.query_ball_point(pts, radius)):
-                if not sph_list:
-                    continue
-                rod = int(tags[pt_idx])
-                cand = np.asarray(sph_list, dtype=int)
-                d = point_seg_dist(sph_c[cand][:, None, :],
-                                   seg_p[rod][None, None, :], seg_q[rod][None, None, :])[:, 0]
-                for s in cand[d <= reach]:
-                    dsu.union(n_rod + int(s), rod)
+                if sph_list:
+                    codes.append(int(tags[pt_idx]) * n_sph + np.asarray(sph_list, dtype=np.int64))
+            if codes:
+                code = np.unique(np.concatenate(codes))
+                rods = (code // n_sph).astype(int)
+                spheres = (code % n_sph).astype(int)
+                if rod_geometry == "capsule":
+                    d = point_seg_dist(sph_c[spheres], seg_p[rods], seg_q[rods])
+                    hit = d <= reach
+                else:
+                    d = point_cylinder_dist(sph_c[spheres], seg_p[rods], seg_q[rods])
+                    hit = d <= R_B + gap
+                for rod, sphere in zip(rods[hit], spheres[hit]):
+                    dsu.union(n_rod + int(sphere), int(rod))
 
     # --- 灵敏度对照：同母介质的碎片粘合
     if bond_fragments:

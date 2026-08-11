@@ -25,6 +25,7 @@ from setup_cn_plot import (COLORS, LINESTYLES, MARKERS, savefig_bundle,  # noqa:
 
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
+from matplotlib.ticker import FuncFormatter, NullFormatter  # noqa: E402
 
 RESULTS = ROOT / "results"
 FIGDIR = ROOT / "figures_paper"
@@ -549,6 +550,8 @@ def fig_convergence() -> None:
                 capsize=3, lw=1.6)
     ax.axhline(p[-1], color=COLORS[5], ls=LINESTYLES[3], lw=1.2)
     ax.set_xscale("log"); ax.set_xlabel("试验次数 $T$"); ax.set_ylabel("导通概率 P")
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _pos: f"{value:g}"))
+    ax.xaxis.set_minor_formatter(NullFormatter())
     ax.set_title("估计值随样本量的稳定过程（φ=0.70%）", fontsize=9)
 
     ax = axes[1]
@@ -558,6 +561,10 @@ def fig_convergence() -> None:
     ax.loglog(T, ref, color=COLORS[1], ls=LINESTYLES[1], lw=1.4,
               label=r"$\propto 1/\sqrt{T}$ 参考线")
     ax.set_xlabel("试验次数 $T$"); ax.set_ylabel("区间半宽")
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _pos: f"{value:g}"))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _pos: f"{value:g}"))
+    ax.xaxis.set_minor_formatter(NullFormatter())
+    ax.yaxis.set_minor_formatter(NullFormatter())
     ax.legend(fontsize=8)
     ax.set_title("半宽按 1/√T 收窄", fontsize=9)
     fig.tight_layout()
@@ -669,73 +676,38 @@ def fig_marginal() -> None:
 
 # ------------------------------------------------- 图10 预算线审计的证据链
 def fig_budget_audit() -> None:
-    """预算线抽样点的 P 与 0.90 的关系——展示已算列及统计不确定性。
-
-    表 11 有同样的数，但"哪些点被干净地排除、哪一个卡在 0.90 上"
-    要对着置信区间逐行心算；画成带误差棒的图，0.90 这条线一穿而过，
-    退化点自己跳出来。
-    """
-    a = load("p4_global_audit.json")
-    if not a:
-        return
-    rows = list(a.get("budget_line_checks", []))
+    """平端圆柱三个终核候选的 99% Wilson 区间。"""
+    a = load("p4_real_geometry.json")
+    rows = [] if not a else sorted(a.get("finalists", []), key=lambda r: r["cost_yuan"])
     if not rows:
         return
-    rc = load("p4_marginal_recheck.json")
-    big = {(r["n_a"], r["n_b"]): r for r in (rc or {}).get("points", [])}
-
-    # p4_global_audit.json 的预算线记录只存了 ci_hi（判据只用上界），
-    # 但误差棒必须两侧都有，否则棒子只朝上、把点在视觉上压到区间底部。
-    # Wilson 区间由 (p̂, 试验数) 唯一确定，这里按同一公式补出下界。
-    def wilson_pair(p_hat: float, n: int) -> tuple[float, float]:
-        z = 1.959964
-        den = 1.0 + z * z / n
-        c = (p_hat + z * z / (2 * n)) / den
-        h = z * math.sqrt(p_hat * (1 - p_hat) / n + z * z / (4 * n * n)) / den
-        return c - h, c + h
-
-    n_small = a.get("trials", 2500)
     x = np.arange(len(rows))
-    fig, ax = plt.subplots(figsize=(7.4, 3.52))
+    fig, ax = plt.subplots(figsize=(7.4, 3.45))
     ax.axhline(0.90, color=COLORS[1], lw=1.4, ls="--", zorder=1)
     ax.annotate("$P=0.90$ 约束线", xy=(0, 0.90), xytext=(2, 5),
                 textcoords="offset points", ha="left", fontsize=8.5,
                 color=COLORS[1])
-
     for i, r in enumerate(rows):
-        key = (r["n_a"], r["n_b"])
-        b = big.get(key)
-        if b:
-            pt, lo, hi = b["p"], b["ci_lo"], b["ci_hi"]
-        else:
-            pt = r["p"]
-            lo, hi = wilson_pair(pt, n_small)
-            hi = r.get("ci_hi", hi)          # 上界以文件里存的为准
-        undecided = not (hi < 0.90 or lo >= 0.90)
-        col = COLORS[1] if undecided else COLORS[0]
+        pt, lo, hi = r["p"], r["ci99_lo"], r["ci99_hi"]
+        confirmed = lo >= 0.90
+        col = COLORS[0] if confirmed else COLORS[1]
         ax.errorbar([i], [pt], yerr=[[pt - lo], [hi - pt]], color=col,
-                    marker="o" if not b else "D", ms=5 if not b else 6,
+                    marker="D" if confirmed else "o", ms=6,
                     capsize=3, lw=1.4, zorder=3)
-        if b:
-            ax.annotate("$T$=20000", (i, lo), xytext=(0, -14),
-                        textcoords="offset points", ha="center",
-                        fontsize=7.5, color="#898781")
-
+        ax.annotate("确认" if confirmed else "未确认", (i, hi), xytext=(0, 7),
+                    textcoords="offset points", ha="center", fontsize=8, color=col)
     ax.set_xticks(x)
-    ax.set_xticklabels([f"({r['n_a']},{r['n_b']})" for r in rows],
-                       rotation=30, ha="right", fontsize=8)
-    ax.set_xlabel("预算线上的整数配比 $(N_A,\\,N_B)$，成本均低于 9.0252 元")
-    ax.set_ylabel("导通概率 $P$（误差棒为 Wilson 95% 区间）")
+    ax.set_xticklabels([f"({r['n_a']},{r['n_b']})\n{r['cost_yuan']:.4f} 元" for r in rows],
+                       fontsize=8.5)
+    ax.set_xlabel("平端圆柱候选配比 $(N_A,\\,N_B)$ 与成本")
+    ax.set_ylabel("导通概率 $P$（误差棒为 Wilson 99% 区间）")
     ax.set_xlim(-0.6, len(rows) - 0.4)
-    last = rows[-1]
-    ax.annotate("区间横跨 0.90：\n可行性无法判定", xy=(len(rows) - 1, 0.9003),
-                xytext=(-20, -52), textcoords="offset points", ha="right",
-                fontsize=8.5, color=COLORS[1],
-                arrowprops=dict(arrowstyle="->", color=COLORS[1], lw=1.1))
-    ax.set_title("已抽样预算线列中，除最右一点外均被 Wilson 上界排除",
+    ax.set_ylim(min(r["ci99_lo"] for r in rows) - 0.012,
+                max(r["ci99_hi"] for r in rows) + 0.016)
+    ax.set_title("真实平端圆柱终核：仅 $(626,0)$ 的 99% 下界超过 0.90",
                  fontsize=9.5, color="#52514e")
     fig.tight_layout()
-    emit(fig, "10_budget_audit", "预算线上抽样审计：$P$ 的点估计与 Wilson 区间")
+    emit(fig, "10_budget_audit", "平端圆柱候选的 99% Wilson 终核")
 
 
 # ------------------------------------------------- 图13 球柱体近似的双侧界
@@ -785,6 +757,13 @@ def fig_bracket() -> None:
 
 def main() -> int:
     font = setup(font_size=10)
+    plt.rcParams.update({
+        "axes.unicode_minus": False,
+        "mathtext.fontset": "dejavusans",
+        "mathtext.rm": "DejaVu Sans",
+        "mathtext.it": "DejaVu Sans:italic",
+        "mathtext.bf": "DejaVu Sans:bold",
+    })
     print(f"中文字体：{font}")
     # 顺序 = 正文中出现的先后。文件名前缀即图号，改动顺序时两者一起改，
     # 避免出现"图 10 排在图 7 前面"这类编号与出现次序不一致的问题。

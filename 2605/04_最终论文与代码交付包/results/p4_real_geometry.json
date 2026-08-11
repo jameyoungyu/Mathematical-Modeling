@@ -1,0 +1,38 @@
+{
+  "target": 0.9,
+  "geometry": "finite flat-ended cylinder after the stated centerline truncation rule",
+  "distance_kernel": "support-mapping Gilbert/GJK + analytic point-cylinder distance",
+  "decision_rule": "99% Wilson: lo>=0.90 confirms; hi<0.90 excludes; otherwise undecided",
+  "screening": [
+    {"group": "pure_a", "n_a": 608, "n_b": 0, "trials": 400, "hits": 360, "p": 0.9, "ci99_lo": 0.854601, "ci99_hi": 0.932346, "seed": 20260812},
+    {"group": "pure_a", "n_a": 614, "n_b": 0, "trials": 400, "hits": 362, "p": 0.905, "ci99_lo": 0.860359, "ci99_hi": 0.936424, "seed": 20260812},
+    {"group": "pure_a", "n_a": 620, "n_b": 0, "trials": 400, "hits": 358, "p": 0.895, "ci99_lo": 0.84887, "ci99_hi": 0.92824, "seed": 20260812},
+    {"group": "pure_a", "n_a": 626, "n_b": 0, "trials": 400, "hits": 372, "p": 0.93, "ci99_lo": 0.889646, "ci99_hi": 0.956322, "seed": 20260812},
+    {"group": "pure_a", "n_a": 630, "n_b": 0, "trials": 400, "hits": 380, "p": 0.95, "ci99_lo": 0.913866, "ci99_hi": 0.971449, "seed": 20260812},
+    {"group": "cost_9.292", "n_a": 480, "n_b": 1293, "trials": 200, "hits": 166, "p": 0.83, "ci99_lo": 0.751265, "ci99_hi": 0.887543, "seed": 20260813},
+    {"group": "cost_9.292", "n_a": 520, "n_b": 939, "trials": 200, "hits": 171, "p": 0.855, "ci99_lo": 0.779487, "ci99_hi": 0.907716, "seed": 20260813},
+    {"group": "cost_9.292", "n_a": 560, "n_b": 584, "trials": 200, "hits": 174, "p": 0.87, "ci99_lo": 0.796697, "ci99_hi": 0.919542, "seed": 20260813},
+    {"group": "cost_9.292", "n_a": 590, "n_b": 318, "trials": 200, "hits": 181, "p": 0.905, "ci99_lo": 0.837869, "ci99_hi": 0.946122, "seed": 20260813},
+    {"group": "cost_9.292", "n_a": 600, "n_b": 230, "trials": 300, "hits": 274, "p": 0.913333, "ci99_lo": 0.862049, "ci99_hi": 0.94673, "seed": 20260813},
+    {"group": "cost_9.292", "n_a": 608, "n_b": 159, "trials": 300, "hits": 279, "p": 0.93, "ci99_lo": 0.882028, "ci99_hi": 0.959363, "seed": 20260813},
+    {"group": "cost_9.292", "n_a": 614, "n_b": 106, "trials": 300, "hits": 274, "p": 0.913333, "ci99_lo": 0.862049, "ci99_hi": 0.94673, "seed": 20260813},
+    {"group": "cost_9.292", "n_a": 620, "n_b": 53, "trials": 300, "hits": 275, "p": 0.916667, "ci99_lo": 0.866008, "ci99_hi": 0.949294, "seed": 20260813},
+    {"group": "cost_9.100", "n_a": 580, "n_b": 292, "trials": 400, "hits": 359, "p": 0.8975, "ci99_lo": 0.851732, "ci99_hi": 0.930296, "seed": 20260814},
+    {"group": "cost_9.100", "n_a": 600, "n_b": 115, "trials": 400, "hits": 351, "p": 0.8775, "ci99_lo": 0.82901, "ci99_hi": 0.913671, "seed": 20260814},
+    {"group": "cost_9.100", "n_a": 608, "n_b": 44, "trials": 400, "hits": 364, "p": 0.91, "ci99_lo": 0.866147, "ci99_hi": 0.940473, "seed": 20260814},
+    {"group": "cost_9.100", "n_a": 612, "n_b": 9, "trials": 400, "hits": 366, "p": 0.915, "ci99_lo": 0.871967, "ci99_hi": 0.94449, "seed": 20260814}
+  ],
+  "finalists": [
+    {"n_a": 612, "n_b": 9, "cost_yuan": 9.099623121122836, "trials": 3000, "hits": 2682, "p": 0.894, "ci95_lo": 0.8824760291555365, "ci95_hi": 0.9045162380484343, "ci99_lo": 0.878643422219822, "ci99_hi": 0.907617657458487, "seed": 20260815, "status": "not confirmed"},
+    {"n_a": 608, "n_b": 44, "cost_yuan": 9.098890082836999, "trials": 3000, "hits": 2699, "p": 0.8996666666666666, "ci95_lo": 0.8883992294460146, "ci95_hi": 0.9099118774723957, "ci99_lo": 0.8846434945841853, "ci99_hi": 0.9129259085751145, "seed": 20260815, "status": "not confirmed"},
+    {"n_a": 626, "n_b": 0, "cost_yuan": 9.292359830420569, "trials": 3000, "hits": 2767, "p": 0.9223333333333333, "ci95_lo": 0.9122067075219562, "ci95_hi": 0.931379758254212, "ci99_lo": 0.9087938796729461, "ci99_hi": 0.9340088174103174, "seed": 20260815, "status": "confirmed"}
+  ],
+  "recommended": {"n_a": 626, "n_b": 0, "cost_yuan": 9.292359830420569, "p": 0.9223333333333333, "ci99_lo": 0.9087938796729461, "ci99_hi": 0.9340088174103174},
+  "closure": {
+    "feasibility": "closed at 99% Wilson confidence",
+    "lower_cost_line": 9.1,
+    "lower_cost_finalists": [[608, 44], [612, 9]],
+    "lower_cost_result": "neither finalist is confirmed feasible at T=3000",
+    "claim": "minimum statistically certified solution in the exact-geometry cost-line search; deterministic global optimality is not claimed"
+  }
+}
