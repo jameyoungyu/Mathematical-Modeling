@@ -5103,6 +5103,18 @@
     "base_p": 0.494,
     "delta_vs_base::方向改为附件标定的极角均匀分布": 0.24775,
     "delta_vs_base::碎片粘合为同一导体（已否决）": 0.506,
-    "gap_scan_range": 0.056
+    "gap_scan_range": 0.056,
+    "excluded_volume_1e9_nm3": 2.5479,
+    "phi_c_excluded_volume_percent": 0.7768,
+    "phi_at_P50_percent::polar_uniform": 0.6071,
+    "phi_at_P50_percent::isotropic": 0.7051,
+    "iso_cost_slope": -8.8594,
+    "sphere_max_bridge_axis_gap_nm": 463.6,
+    "cost_of_3200_spheres_yuan": 5.3617,
+    "break_even_cost_per_sphere_1e3_yuan": 1.3112,
+    "price_premium_over_break_even_percent": 27.7889,
+    "gap_scan_p_min": 0.4625,
+    "gap_scan_p_max": 0.5185,
+    "boundary_slope_control_caliber": -11.3875
   }
 }

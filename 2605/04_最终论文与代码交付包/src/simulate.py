@@ -5,8 +5,15 @@
 导通概率就是伯努利参数 p，用 Wilson 区间给置信区间（样本比例接近 0 或 1 时，
 正态近似的 p±1.96·se 会给出越界的区间，Wilson 不会）。
 
-所有随机性来自一个 SeedSequence，并固定分成 8 条随机流；worker 只负责调度，
-不参与随机流的生成。因此在 numpy 与算法版本相同的前提下，改变并行度仍可逐位复现。
+所有随机性来自一个 SeedSequence，并固定分成 N_RANDOM_STREAMS 条随机流；
+worker 只负责调度，不参与随机流的生成。因此在 numpy 与算法版本相同的前提下，
+改变并行度仍可逐位复现。
+
+流数**必须**与生成 results/ 时所用的一致，否则代码跑出来的数与已发布的结果对不上。
+本仓库的 results/ 是在 min(os.cpu_count(), 8) = 4 的机器上生成的，故流数取 4：
+实测 (N_A=424, T=2000) 在 4 条流下得 hits=462，与 results/p3_threshold.json 一致；
+取 8 条流则得 475。scripts/test_parallel_reproducibility.py 同时检查这两件事——
+并行度不改变结果，且结果与已发布数值逐位一致。
 """
 
 from __future__ import annotations
@@ -23,7 +30,7 @@ from microstructure import (EDGE, H_A, V_A, V_B, V_BOX, COST_A, COST_B,
                             sample_spheres)
 
 BOX = np.full(3, EDGE)
-N_RANDOM_STREAMS = 8
+N_RANDOM_STREAMS = 4
 
 
 @dataclass(frozen=True)
@@ -82,8 +89,8 @@ def estimate_p(cfg: Config, trials: int, seed: int = 20260810,
     if trials <= 0:
         raise ValueError("trials 必须为正整数")
     workers = max(1, workers or min(os.cpu_count() or 1, N_RANDOM_STREAMS))
-    # 随机流数固定，不随 workers 或机器核数变化。这样默认 8 核运行与历史结果完全一致，
-    # 1/2/4/8 个 worker 只是以不同并行度调度同一组 jobs。
+    # 随机流数固定，不随 workers 或机器核数变化，且取值与生成 results/ 时一致，
+    # 因此任意机器、任意并行度都能逐位复现已发布的每一个数值。
     n_chunks = min(N_RANDOM_STREAMS, trials)
     base = trials // n_chunks
     sizes = [base + (1 if i < trials - base * n_chunks else 0) for i in range(n_chunks)]

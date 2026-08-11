@@ -63,7 +63,14 @@ def preprocess(text: str, include_code: bool) -> str:
     out: list[str] = []
     i = 0
     img_re = re.compile(r"!\[([^\]]*)\]\((figures_paper/[^)]+)\)")
+    # 题注必须**整行**就是题注：只要求行首匹配的话，"表 9 列出了阶段 C 的全部探测点……"
+    # 这类以表号开头的正文句子也会被当成题注，在 PDF 里排成居中加粗的一行。
+    # 题注普遍短且不以句末标点收尾，用长度与结尾再筛一道。
     cap_re = re.compile(r"^(图|表)\s*\d+(?:-\d+)?\s+\S")
+
+    def is_caption(line: str) -> bool:
+        s = line.strip()
+        return bool(cap_re.match(s)) and len(s) <= 60 and not s.endswith(("。", "；", "："))
 
     while i < len(lines):
         line = lines[i]
@@ -75,7 +82,7 @@ def preprocess(text: str, include_code: bool) -> str:
             j = i + 1
             while j < len(lines) and not lines[j].strip():
                 j += 1
-            cap = lines[j] if j < len(lines) and cap_re.match(lines[j]) else ""
+            cap = lines[j] if j < len(lines) and is_caption(lines[j]) else ""
             path = (ROOT / m.group(2)).as_posix()
             out += ["", "\\begin{figure}[H]", "\\centering",
                     f"\\includegraphics[width=0.92\\linewidth]{{{path}}}"]
@@ -87,8 +94,11 @@ def preprocess(text: str, include_code: bool) -> str:
             i += 1
             continue
 
-        if cap_re.match(line):              # 表题：居中小字加粗，不浮动
-            out += ["", "\\begin{center}\\small\\bfseries "
+        if is_caption(line):                # 表题：居中小字加粗，不浮动
+            # \needspace 保证题注下面至少还有 6 行位置，否则整块推到下一页——
+            # 图那边靠 figure[H] 把图与题注打包，表用不了浮动体，只能这样绑。
+            out += ["", "\\needspace{3\\baselineskip}",
+                    "\\begin{center}\\small\\bfseries "
                     + tex_escape(line) + "\\end{center}", ""]
             i += 1
             continue

@@ -88,6 +88,34 @@ def bundle_results() -> dict:
         gaps = [g["p"] for g in sens.get("gap_scan", [])]
         if gaps:
             derived["gap_scan_range"] = round(max(gaps) - min(gaps), 6)
+        # 正文里若干**派生量**：由结果文件换算而来，本身不是任何文件里的字段，
+        # 数字溯源会把它们当成"查无出处"。在这里显式算出并落盘，既消除误报，
+        # 也让"这个数怎么来的"有一处可查。
+        from microstructure import COST_A, COST_B, GAP, R_A, R_B
+        th = out.get("theory_check", {})
+        if th:
+            ev = th["excluded_volume_estimate"]
+            derived["excluded_volume_1e9_nm3"] = round(ev["mean_excluded_volume_nm3"] / 1e9, 4)
+            derived["phi_c_excluded_volume_percent"] = round(ev["critical_volume_fraction"] * 100, 4)
+            for k, v in th.get("simulation_midpoint", {}).items():
+                derived[f"phi_at_P50_percent::{k}"] = round(v["phi_at_P50"] * 100, 4)
+        derived["iso_cost_slope"] = round(-COST_A / COST_B, 4)
+        derived["sphere_max_bridge_axis_gap_nm"] = round(2 * (R_B + R_A + GAP), 4)
+        derived["cost_of_3200_spheres_yuan"] = round(3200 * COST_B, 4)
+        be = out.get("p4_break_even", {})
+        if be:
+            derived["break_even_cost_per_sphere_1e3_yuan"] = round(
+                be["break_even_cost_per_sphere_yuan"] * 1e3, 4)
+            derived["price_premium_over_break_even_percent"] = round(
+                (be["unit_price_now_yuan_per_um3"]
+                 / be["break_even_unit_price_yuan_per_um3"] - 1) * 100, 4)
+        if gaps:
+            derived["gap_scan_p_min"] = round(min(gaps), 6)
+            derived["gap_scan_p_max"] = round(max(gaps), 6)
+        ctrl = RESULTS / "对照口径_polar_uniform" / "p4_break_even.json"
+        if ctrl.exists():
+            derived["boundary_slope_control_caliber"] = round(
+                json.loads(ctrl.read_text(encoding="utf-8"))["slope_dNB_dNA"], 4)
         if derived:
             out["derived"] = derived
             print(f"  派生量 {len(derived)} 项 -> results.json 的 derived 段")
