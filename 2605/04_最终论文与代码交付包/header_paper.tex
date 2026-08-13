@@ -1,5 +1,11 @@
-% 论文排版样式（XeLaTeX + ctex）。字体配置由 build_paper_pdf.py 按本机环境注入：
-% 优先采用优秀论文 A092 的宋体/黑体/Times New Roman 组合，缺少系统字体时回退 Fandol。
+% 论文排版样式（XeLaTeX + ctex）。字体配置由 build_paper_pdf.py 按本机环境注入，
+% 三档依次探测（均为"正文宋体 + 标题黑体 + 西文数字 Times"这一组合，只是来源不同）：
+%   1. macOS：SimSong / STHeiti / Times New Roman（系统自带，最贴近样例）
+%   2. 装了 fonts-noto-cjk 的机器：思源宋体 Noto Serif CJK SC（正文）
+%      + 思源黑体 Noto Sans CJK SC（标题与强调）+ TeX Gyre Termes（西文，
+%      Times New Roman 的度量兼容克隆）+ XITS Math（Times 谱系的数学字体）。
+%      思源系字形完整、有真正的粗体，观感明显优于 Fandol，是本仓库的默认选择。
+%   3. 都没有时回退 TeX Live 自带的 Fandol，保证任何装了 texlive 的机器都能编译。
 \usepackage[fontset=none]{ctex}
 \usepackage{unicode-math}
 @FONT_SETUP@
@@ -14,6 +20,7 @@
 \usepackage{graphicx}
 \usepackage{fancyhdr}
 \usepackage{amsmath,amssymb}
+\usepackage{etoolbox}
 \usepackage{needspace}   % 表题与表体绑定，见 build_paper_pdf.py
 \usepackage{fvextra}
 \usepackage{seqsplit}
@@ -29,10 +36,12 @@
 \renewcommand{\figurename}{图}
 \renewcommand{\tablename}{表}
 
-% 段落：小四号、单倍行距、首行缩进两字。
+% 段落：小四号、1.5 倍行距、首行缩进两字。
 % 正文中文使用宋体，英文与数字使用 Times New Roman（字体配置见构建脚本）。
+% 行距按数模论文的常规取 1.5 倍：早先为压页数收到 1.0，版面过密、与样例不符；
+% 正文压到 23 页后已有余量，恢复到常规行距仍在 30 页上限内。
 \setlength{\parindent}{2em}
-\setstretch{1.0}
+\setstretch{1.4}
 \setlength{\parskip}{0pt}
 
 % 正文重点统一使用黑体粗体；若重点中含数学量，同时启用 \boldmath。
@@ -75,6 +84,12 @@
 \makeatletter
 \def\tagform@#1{\maketag@@@{(#1\@@italiccorr)}}
 \makeatother
+
+% 附录源程序：正文的 1.5 倍行距不应传导到代码清单——代码本来就按行阅读，
+% 拉开行距只会把附录从 63 页吹到 90 页。这里在逐字环境内把行距压回单倍。
+\AtBeginEnvironment{Highlighting}{\setstretch{1}}
+\AtBeginEnvironment{verbatim}{\setstretch{1}}
+\AtBeginEnvironment{Verbatim}{\setstretch{1}}
 
 % 附录源程序：允许在任意位置断行，避免长行溢出版心；字号压到 7.5pt 以控制篇幅
 \fvset{breaklines=true, breakanywhere=true, fontsize=\fontsize{7.5pt}{9pt}\selectfont}

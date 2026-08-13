@@ -29,6 +29,20 @@ BUILD = ROOT / "build"
 APPENDIX_B = "### 附录 B 完整可运行源程序"
 
 
+def _has_family(name: str) -> bool:
+    """系统里是否装了该字体家族（用 fc-list 查，查不到就当没有）。"""
+    fc = shutil.which("fc-list")
+    if fc is None:
+        return False
+    try:
+        # -f '%{family}\n' 只吐家族名；直接用 ":family" 会连路径和 ":style=" 一起吐出来。
+        out = subprocess.check_output([fc, "-f", "%{family}\n"], text=True,
+                                      stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        return False
+    return any(name == f.strip() for line in out.splitlines() for f in line.split(","))
+
+
 def materialize_header() -> Path:
     """按本机字体环境生成 header，优先复现 A092 的宋体/黑体排版。"""
     kpsewhich = shutil.which("kpsewhich")
@@ -41,10 +55,20 @@ def materialize_header() -> Path:
         sys.exit("TeX Live 中缺少 FandolSong-Regular.otf；请安装中文字体包")
     if not font.is_file():
         sys.exit(f"Fandol 中文字体路径无效：{font}")
-    math_font = Path(subprocess.check_output(
-        [kpsewhich, "texgyretermes-math.otf"], text=True).strip())
-    if not math_font.is_file():
-        sys.exit("TeX Live 中缺少 texgyretermes-math.otf")
+    # 数学字体按"与 Times 的匹配度"排序探测：Termes Math 最贴，其次 XITS/STIX
+    # （二者同出 STIX 谱系，字重与 Times 一致），最后才退到 Latin Modern。
+    math_font = None
+    for cand in ("texgyretermes-math.otf", "XITSMath-Regular.otf",
+                 "STIXTwoMath-Regular.otf", "latinmodern-math.otf"):
+        try:
+            got = Path(subprocess.check_output([kpsewhich, cand], text=True).strip())
+        except subprocess.CalledProcessError:
+            continue
+        if got.is_file():
+            math_font = got
+            break
+    if math_font is None:
+        sys.exit("找不到任何可用的 OpenType 数学字体（Termes/XITS/STIX/LatinModern）")
     simsong = Path(
         "/System/Library/AssetsV2/com_apple_MobileAsset_Font8/"
         "259e8f5a322e8dae602d51ac00aefb3d6b05c224.asset/AssetData/SimSong.ttc"
@@ -67,6 +91,18 @@ def materialize_header() -> Path:
   BoldFont=STHEITI.ttf]{{STHEITI.ttf}}
 \setCJKmonofont[Path={font.parent.as_posix()}/]{{FandolFang-Regular.otf}}
 """.strip()
+    elif _has_family("Noto Serif CJK SC") and _has_family("Noto Sans CJK SC"):
+        # 思源宋体/黑体：正文宋体、标题黑体、西文与数字 Times（TeX Gyre Termes 是
+        # Times New Roman 的度量兼容克隆），与题面样例的宋体+黑体+Times 组合一致。
+        font_setup = rf"""
+\setmainfont[Scale=0.90]{{TeX Gyre Termes}}
+\setsansfont[Scale=0.90]{{TeX Gyre Termes}}
+\setmathfont[Path={math_font.parent.as_posix()}/,Scale=0.90]{{{math_font.name}}}
+\setCJKmainfont[BoldFont={{Noto Serif CJK SC Bold}},
+  ItalicFont={{Noto Serif CJK SC}}]{{Noto Serif CJK SC}}
+\setCJKsansfont[BoldFont={{Noto Sans CJK SC Bold}}]{{Noto Sans CJK SC}}
+\setCJKmonofont{{Noto Sans Mono CJK SC}}
+""".strip()
     else:
         font_setup = rf"""
 \setmainfont[Scale=0.90]{{TeX Gyre Termes}}
@@ -83,6 +119,8 @@ def materialize_header() -> Path:
         code_font_setup = rf"""
 \setmonofont[Path={code_font.parent.as_posix()}/,Scale=0.78]{{{code_font.name}}}
 """.strip()
+    elif _has_family("Noto Sans Mono CJK SC"):
+        code_font_setup = r"\setmonofont[Scale=0.78]{Noto Sans Mono CJK SC}"
     else:
         code_font_setup = r"\setmonofont{DejaVuSansMono.ttf}[Scale=MatchLowercase]"
 
@@ -115,8 +153,34 @@ def tex_escape(text: str) -> str:
     return "".join(out)
 
 
+CITE_RE = re.compile(r"\[(\d{1,2})\]")
+
+
+def superscript_citations(text: str) -> str:
+    """把正文里的 [n] 引用改成上标，符合 GB/T 7714 顺序编码制的排版惯例。
+
+    只作用于**附录 B 之前**的正文：附录 B 是源程序清单，里面的 ``p[0]``、``sizes[i]``
+    一类下标写法同样匹配 [数字]，一旦被改写就把代码改坏了。
+    参考文献表本身（行首就是 "[n] 作者…"）也要跳过，否则条目编号会被抬成上标。
+    行内公式 $...$ 里的方括号一并跳过。
+    """
+    head, sep, tail = text.partition(APPENDIX_B)
+    out = []
+    for line in head.split("\n"):
+        if line.lstrip().startswith("["):          # 参考文献条目
+            out.append(line)
+            continue
+        # 按 $...$ 切开，奇数段是数学，原样保留
+        parts = re.split(r"(\$[^$]*\$)", line)
+        for k in range(0, len(parts), 2):
+            parts[k] = CITE_RE.sub(r"\\textsuperscript{[\1]}", parts[k])
+        out.append("".join(parts))
+    return "\n".join(out) + sep + tail
+
+
 def preprocess(text: str, include_code: bool) -> str:
     """把 Markdown 调整成适合 pandoc→LaTeX 的形态。"""
+    text = superscript_citations(text)
     if not include_code:
         idx = text.find(APPENDIX_B)
         if idx > 0:
@@ -129,14 +193,25 @@ def preprocess(text: str, include_code: bool) -> str:
     out: list[str] = []
     i = 0
     img_re = re.compile(r"!\[([^\]]*)\]\((figures_paper/[^)]+)\)")
-    # 题注必须**整行**就是题注：只要求行首匹配的话，"表 9 列出了阶段 C 的全部探测点……"
-    # 这类以表号开头的正文句子也会被当成题注，在 PDF 里排成居中加粗的一行。
-    # 题注普遍短且不以句末标点收尾，用长度与结尾再筛一道。
     cap_re = re.compile(r"^(图|表)\s*\d+(?:-\d+)?\s+\S")
 
-    def is_caption(line: str) -> bool:
-        s = line.strip()
-        return bool(cap_re.match(s)) and len(s) <= 60 and not s.endswith(("。", "；", "："))
+    def is_caption(idx: int) -> bool:
+        """第 idx 行是不是题注。
+
+        只看行首"图 N/表 N"是不够的——正文里"图 2 把保留碎片与反推出的总缺口画在
+        同一坐标上……"这种以图号开头的句子同样匹配，一旦误判就会被排成居中加粗的一行，
+        把整段话拦腰截断（预览版里真出现过）。长度与结尾标点的启发式也不可靠：
+        上面那句才 42 字、且不以句号收尾。
+
+        可靠的判据是**结构**：真正的题注自成一段，前后都是空行；而以图号开头的正文句
+        后面紧跟着同一段的下一行，不是空行。
+        """
+        s = lines[idx].strip()
+        if not cap_re.match(s):
+            return False
+        prev_blank = idx == 0 or not lines[idx - 1].strip()
+        next_blank = idx + 1 >= len(lines) or not lines[idx + 1].strip()
+        return prev_blank and next_blank
 
     while i < len(lines):
         line = lines[i]
@@ -155,7 +230,7 @@ def preprocess(text: str, include_code: bool) -> str:
             j = i + 1
             while j < len(lines) and not lines[j].strip():
                 j += 1
-            cap = lines[j] if j < len(lines) and is_caption(lines[j]) else ""
+            cap = lines[j] if j < len(lines) and is_caption(j) else ""
             path = (ROOT / m.group(2)).as_posix()
             out += ["", "\\begin{figure}[H]", "\\centering",
                     f"\\includegraphics[width=0.86\\linewidth]{{{path}}}"]
@@ -167,7 +242,7 @@ def preprocess(text: str, include_code: bool) -> str:
             i += 1
             continue
 
-        if is_caption(line):                # 表题：居中五号字加粗，不浮动
+        if is_caption(i):                   # 表题：居中五号字加粗，不浮动
             # \needspace 保证题注下面至少还有 6 行位置，否则整块推到下一页——
             # 图那边靠 figure[H] 把图与题注打包，表用不了浮动体，只能这样绑。
             out += ["", "\\needspace{3\\baselineskip}",
