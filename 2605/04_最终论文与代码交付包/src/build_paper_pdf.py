@@ -82,9 +82,9 @@ def materialize_header() -> Path:
 
     if simsong.is_file() and simhei.is_file() and times.is_file():
         font_setup = rf"""
-\setmainfont[Scale=0.88]{{Times New Roman}}
-\setsansfont[Scale=0.88]{{Times New Roman}}
-\setmathfont[Path={math_font.parent.as_posix()}/,Scale=0.88]{{{math_font.name}}}
+\setmainfont[Scale=0.80]{{Times New Roman}}
+\setsansfont[Scale=0.80]{{Times New Roman}}
+\setmathfont[Path={math_font.parent.as_posix()}/,Scale=0.84]{{{math_font.name}}}
 \setCJKmainfont[Path={simsong.parent.as_posix()}/,FontIndex=0,
   BoldFont=SimSong.ttc,BoldFeatures={{FontIndex=1}}]{{SimSong.ttc}}
 \setCJKsansfont[Path={simhei.parent.as_posix()}/,
@@ -95,9 +95,9 @@ def materialize_header() -> Path:
         # 思源宋体/黑体：正文宋体、标题黑体、西文与数字 Times（TeX Gyre Termes 是
         # Times New Roman 的度量兼容克隆），与题面样例的宋体+黑体+Times 组合一致。
         font_setup = rf"""
-\setmainfont[Scale=0.90]{{TeX Gyre Termes}}
-\setsansfont[Scale=0.90]{{TeX Gyre Termes}}
-\setmathfont[Path={math_font.parent.as_posix()}/,Scale=0.90]{{{math_font.name}}}
+\setmainfont[Scale=0.82]{{TeX Gyre Termes}}
+\setsansfont[Scale=0.82]{{TeX Gyre Termes}}
+\setmathfont[Path={math_font.parent.as_posix()}/,Scale=0.84]{{{math_font.name}}}
 \setCJKmainfont[BoldFont={{Noto Serif CJK SC Bold}},
   ItalicFont={{Noto Serif CJK SC}}]{{Noto Serif CJK SC}}
 \setCJKsansfont[BoldFont={{Noto Sans CJK SC Bold}}]{{Noto Sans CJK SC}}
@@ -105,9 +105,9 @@ def materialize_header() -> Path:
 """.strip()
     else:
         font_setup = rf"""
-\setmainfont[Scale=0.90]{{TeX Gyre Termes}}
-\setsansfont[Scale=0.90]{{TeX Gyre Termes}}
-\setmathfont[Path={math_font.parent.as_posix()}/,Scale=0.88]{{{math_font.name}}}
+\setmainfont[Scale=0.82]{{TeX Gyre Termes}}
+\setsansfont[Scale=0.82]{{TeX Gyre Termes}}
+\setmathfont[Path={math_font.parent.as_posix()}/,Scale=0.84]{{{math_font.name}}}
 \setCJKmainfont[Path={font.parent.as_posix()}/,BoldFont=FandolSong-Bold.otf,
   ItalicFont=FandolKai-Regular.otf]{{FandolSong-Regular.otf}}
 \setCJKsansfont[Path={font.parent.as_posix()}/,
@@ -192,13 +192,14 @@ def preprocess(text: str, include_code: bool) -> str:
     lines = text.split("\n")
     out: list[str] = []
     i = 0
+    in_abstract = False
     img_re = re.compile(r"!\[([^\]]*)\]\((figures_paper/[^)]+)\)")
-    cap_re = re.compile(r"^(图|表)\s*\d+(?:-\d+)?\s+\S")
+    cap_re = re.compile(r"^(?:图|表)\s*\d+(?:-\d+)?\s+\S")
 
     def is_caption(idx: int) -> bool:
         """第 idx 行是不是题注。
 
-        只看行首"图 N/表 N"是不够的——正文里"图 2 把保留碎片与反推出的总缺口画在
+        只看行首"图N/表N"是不够的——正文里"图2把保留碎片与反推出的总缺口画在
         同一坐标上……"这种以图号开头的句子同样匹配，一旦误判就会被排成居中加粗的一行，
         把整段话拦腰截断（预览版里真出现过）。长度与结尾标点的启发式也不可靠：
         上面那句才 42 字、且不以句号收尾。
@@ -213,12 +214,27 @@ def preprocess(text: str, include_code: bool) -> str:
         next_blank = idx + 1 >= len(lines) or not lines[idx + 1].strip()
         return prev_blank and next_blank
 
+    def format_caption(caption: str) -> str:
+        """图号紧排为“图1”，并在图号与标题之间显式留半字空格。"""
+        m = re.match(r"^图(\d+)\s+(.+)$", caption.strip())
+        if m:
+            return (rf"\mbox{{图}}\mbox{{{m.group(1)}}}\hspace{{0.5em}}"
+                    + tex_escape(m.group(2)))
+        return tex_escape(caption)
+
     while i < len(lines):
         line = lines[i]
         # 摘要标题使用赛区给定的专用格式：三号黑体加粗、字间空一格，
         # 段前段后各一行。单独输出原始 LaTeX，避免影响其他一级标题。
         if line.strip() == "## 摘要":
-            out += ["", r"\paperabstractheading", ""]
+            out += ["", r"\paperabstractheading",
+                    r"\begingroup\setstretch{1.0}\fontsize{16pt}{20pt}\selectfont", ""]
+            in_abstract = True
+            i += 1
+            continue
+        if in_abstract and line.strip() == r"\newpage":
+            out += [r"\endgroup", "", r"\newpage", ""]
+            in_abstract = False
             i += 1
             continue
         # 结论按自然分页连续排版；避免人为插入整页空白，以符合 20 页内的赛区要求。
@@ -236,7 +252,8 @@ def preprocess(text: str, include_code: bool) -> str:
                     f"\\includegraphics[width=0.86\\linewidth]{{{path}}}"]
             if cap:
                 out += ["\\par\\vspace{5pt}",
-                        "{\\small\\bfseries " + tex_escape(cap) + "}"]
+                        "{\\fontsize{14pt}{18pt}\\selectfont\\bfseries "
+                        + format_caption(cap) + "}"]
                 i = j
             out += ["\\end{figure}", ""]
             i += 1
@@ -246,8 +263,8 @@ def preprocess(text: str, include_code: bool) -> str:
             # \needspace 保证题注下面至少还有 6 行位置，否则整块推到下一页——
             # 图那边靠 figure[H] 把图与题注打包，表用不了浮动体，只能这样绑。
             out += ["", "\\needspace{3\\baselineskip}",
-                    "\\begin{center}\\small\\bfseries "
-                    + tex_escape(line) + "\\end{center}", ""]
+                    "\\begin{center}\\fontsize{14pt}{18pt}\\selectfont\\bfseries "
+                    + format_caption(line) + "\\end{center}", ""]
             i += 1
             continue
 
