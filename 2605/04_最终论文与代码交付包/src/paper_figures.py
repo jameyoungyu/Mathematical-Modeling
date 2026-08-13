@@ -125,12 +125,12 @@ def fig_p1() -> None:
     这里的着色口径必须讲清楚，早先的版本在这上面出过错。判定导通时会往并查集里加两个
     虚拟电极节点 L、R，凡触及同一带电面的碎片都会被它们合并成一个连通块——那是**判定用的
     辅助结构，不是物理团簇**。若按那个口径着色，组 3 会有 258/535（48.2%）的碎片被涂成
-    同一个"贯通团簇"，看上去像一个吞掉半个盒子的巨团簇，与第 5.3 节"贯通靠短链、
+    同一个"贯通团簇"，看上去像一个吞掉半个盒子的巨团簇，与第 6.3 节"贯通靠短链、
     此时尚未形成巨团簇"的结论正好相反。
 
     本函数只用**碎片之间的接触**建团簇（不含电极节点），再看每个团簇是否触到带电面：
     同时触到左右两面的团簇才是真正的贯通团簇。按这个口径，组 3 的贯通团簇只有 17 个碎片
-    （3.2%），组 2 只有 5 个（10.2%）——图与第 5.3 节这才是一致的。
+    （3.2%），组 2 只有 5 个（10.2%）——图与第 6.3 节这才是一致的。
     """
     # 该函数常被单独调用来局部重绘。不能只依赖 main() 里的全局 setup()，
     # 否则单独运行时 Matplotlib 会回退到不含中文字形的默认字体，输出方框乱码。
@@ -625,7 +625,7 @@ def fig_clusters() -> None:
 def fig_marginal() -> None:
     """每元钱买到多少 ΔP：两种介质的边际效率随 N_A 的变化。
 
-    这是问题四"为什么不掺 B"的机理图。表 10 给的是同样的数，
+    这是问题四“为什么 B 只占很小比例”的机理图。表 10 给的是同样的数，
     但交叉点的位置在表里要靠逐列比大小才看得出来，画成两条线一眼可辨。
     """
     t = load("theory_check.json")
@@ -676,7 +676,52 @@ def fig_marginal() -> None:
 
 # ------------------------------------------------- 图10 预算线审计的证据链
 def fig_budget_audit() -> None:
-    """平端圆柱三个终核候选的 99% Wilson 区间。"""
+    """问题四的全局边界与独立置信确认。"""
+    cert = load("p4_global_certificate.json")
+    if cert:
+        pair = cert["robust_saa"]["boundary_pair"]
+        prev = pair["last_infeasible_best"]
+        first = pair["first_feasible_best"]
+        val = cert["independent_validation"]
+        fig, axes = plt.subplots(1, 2, figsize=(9.4, 3.55),
+                                 gridspec_kw={"width_ratios": [1.12, 0.88]})
+
+        ax = axes[0]
+        rows = [prev, first]
+        x = np.arange(2)
+        heights = [r["hits"] / r["trials"] for r in rows]
+        ax.bar(x, heights, width=0.56, color=["#b8b5ae", COLORS[0]],
+               edgecolor="#333333", linewidth=0.7)
+        ax.axhline(0.92, color=COLORS[1], lw=1.3, ls="--")
+        for i, r in enumerate(rows):
+            ax.text(i, heights[i] + 0.0010, f"{r['hits']}/{r['trials']}",
+                    ha="center", va="bottom", fontsize=8.5)
+        ax.set_xticks(x, [f"Q={cert['robust_saa']['last_infeasible_q']}\n前一成本刻度",
+                          f"Q={cert['robust_saa']['first_feasible_q']}\n(619,8)"])
+        ax.set_ylabel("共同情景导通频率")
+        ax.set_ylim(0.912, 0.926)
+        ax.set_title("鲁棒 SAA 的全局离散边界", fontsize=9.5)
+        ax.annotate("92% 安全线", xy=(0.03, 0.92), xycoords=("axes fraction", "data"),
+                    xytext=(0, 5), textcoords="offset points", fontsize=8,
+                    color=COLORS[1])
+
+        ax = axes[1]
+        pt = val["p"]
+        lo, hi = val["cp995_one_sided_lo"], val["cp995_one_sided_hi"]
+        ax.axhline(0.90, color=COLORS[1], lw=1.3, ls="--")
+        ax.errorbar([0], [pt], yerr=[[pt - lo], [hi - pt]], marker="D",
+                    color=COLORS[0], capsize=4, lw=1.5, ms=7)
+        ax.text(0, hi + 0.0012, f"{val['hits']}/{val['trials']}\n下界 {lo:.4f}",
+                ha="center", va="bottom", fontsize=8.5)
+        ax.set_xticks([0], ["(619,8)\n球缺内界"])
+        ax.set_ylabel("独立验证导通概率")
+        ax.set_ylim(min(0.895, lo - 0.003), max(0.925, hi + 0.006))
+        ax.set_title("99.5% Clopper--Pearson 单侧确认", fontsize=9.5)
+        fig.tight_layout()
+        emit(fig, "10_budget_audit", "全局成本边界与推荐配比的独立置信确认")
+        return
+
+    # 兼容尚未生成全局证书的历史结果。
     a = load("p4_real_geometry.json")
     rows = [] if not a else sorted(a.get("finalists", []), key=lambda r: r["cost_yuan"])
     if not rows:
@@ -704,7 +749,7 @@ def fig_budget_audit() -> None:
     ax.set_xlim(-0.6, len(rows) - 0.4)
     ax.set_ylim(min(r["ci99_lo"] for r in rows) - 0.012,
                 max(r["ci99_hi"] for r in rows) + 0.016)
-    ax.set_title("真实平端圆柱终核：仅 $(626,0)$ 的 99% 下界超过 0.90",
+    ax.set_title("历史平端圆柱候选终核（全局 SAA 证书生成前）",
                  fontsize=9.5, color="#52514e")
     fig.tight_layout()
     emit(fig, "10_budget_audit", "平端圆柱候选的 99% Wilson 终核")
@@ -744,7 +789,7 @@ def fig_bracket() -> None:
                     ha="center", va="top", fontsize=8.5, color="#52514e")
         ax.plot([b], [0.90], marker="*", ms=13, color=COLORS[1],
                 mec="w", mew=0.9, zorder=6)
-        ax.annotate(f"可证达标 {b:.2f}%", xy=(b, 0.90), xytext=(6, -16),
+        ax.annotate(f"内界达标 {b:.2f}%", xy=(b, 0.90), xytext=(6, -16),
                     textcoords="offset points", fontsize=8.5, color=COLORS[1])
 
     ax.set_xlabel("介质 A 体积分数 φ / %")

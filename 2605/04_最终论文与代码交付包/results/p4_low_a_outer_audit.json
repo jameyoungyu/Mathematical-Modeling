@@ -1,0 +1,172 @@
+{
+  "scope": "all integer columns A<580 on Q<=candidate-1",
+  "geometry_outer_bound": "capsule rods + full wrapped spheres",
+  "q_limit": 351484,
+  "budget_yuan": 9.201829602119624,
+  "target": 0.92,
+  "trials": 600,
+  "required_hits": 552,
+  "seed": 20260824,
+  "sample_max_a": 630,
+  "partitions": [
+    {
+      "a_range": [
+        0,
+        159
+      ],
+      "outer_best": {
+        "n_a": 157,
+        "n_b": 4101,
+        "cost_tick": 351483,
+        "cost_yuan": 9.201803422180843,
+        "hits": 37,
+        "trials": 600,
+        "p": 0.06166666666666667,
+        "wilson99_lo": 0.0408511728123215,
+        "wilson99_hi": 0.09207045278623704,
+        "cp995_one_sided_lo": 0.03910287714047999,
+        "cp995_one_sided_hi": 0.09145441498221117,
+        "confirmed": false,
+        "excluded": true
+      },
+      "exact_fallback_best": null,
+      "all_columns_below_saa_target": true,
+      "details_file": "p4_low_a_0_159_outer.json"
+    },
+    {
+      "a_range": [
+        160,
+        319
+      ],
+      "outer_best": {
+        "n_a": 319,
+        "n_b": 2665,
+        "cost_tick": 351433,
+        "cost_yuan": 9.200494425241848,
+        "hits": 337,
+        "trials": 600,
+        "p": 0.5616666666666666,
+        "wilson99_lo": 0.5090964732700288,
+        "wilson99_hi": 0.6128879368168659,
+        "cp995_one_sided_lo": 0.5083290528303425,
+        "cp995_one_sided_hi": 0.6140089446161237,
+        "confirmed": false,
+        "excluded": true
+      },
+      "exact_fallback_best": null,
+      "all_columns_below_saa_target": true,
+      "details_file": "p4_low_a_160_319_outer.json"
+    },
+    {
+      "a_range": [
+        320,
+        439
+      ],
+      "outer_best": {
+        "n_a": 438,
+        "n_b": 1611,
+        "cost_tick": 351450,
+        "cost_yuan": 9.200939484201106,
+        "hits": 485,
+        "trials": 600,
+        "p": 0.8083333333333333,
+        "wilson99_lo": 0.7636587088477791,
+        "wilson99_hi": 0.846263341586695,
+        "cp995_one_sided_lo": 0.7637045283987617,
+        "cp995_one_sided_hi": 0.8479590259371627,
+        "confirmed": false,
+        "excluded": true
+      },
+      "exact_fallback_best": null,
+      "all_columns_below_saa_target": true,
+      "details_file": "p4_low_a_320_439_outer.json"
+    },
+    {
+      "a_range": [
+        440,
+        519
+      ],
+      "outer_best": {
+        "n_a": 519,
+        "n_b": 893,
+        "cost_tick": 351425,
+        "cost_yuan": 9.200284985731608,
+        "hits": 524,
+        "trials": 600,
+        "p": 0.8733333333333333,
+        "wilson99_lo": 0.8342276587135129,
+        "wilson99_hi": 0.9042725537044447,
+        "cp995_one_sided_lo": 0.8345291269049464,
+        "cp995_one_sided_hi": 0.9060517856458188,
+        "confirmed": false,
+        "excluded": false
+      },
+      "exact_fallback_best": null,
+      "all_columns_below_saa_target": true,
+      "details_file": "p4_low_a_440_519_outer.json"
+    },
+    {
+      "a_range": [
+        520,
+        559
+      ],
+      "outer_best": {
+        "n_a": 551,
+        "n_b": 610,
+        "cost_tick": 351457,
+        "cost_yuan": 9.201122743772565,
+        "hits": 554,
+        "trials": 600,
+        "p": 0.9233333333333333,
+        "wilson99_lo": 0.8904956037813514,
+        "wilson99_hi": 0.94691088708544,
+        "cp995_one_sided_lo": 0.8910287435319487,
+        "cp995_one_sided_hi": 0.9486871117687848,
+        "confirmed": false,
+        "excluded": false
+      },
+      "exact_fallback_best": {
+        "n_a": 551,
+        "n_b": 610,
+        "cost_tick": 351457,
+        "cost_yuan": 9.201122743772565,
+        "hits": 545,
+        "trials": 600,
+        "p": 0.9083333333333333,
+        "wilson99_lo": 0.8733612302034653,
+        "wilson99_hi": 0.934373377128676,
+        "cp995_one_sided_lo": 0.8738194065766866,
+        "cp995_one_sided_hi": 0.9361613712579256,
+        "confirmed": false,
+        "excluded": false
+      },
+      "all_columns_below_saa_target": true,
+      "details_file": "p4_low_a_520_559_outer.json"
+    },
+    {
+      "a_range": [
+        560,
+        579
+      ],
+      "outer_best": {
+        "n_a": 561,
+        "n_b": 521,
+        "cost_tick": 351431,
+        "cost_yuan": 9.200442065364287,
+        "hits": 549,
+        "trials": 600,
+        "p": 0.915,
+        "wilson99_lo": 0.8809442137088144,
+        "wilson99_hi": 0.9399778974165048,
+        "cp995_one_sided_lo": 0.8814349302118045,
+        "cp995_one_sided_hi": 0.941762228410999,
+        "confirmed": false,
+        "excluded": false
+      },
+      "exact_fallback_best": null,
+      "all_columns_below_saa_target": true,
+      "details_file": "p4_low_a_560_579_outer.json"
+    }
+  ],
+  "all_low_a_columns_excluded": true
+}

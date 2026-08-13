@@ -2,8 +2,9 @@
 """把终稿 Markdown 编译成提交用 PDF（pandoc + XeLaTeX）。
 
 排版规范照搬竞赛论文的通行要求：A4、四边留白 ≥2.5 cm、页脚居中连续页码、
-正文无目录、图题在图下方、表题在表上方。中文正文用 TeX Live 自带的 Fandol，
-代码逐字环境用 DejaVu Sans Mono 覆盖希腊字母与校验符号；均不依赖私有字体。
+正文无目录、图题在图下方、表题在表上方。正文优先使用参考论文 A092 的
+宋体/黑体/Times New Roman 组合，系统字体不可用时回退到 TeX Live 的 Fandol；
+代码逐字环境用 DejaVu Sans Mono 覆盖希腊字母与校验符号。
 
 用法：
     python3 src/build_paper_pdf.py              # 完整版（含附录 B 全部源程序）
@@ -26,6 +27,71 @@ MANUSCRIPT = ROOT / "论文_微构体中填充导电介质的仿真优化.md"
 HEADER = ROOT / "header_paper.tex"
 BUILD = ROOT / "build"
 APPENDIX_B = "### 附录 B 完整可运行源程序"
+
+
+def materialize_header() -> Path:
+    """按本机字体环境生成 header，优先复现 A092 的宋体/黑体排版。"""
+    kpsewhich = shutil.which("kpsewhich")
+    if kpsewhich is None:
+        sys.exit("缺少 kpsewhich；无法定位 TeX Live 的 Fandol 中文字体")
+    try:
+        font = Path(subprocess.check_output(
+            [kpsewhich, "FandolSong-Regular.otf"], text=True).strip())
+    except subprocess.CalledProcessError:
+        sys.exit("TeX Live 中缺少 FandolSong-Regular.otf；请安装中文字体包")
+    if not font.is_file():
+        sys.exit(f"Fandol 中文字体路径无效：{font}")
+    math_font = Path(subprocess.check_output(
+        [kpsewhich, "texgyretermes-math.otf"], text=True).strip())
+    if not math_font.is_file():
+        sys.exit("TeX Live 中缺少 texgyretermes-math.otf")
+    simsong = Path(
+        "/System/Library/AssetsV2/com_apple_MobileAsset_Font8/"
+        "259e8f5a322e8dae602d51ac00aefb3d6b05c224.asset/AssetData/SimSong.ttc"
+    )
+    simhei = Path(
+        "/System/Library/AssetsV2/com_apple_MobileAsset_Font8/"
+        "53fe5be564086fefc7523ccd0a31200acf92e0e5.asset/AssetData/STHEITI.ttf"
+    )
+    times = Path("/System/Library/Fonts/Supplemental/Times New Roman.ttf")
+    code_font = Path.home() / "Library/Fonts/NotoSansCJKsc-Regular.otf"
+
+    if simsong.is_file() and simhei.is_file() and times.is_file():
+        font_setup = rf"""
+\setmainfont[Scale=0.88]{{Times New Roman}}
+\setsansfont[Scale=0.88]{{Times New Roman}}
+\setmathfont[Path={math_font.parent.as_posix()}/,Scale=0.88]{{{math_font.name}}}
+\setCJKmainfont[Path={simsong.parent.as_posix()}/,FontIndex=0,
+  BoldFont=SimSong.ttc,BoldFeatures={{FontIndex=1}}]{{SimSong.ttc}}
+\setCJKsansfont[Path={simhei.parent.as_posix()}/,
+  BoldFont=STHEITI.ttf]{{STHEITI.ttf}}
+\setCJKmonofont[Path={font.parent.as_posix()}/]{{FandolFang-Regular.otf}}
+""".strip()
+    else:
+        font_setup = rf"""
+\setmainfont[Scale=0.90]{{TeX Gyre Termes}}
+\setsansfont[Scale=0.90]{{TeX Gyre Termes}}
+\setmathfont[Path={math_font.parent.as_posix()}/,Scale=0.88]{{{math_font.name}}}
+\setCJKmainfont[Path={font.parent.as_posix()}/,BoldFont=FandolSong-Bold.otf,
+  ItalicFont=FandolKai-Regular.otf]{{FandolSong-Regular.otf}}
+\setCJKsansfont[Path={font.parent.as_posix()}/,
+  BoldFont=FandolHei-Bold.otf]{{FandolHei-Regular.otf}}
+\setCJKmonofont[Path={font.parent.as_posix()}/]{{FandolFang-Regular.otf}}
+""".strip()
+
+    if code_font.is_file():
+        code_font_setup = rf"""
+\setmonofont[Path={code_font.parent.as_posix()}/,Scale=0.78]{{{code_font.name}}}
+""".strip()
+    else:
+        code_font_setup = r"\setmonofont{DejaVuSansMono.ttf}[Scale=MatchLowercase]"
+
+    dst = BUILD / "header_paper.generated.tex"
+    header = HEADER.read_text(encoding="utf-8")
+    header = header.replace("@FONT_SETUP@", font_setup)
+    header = header.replace("@CODE_FONT_SETUP@", code_font_setup)
+    dst.write_text(header, encoding="utf-8")
+    return dst
 
 
 # LaTeX 特殊字符（数学环境之外才需要转义）
@@ -74,6 +140,13 @@ def preprocess(text: str, include_code: bool) -> str:
 
     while i < len(lines):
         line = lines[i]
+        # 摘要标题使用赛区给定的专用格式：三号黑体加粗、字间空一格，
+        # 段前段后各一行。单独输出原始 LaTeX，避免影响其他一级标题。
+        if line.strip() == "## 摘要":
+            out += ["", r"\paperabstractheading", ""]
+            i += 1
+            continue
+        # 结论按自然分页连续排版；避免人为插入整页空白，以符合 20 页内的赛区要求。
         m = img_re.match(line.strip())
         if m:
             # 向后找紧随的 "图 N …" 题注，和图打包进同一个 [H] 浮动体。
@@ -85,7 +158,7 @@ def preprocess(text: str, include_code: bool) -> str:
             cap = lines[j] if j < len(lines) and is_caption(lines[j]) else ""
             path = (ROOT / m.group(2)).as_posix()
             out += ["", "\\begin{figure}[H]", "\\centering",
-                    f"\\includegraphics[width=0.92\\linewidth]{{{path}}}"]
+                    f"\\includegraphics[width=0.86\\linewidth]{{{path}}}"]
             if cap:
                 out += ["\\par\\vspace{5pt}",
                         "{\\small\\bfseries " + tex_escape(cap) + "}"]
@@ -94,7 +167,7 @@ def preprocess(text: str, include_code: bool) -> str:
             i += 1
             continue
 
-        if is_caption(line):                # 表题：居中小字加粗，不浮动
+        if is_caption(line):                # 表题：居中五号字加粗，不浮动
             # \needspace 保证题注下面至少还有 6 行位置，否则整块推到下一页——
             # 图那边靠 figure[H] 把图与题注打包，表用不了浮动体，只能这样绑。
             out += ["", "\\needspace{3\\baselineskip}",
@@ -120,6 +193,7 @@ def main() -> int:
             sys.exit(f"缺少 {tool}；请先安装 pandoc 与 texlive-xetex/texlive-lang-chinese")
 
     BUILD.mkdir(parents=True, exist_ok=True)
+    generated_header = materialize_header()
 
     if args.ai_details:
         # 支撑材料里要求文件名精确为 AI工具使用详情.pdf
@@ -127,7 +201,7 @@ def main() -> int:
         out_pdf = ROOT / "AI工具使用详情.pdf"
         cmd = ["pandoc", str(src_md), "--from", "markdown+pipe_tables",
                "--pdf-engine", "xelatex", "--top-level-division", "section",
-               "--include-in-header", str(HEADER), "-V", "documentclass=article",
+               "--include-in-header", str(generated_header), "-V", "documentclass=article",
                "-V", "fontsize=12pt", "-o", str(out_pdf)]
         res = subprocess.run(cmd, capture_output=True, text=True)
         if res.returncode != 0:
@@ -148,7 +222,7 @@ def main() -> int:
         "--to", "latex",
         "--pdf-engine", "xelatex",
         "--top-level-division", "section",
-        "--include-in-header", str(HEADER),
+        "--include-in-header", str(generated_header),
         "--resource-path", str(ROOT),
         "--highlight-style", "monochrome",
         "-V", "documentclass=article",

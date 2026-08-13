@@ -5,8 +5,9 @@
 `sphere_mode="inside"` 则改变球心采样域，使整球不越界。两者都不是题面截断规则的精确实现，
 只能作为近似口径的包络式对照，不能据此声称球边界误差已被严格夹住。
 
-只在含介质 B 的配置上比较才有意义；当前推荐方案 $N_B=0$，这条假设不影响该方案本身，
-但会影响混填可行边界、盈亏平衡价与全局最优性判断，所以仍要量化并明确局限。
+只在含介质 B 的配置上比较才有意义。早期 `wrap`/`inside` 对照只用于灵敏度解释；
+最终推荐方案含 8 颗 B，故其证书另用严格包含的 `discard` 内界与 `wrap` 外界，
+不能用本脚本的点估计代替可行性确认。
 
 结果写入 results/sphere_mode_check.json。
 """
@@ -38,8 +39,8 @@ def main() -> int:
         print(f"    差值（wrap − inside）= {pair['delta_wrap_minus_inside']:+.4f}")
 
     out = {"trials": TRIALS, "cases": rows,
-           "note": ("wrap 与 inside 都不是题面球缺截断的精确实现；N_B=0 的推荐方案本身不受影响，"
-                    "但混填可行边界与盈亏平衡价受影响。")}
+           "note": ("wrap 与 inside 都不是题面球缺截断的精确实现；本结果只作灵敏度对照。"
+                    "最终 (619,8) 的确认改用 discard 内界，低成本排除使用 wrap 外界。")}
     RESULTS.mkdir(parents=True, exist_ok=True)
     (RESULTS / "sphere_mode_check.json").write_text(
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")

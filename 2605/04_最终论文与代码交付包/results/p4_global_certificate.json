@@ -1,0 +1,246 @@
+{
+  "claim": "global minimum of the prespecified robust SAA problem",
+  "model_scope": "flat-ended cylinders after centerline truncation; true clipped-sphere geometry bracketed by discard inner bound and full-sphere wrap outer bound",
+  "cost_integerization": {
+    "unit_yuan": 2.617993877991494e-05,
+    "formula": "Q = 567*N_A + 64*N_B"
+  },
+  "target_probability": 0.9,
+  "robust_saa": {
+    "trials": 600,
+    "seed": 20260824,
+    "safety_target": 0.92,
+    "required_hits": 552,
+    "last_infeasible_q": 351484,
+    "first_feasible_q": 351485,
+    "recommended_outer_hits": 552,
+    "recommended_inner_hits": 552,
+    "boundary_pair": {
+      "last_infeasible_best": {
+        "n_a": 619,
+        "n_b": 7,
+        "cost_tick": 351421,
+        "cost_yuan": 9.200180265976488,
+        "hits": 551,
+        "trials": 600,
+        "p": 0.9183333333333333,
+        "wilson99_lo": 0.8847545681877667,
+        "wilson99_hi": 0.9427612948341414,
+        "cp995_one_sided_lo": 0.8852620001788121,
+        "cp995_one_sided_hi": 0.944542897275841,
+        "confirmed": false,
+        "excluded": false
+      },
+      "first_feasible_best": {
+        "n_a": 619,
+        "n_b": 8,
+        "cost_tick": 351485,
+        "cost_yuan": 9.201855782058404,
+        "hits": 552,
+        "trials": 600,
+        "p": 0.92,
+        "wilson99_lo": 0.8866647532646126,
+        "wilson99_hi": 0.94414798570559,
+        "cp995_one_sided_lo": 0.887180666034966,
+        "cp995_one_sided_hi": 0.9459279750394424,
+        "confirmed": false,
+        "excluded": false
+      }
+    },
+    "high_a_search_range": [
+      580,
+      624
+    ],
+    "low_a_outer_audit": [
+      {
+        "a_range": [
+          0,
+          159
+        ],
+        "outer_best": {
+          "n_a": 157,
+          "n_b": 4101,
+          "cost_tick": 351483,
+          "cost_yuan": 9.201803422180843,
+          "hits": 37,
+          "trials": 600,
+          "p": 0.06166666666666667,
+          "wilson99_lo": 0.0408511728123215,
+          "wilson99_hi": 0.09207045278623704,
+          "cp995_one_sided_lo": 0.03910287714047999,
+          "cp995_one_sided_hi": 0.09145441498221117,
+          "confirmed": false,
+          "excluded": true
+        },
+        "exact_fallback_best": null,
+        "all_columns_below_saa_target": true,
+        "details_file": "p4_low_a_0_159_outer.json"
+      },
+      {
+        "a_range": [
+          160,
+          319
+        ],
+        "outer_best": {
+          "n_a": 319,
+          "n_b": 2665,
+          "cost_tick": 351433,
+          "cost_yuan": 9.200494425241848,
+          "hits": 337,
+          "trials": 600,
+          "p": 0.5616666666666666,
+          "wilson99_lo": 0.5090964732700288,
+          "wilson99_hi": 0.6128879368168659,
+          "cp995_one_sided_lo": 0.5083290528303425,
+          "cp995_one_sided_hi": 0.6140089446161237,
+          "confirmed": false,
+          "excluded": true
+        },
+        "exact_fallback_best": null,
+        "all_columns_below_saa_target": true,
+        "details_file": "p4_low_a_160_319_outer.json"
+      },
+      {
+        "a_range": [
+          320,
+          439
+        ],
+        "outer_best": {
+          "n_a": 438,
+          "n_b": 1611,
+          "cost_tick": 351450,
+          "cost_yuan": 9.200939484201106,
+          "hits": 485,
+          "trials": 600,
+          "p": 0.8083333333333333,
+          "wilson99_lo": 0.7636587088477791,
+          "wilson99_hi": 0.846263341586695,
+          "cp995_one_sided_lo": 0.7637045283987617,
+          "cp995_one_sided_hi": 0.8479590259371627,
+          "confirmed": false,
+          "excluded": true
+        },
+        "exact_fallback_best": null,
+        "all_columns_below_saa_target": true,
+        "details_file": "p4_low_a_320_439_outer.json"
+      },
+      {
+        "a_range": [
+          440,
+          519
+        ],
+        "outer_best": {
+          "n_a": 519,
+          "n_b": 893,
+          "cost_tick": 351425,
+          "cost_yuan": 9.200284985731608,
+          "hits": 524,
+          "trials": 600,
+          "p": 0.8733333333333333,
+          "wilson99_lo": 0.8342276587135129,
+          "wilson99_hi": 0.9042725537044447,
+          "cp995_one_sided_lo": 0.8345291269049464,
+          "cp995_one_sided_hi": 0.9060517856458188,
+          "confirmed": false,
+          "excluded": false
+        },
+        "exact_fallback_best": null,
+        "all_columns_below_saa_target": true,
+        "details_file": "p4_low_a_440_519_outer.json"
+      },
+      {
+        "a_range": [
+          520,
+          559
+        ],
+        "outer_best": {
+          "n_a": 551,
+          "n_b": 610,
+          "cost_tick": 351457,
+          "cost_yuan": 9.201122743772565,
+          "hits": 554,
+          "trials": 600,
+          "p": 0.9233333333333333,
+          "wilson99_lo": 0.8904956037813514,
+          "wilson99_hi": 0.94691088708544,
+          "cp995_one_sided_lo": 0.8910287435319487,
+          "cp995_one_sided_hi": 0.9486871117687848,
+          "confirmed": false,
+          "excluded": false
+        },
+        "exact_fallback_best": {
+          "n_a": 551,
+          "n_b": 610,
+          "cost_tick": 351457,
+          "cost_yuan": 9.201122743772565,
+          "hits": 545,
+          "trials": 600,
+          "p": 0.9083333333333333,
+          "wilson99_lo": 0.8733612302034653,
+          "wilson99_hi": 0.934373377128676,
+          "cp995_one_sided_lo": 0.8738194065766866,
+          "cp995_one_sided_hi": 0.9361613712579256,
+          "confirmed": false,
+          "excluded": false
+        },
+        "all_columns_below_saa_target": true,
+        "details_file": "p4_low_a_520_559_outer.json"
+      },
+      {
+        "a_range": [
+          560,
+          579
+        ],
+        "outer_best": {
+          "n_a": 561,
+          "n_b": 521,
+          "cost_tick": 351431,
+          "cost_yuan": 9.200442065364287,
+          "hits": 549,
+          "trials": 600,
+          "p": 0.915,
+          "wilson99_lo": 0.8809442137088144,
+          "wilson99_hi": 0.9399778974165048,
+          "cp995_one_sided_lo": 0.8814349302118045,
+          "cp995_one_sided_hi": 0.941762228410999,
+          "confirmed": false,
+          "excluded": false
+        },
+        "exact_fallback_best": null,
+        "all_columns_below_saa_target": true,
+        "details_file": "p4_low_a_560_579_outer.json"
+      }
+    ]
+  },
+  "recommended": {
+    "n_a": 619,
+    "n_b": 8,
+    "cost_tick": 351485,
+    "cost_yuan": 9.201855782058404
+  },
+  "independent_validation": {
+    "n_a": 619,
+    "n_b": 8,
+    "cost_tick": 351485,
+    "cost_yuan": 9.201855782058404,
+    "hits": 7322,
+    "trials": 8000,
+    "p": 0.91525,
+    "wilson99_lo": 0.9068811441427876,
+    "wilson99_hi": 0.9229306414327622,
+    "cp995_one_sided_lo": 0.9069171426148215,
+    "cp995_one_sided_hi": 0.9230838996365704,
+    "confirmed": true,
+    "excluded": false
+  },
+  "global_optimality": {
+    "under_robust_saa_rule": true,
+    "deterministic_true_probability_theorem": false,
+    "covered_integer_domain": {
+      "n_a_0_to_579": "partitioned outer audit with exact-cylinder fallback",
+      "n_a_580_to_624": "every cost-line column searched during bisection",
+      "n_a_at_least_625": "A-only cost already exceeds the candidate cost"
+    },
+    "explanation": "Every lower-cost integer pair is covered: A<580 by partitioned outer audits, A=580..624 by complete cost-line search, and A>=625 by the cost bound. All covered pairs fail the 92% common-scenario rule in an optimistic geometry; the candidate passes that rule in the conservative inner geometry and its independent CP99.5% lower bound exceeds 0.90."
+  }
+}

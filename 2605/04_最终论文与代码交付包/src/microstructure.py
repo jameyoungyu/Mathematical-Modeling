@@ -330,7 +330,7 @@ class DSU:
 # 主口径取**球面均匀**：题面对问题二至四只说"方向随机"，未指定分布，
 # 球面均匀是这句话的最少假设读法。
 # 对照口径取附件标定的极角均匀分布：附件组 3 的 354 根母介质以
-# KS 检验 p=6.7e-19 拒绝球面均匀、p=0.73 不拒绝极角均匀（第 2.4 节）。
+# KS 检验 p=6.7e-19 拒绝球面均匀、p=0.73 不拒绝极角均匀（第 3.4 节）。
 # 这一条只作为灵敏度分析出现——它刻画的是附件的生成过程，
 # 而题面并未说问题二至四必须沿用同一过程。
 PRIMARY_ORIENTATION = "isotropic"
@@ -394,6 +394,9 @@ def sample_spheres(n: int, rng: np.random.Generator, box: np.ndarray,
     mode="wrap"   ：中心在盒内均匀，越界部分按截断规则折回，碎片以其所在周期像的
                     球心表示（碎片是球与盒的交，用整球近似，只在距壁 200 nm 内有偏差）；
     mode="inside" ：把球心限制在 [-(L/2-R), L/2-R]，保证整颗球都在盒内，不产生碎片。
+    mode="discard"：球心仍在整个盒内均匀生成，但丢弃任何与边界相交的球。
+                    它是题设“球体截断后平移”几何的严格内界，专用于
+                    可行性确认；不作为点估计口径。
     两种取法在灵敏度分析里对比。
     """
     if mode == "inside":
@@ -402,6 +405,11 @@ def sample_spheres(n: int, rng: np.random.Generator, box: np.ndarray,
 
     c = (rng.random((n, 3)) - 0.5) * box
     half = box / 2.0
+    if mode == "discard":
+        keep = np.all(np.abs(c) + R_B <= half + 1e-12, axis=1)
+        return c[keep], np.nonzero(keep)[0].astype(int)
+    if mode != "wrap":
+        raise ValueError(f"未知球体边界口径：{mode}")
     centers: list[np.ndarray] = []
     owner: list[int] = []
     for i in range(n):
@@ -505,12 +513,18 @@ def percolates(seg_p: np.ndarray, seg_q: np.ndarray,
             radius = reach + step / 2.0 + 1e-9
             # 同一棒—球对常被相邻多个轴线采样点重复命中。先编码去重，再一次性做精确
             # 距离过滤；混填边界上可把这部分耗时降低一个数量级。
-            codes: list[np.ndarray] = []
-            for pt_idx, sph_list in enumerate(tree.query_ball_point(pts, radius)):
-                if sph_list:
-                    codes.append(int(tags[pt_idx]) * n_sph + np.asarray(sph_list, dtype=np.int64))
-            if codes:
-                code = np.unique(np.concatenate(codes))
+            # 用两棵 KD 树的稀疏距离矩阵一次性取出所有候选。旧实现对
+            # ``query_ball_point`` 返回的每个采样点在 Python 层循环，混填
+            # 边界上一次试验要扫几万个 list，全局审计时这一步占
+            # 了主要时间。稀疏矩阵返回的 (row,col) 与原候选集合完全
+            # 相同；后面仍按“棒编号×球数+球编号”去重，并用精确距离
+            # 过滤，因此不改变任何接触判定。
+            sample_tree = cKDTree(pts)
+            near = sample_tree.sparse_distance_matrix(
+                tree, radius, output_type="coo_matrix")
+            if near.nnz:
+                code = np.unique(tags[near.row].astype(np.int64) * n_sph
+                                 + near.col.astype(np.int64))
                 rods = (code // n_sph).astype(int)
                 spheres = (code % n_sph).astype(int)
                 if rod_geometry == "capsule":

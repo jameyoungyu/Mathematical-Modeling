@@ -1,6 +1,8 @@
-% 论文排版样式（XeLaTeX + ctex）。字体用 texlive-lang-chinese 自带的 Fandol 开源字族，
-% 不依赖 macOS/Windows 私有字体，任何装了 texlive 的机器都能复现同样的版面。
-\usepackage[fontset=fandol]{ctex}
+% 论文排版样式（XeLaTeX + ctex）。字体配置由 build_paper_pdf.py 按本机环境注入：
+% 优先采用优秀论文 A092 的宋体/黑体/Times New Roman 组合，缺少系统字体时回退 Fandol。
+\usepackage[fontset=none]{ctex}
+\usepackage{unicode-math}
+@FONT_SETUP@
 \usepackage{geometry}
 \usepackage{indentfirst}
 \usepackage{titlesec}
@@ -16,22 +18,26 @@
 \usepackage{fvextra}
 \usepackage{seqsplit}
 
-% 代码逐字环境必须覆盖希腊字母与常用校验符号。按文件名调用 TeX Live 随附的
-% DejaVu Sans Mono，避免系统字体差异，也避免 φ/δ/π/✓ 等字符被静默丢弃。
-\setmonofont{DejaVuSansMono.ttf}[Scale=MatchLowercase]
+% 代码逐字环境必须覆盖中文注释、希腊字母与常用校验符号。
+% 具体字体由构建脚本按本机可用字库注入，缺少宽字符字体时回退 DejaVu Sans Mono。
+@CODE_FONT_SETUP@
 
 % 页面：A4，四边留白不小于 2.5 cm
-\geometry{a4paper, top=2.6cm, bottom=2.6cm, left=2.7cm, right=2.7cm}
+\geometry{a4paper, top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
 
 % 图表前缀中文化
 \renewcommand{\figurename}{图}
 \renewcommand{\tablename}{表}
 
-% 段落：小四号、1.25 倍行距、首行缩进两字。该设置在保持可读性的同时，
-% 确保摘要、正文、AI 声明与参考文献合计不超过 30 页。
+% 段落：小四号、单倍行距、首行缩进两字。
+% 正文中文使用宋体，英文与数字使用 Times New Roman（字体配置见构建脚本）。
 \setlength{\parindent}{2em}
-\setstretch{1.25}
-\setlength{\parskip}{1pt plus 0.6pt minus 0.3pt}
+\setstretch{1.0}
+\setlength{\parskip}{0pt}
+
+% 正文重点统一使用黑体粗体；若重点中含数学量，同时启用 \boldmath。
+% 这比宋体粗体具有更清楚的层级，又不会放大字号。
+\DeclareTextFontCommand{\textbf}{\bfseries\sffamily\boldmath}
 
 % 页脚居中页码，无页眉横线（页眉不得出现任何身份信息）
 \pagestyle{fancy}
@@ -44,18 +50,26 @@
 %   Markdown #   -> \section      论文主标题
 %   Markdown ##  -> \subsection   一级标题（摘要 / 1 问题重述 / 2 数据审计 …）
 %   Markdown ### -> \subsubsection 二级标题（1.1、1.2 …）
-% 论文主标题与**全部一级标题**居中，二级及以下左对齐。
-% 字号参照所给的获奖论文：标题三号(16pt)黑体居中，一级标题四号(14pt)黑体居中，
-% 二级标题小四(12pt)黑体左对齐，正文小四(12pt)宋体。
-\titleformat{\section}[block]{\centering\fontsize{16pt}{22pt}\selectfont\bfseries\sffamily}{\thesection}{1em}{}
-\titlespacing*{\section}{0pt}{10pt}{14pt}
-\titleformat{\subsection}[block]{\centering\fontsize{14pt}{18pt}\selectfont\bfseries\sffamily}{\thesubsection}{1em}{}
-\titlespacing*{\subsection}{0pt}{13pt}{8pt}
-\titleformat{\subsubsection}[block]{\fontsize{12pt}{15pt}\selectfont\bfseries\sffamily}{\thesubsubsection}{1em}{}
-\titlespacing*{\subsubsection}{0pt}{8pt}{4pt}
+% 论文主标题为三号黑体；“一、问题重述”一类一级标题为小三黑体居中；
+% “1.1 ……”二级标题为四号黑体左对齐。编号已经写在 Markdown 标题文本中，故不另生成编号。
+\titleformat{\section}[block]{\centering\fontsize{16pt}{18pt}\selectfont\bfseries\sffamily}{}{0pt}{}
+\titlespacing*{\section}{0pt}{8pt}{10pt}
+\titleformat{\subsection}[block]{\centering\fontsize{15pt}{20pt}\selectfont\bfseries\sffamily}{}{0pt}{}
+\titlespacing*{\subsection}{0pt}{10pt}{6pt}
+\titleformat{\subsubsection}[block]{\fontsize{14pt}{18pt}\selectfont\bfseries\sffamily}{}{0pt}{}
+\titlespacing*{\subsubsection}{0pt}{7pt}{3pt}
+\titleformat{\paragraph}[block]{\fontsize{12pt}{16pt}\selectfont\bfseries\sffamily}{}{0pt}{}
+\titlespacing*{\paragraph}{0pt}{5pt}{2pt}
 
-% 图表题注：五号加粗居中，题注与图表间留白
-\captionsetup{justification=centering, font={small,bf}, labelfont=bf, skip=6pt}
+% 图表题注：五号宋体/Times New Roman 加粗、居中、无缩进；图题在图下、表题在表上。
+\captionsetup{justification=centering, font={small,bf}, labelfont=bf,
+  singlelinecheck=true, skip=5pt}
+
+% 摘要标题：三号黑体加粗，字间空一格，段前、段后各一行。
+\newcommand{\paperabstractheading}{%
+  \par\vspace{\baselineskip}%
+  \begin{center}\fontsize{16pt}{16pt}\selectfont\bfseries\sffamily 摘\hspace{1em}要\end{center}%
+  \vspace{\baselineskip}\par}
 
 % 公式编号右对齐
 \makeatletter
@@ -67,6 +81,9 @@
 \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines=true, breakanywhere=true,
   commandchars=\\\{\}, fontsize=\fontsize{7.5pt}{9pt}\selectfont}
 
-% 表格整体缩小一档，宽表不至于顶出版心
-\AtBeginEnvironment{longtable}{\small}
+% 表格整体采用五号字和三线表风格。pandoc 生成的 longtable 本身使用 booktabs 横线，
+% 这里关闭竖线并收紧列间距，使版面接近 A092 的表格密度。
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.05}
+\AtBeginEnvironment{longtable}{\small\setlength{\LTpre}{3pt}\setlength{\LTpost}{3pt}}
 \AtBeginEnvironment{tabular}{\small}

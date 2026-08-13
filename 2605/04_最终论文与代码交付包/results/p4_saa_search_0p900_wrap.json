@@ -1,0 +1,223 @@
+{
+  "scope": "SAA global search on fixed common scenarios",
+  "target": 0.9,
+  "trials": 600,
+  "seed": 20260824,
+  "sphere_mode": "wrap",
+  "a_range": [
+    580,
+    620
+  ],
+  "sample_max_a": 630,
+  "last_infeasible_q": 346948,
+  "first_feasible_q": 346949,
+  "first_feasible_budget_yuan": 9.08310357975271,
+  "recommended": {
+    "n_a": 611,
+    "n_b": 8,
+    "cost_tick": 346949,
+    "cost_yuan": 9.08310357975271,
+    "hits": 540,
+    "trials": 600,
+    "p": 0.9,
+    "wilson99_lo": 0.8639472188944181,
+    "wilson99_hi": 0.927303008696251,
+    "cp995_one_sided_lo": 0.8643661617147242,
+    "cp995_one_sided_hi": 0.9290926988726409,
+    "confirmed": false,
+    "excluded": false
+  },
+  "history": [
+    {
+      "q_tick": 347212,
+      "feasible": true,
+      "best": {
+        "n_a": 612,
+        "n_b": 3,
+        "cost_tick": 347196,
+        "cost_yuan": 9.089570024631348,
+        "hits": 541,
+        "trials": 600,
+        "p": 0.9016666666666666,
+        "wilson99_lo": 0.8658246166622344,
+        "wilson99_hi": 0.928722486876729,
+        "cp995_one_sided_lo": 0.8662512907373778,
+        "cp995_one_sided_hi": 0.9305120674615982,
+        "confirmed": false,
+        "excluded": false
+      }
+    },
+    {
+      "q_tick": 347021,
+      "feasible": true,
+      "best": {
+        "n_a": 611,
+        "n_b": 9,
+        "cost_tick": 347013,
+        "cost_yuan": 9.084779095834623,
+        "hits": 540,
+        "trials": 600,
+        "p": 0.9,
+        "wilson99_lo": 0.8639472188944181,
+        "wilson99_hi": 0.927303008696251,
+        "cp995_one_sided_lo": 0.8643661617147242,
+        "cp995_one_sided_hi": 0.9290926988726409,
+        "confirmed": false,
+        "excluded": false
+      }
+    },
+    {
+      "q_tick": 346925,
+      "feasible": false,
+      "best": {
+        "n_a": 611,
+        "n_b": 7,
+        "cost_tick": 346885,
+        "cost_yuan": 9.081428063670794,
+        "hits": 539,
+        "trials": 600,
+        "p": 0.8983333333333333,
+        "wilson99_lo": 0.8620724059879937,
+        "wilson99_hi": 0.9258809456543808,
+        "cp995_one_sided_lo": 0.862483671175203,
+        "cp995_one_sided_hi": 0.9276706392227351,
+        "confirmed": false,
+        "excluded": false
+      }
+    },
+    {
+      "q_tick": 346973,
+      "feasible": true,
+      "best": {
+        "n_a": 611,
+        "n_b": 8,
+        "cost_tick": 346949,
+        "cost_yuan": 9.08310357975271,
+        "hits": 540,
+        "trials": 600,
+        "p": 0.9,
+        "wilson99_lo": 0.8639472188944181,
+        "wilson99_hi": 0.927303008696251,
+        "cp995_one_sided_lo": 0.8643661617147242,
+        "cp995_one_sided_hi": 0.9290926988726409,
+        "confirmed": false,
+        "excluded": false
+      }
+    },
+    {
+      "q_tick": 346949,
+      "feasible": true,
+      "best": {
+        "n_a": 611,
+        "n_b": 8,
+        "cost_tick": 346949,
+        "cost_yuan": 9.08310357975271,
+        "hits": 540,
+        "trials": 600,
+        "p": 0.9,
+        "wilson99_lo": 0.8639472188944181,
+        "wilson99_hi": 0.927303008696251,
+        "cp995_one_sided_lo": 0.8643661617147242,
+        "cp995_one_sided_hi": 0.9290926988726409,
+        "confirmed": false,
+        "excluded": false
+      }
+    },
+    {
+      "q_tick": 346937,
+      "feasible": false,
+      "best": {
+        "n_a": 611,
+        "n_b": 7,
+        "cost_tick": 346885,
+        "cost_yuan": 9.081428063670794,
+        "hits": 539,
+        "trials": 600,
+        "p": 0.8983333333333333,
+        "wilson99_lo": 0.8620724059879937,
+        "wilson99_hi": 0.9258809456543808,
+        "cp995_one_sided_lo": 0.862483671175203,
+        "cp995_one_sided_hi": 0.9276706392227351,
+        "confirmed": false,
+        "excluded": false
+      }
+    },
+    {
+      "q_tick": 346943,
+      "feasible": false,
+      "best": {
+        "n_a": 611,
+        "n_b": 7,
+        "cost_tick": 346885,
+        "cost_yuan": 9.081428063670794,
+        "hits": 539,
+        "trials": 600,
+        "p": 0.8983333333333333,
+        "wilson99_lo": 0.8620724059879937,
+        "wilson99_hi": 0.9258809456543808,
+        "cp995_one_sided_lo": 0.862483671175203,
+        "cp995_one_sided_hi": 0.9276706392227351,
+        "confirmed": false,
+        "excluded": false
+      }
+    },
+    {
+      "q_tick": 346946,
+      "feasible": false,
+      "best": {
+        "n_a": 611,
+        "n_b": 7,
+        "cost_tick": 346885,
+        "cost_yuan": 9.081428063670794,
+        "hits": 539,
+        "trials": 600,
+        "p": 0.8983333333333333,
+        "wilson99_lo": 0.8620724059879937,
+        "wilson99_hi": 0.9258809456543808,
+        "cp995_one_sided_lo": 0.862483671175203,
+        "cp995_one_sided_hi": 0.9276706392227351,
+        "confirmed": false,
+        "excluded": false
+      }
+    },
+    {
+      "q_tick": 346947,
+      "feasible": false,
+      "best": {
+        "n_a": 611,
+        "n_b": 7,
+        "cost_tick": 346885,
+        "cost_yuan": 9.081428063670794,
+        "hits": 539,
+        "trials": 600,
+        "p": 0.8983333333333333,
+        "wilson99_lo": 0.8620724059879937,
+        "wilson99_hi": 0.9258809456543808,
+        "cp995_one_sided_lo": 0.862483671175203,
+        "cp995_one_sided_hi": 0.9276706392227351,
+        "confirmed": false,
+        "excluded": false
+      }
+    },
+    {
+      "q_tick": 346948,
+      "feasible": false,
+      "best": {
+        "n_a": 611,
+        "n_b": 7,
+        "cost_tick": 346885,
+        "cost_yuan": 9.081428063670794,
+        "hits": 539,
+        "trials": 600,
+        "p": 0.8983333333333333,
+        "wilson99_lo": 0.8620724059879937,
+        "wilson99_hi": 0.9258809456543808,
+        "cp995_one_sided_lo": 0.862483671175203,
+        "cp995_one_sided_hi": 0.9276706392227351,
+        "confirmed": false,
+        "excluded": false
+      }
+    }
+  ],
+  "claim_limit": "finite-scenario SAA optimum; independent confidence validation required"
+}

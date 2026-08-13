@@ -1,0 +1,29 @@
+{
+  "q_tick": 351485,
+  "budget_yuan": 9.201855782058404,
+  "a_min": 619,
+  "a_max": 619,
+  "trials": 8000,
+  "seed": 20260828,
+  "sample_max_a": 630,
+  "rod_geometry": "cylinder",
+  "sphere_mode": "discard",
+  "rows": [
+    {
+      "n_a": 619,
+      "n_b": 8,
+      "cost_tick": 351485,
+      "cost_yuan": 9.201855782058404,
+      "hits": 7322,
+      "trials": 8000,
+      "p": 0.91525,
+      "wilson99_lo": 0.9068811441427876,
+      "wilson99_hi": 0.9229306414327622,
+      "cp995_one_sided_lo": 0.9069171426148215,
+      "cp995_one_sided_hi": 0.9230838996365704,
+      "confirmed": true,
+      "excluded": false
+    }
+  ],
+  "seconds": 777.3
+}

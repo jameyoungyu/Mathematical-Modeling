@@ -27,6 +27,11 @@ PARTS = [
     "sphere_mode_check.json", "cluster_stats.json",
     "geometry_bracket.json", "p4_global_audit.json", "p4_global_audit2.json",
     "p4_real_geometry.json",
+    "p4_pure_a_sweep.json", "p4_saa_search_0p900_wrap.json",
+    "p4_saa_search_0p910_wrap.json", "p4_saa_search_0p920_wrap.json",
+    "p4_low_a_outer_audit.json", "p4_validation_615_8_discard_failed.json",
+    "p4_inner_saa_619_8_discard.json", "p4_validation_619_8_discard.json",
+    "p4_global_certificate.json",
     "p4_marginal_recheck.json",
 ]
 
@@ -38,6 +43,8 @@ ORDER = [
     "sensitivity.py", "sphere_mode_check.py", "p4_backfill_probes.py",
     "geometry_bracket.py", "p4_global_audit.py", "p4_marginal_recheck.py",
     "p4_global_audit2.py", "p4_real_geometry.py",
+    "p4_pure_a_sweep.py", "p4_cost_line_sweep.py", "p4_saa_search.py",
+    "p4_low_a_outer_audit.py", "p4_build_global_certificate.py",
     "paper_figures.py", "make_results_bundle.py",
 ]
 
@@ -90,6 +97,17 @@ def bundle_results() -> dict:
             derived["p4_exact_geometry_recommended_cost_yuan"] = round(
                 real_p4["cost_yuan"], 4)
             derived["p4_exact_geometry_recommended_p"] = real_p4["p"]
+        cert = out.get("p4_global_certificate", {})
+        if cert:
+            rec = cert["recommended"]
+            val = cert["independent_validation"]
+            derived["p4_final_n_a"] = rec["n_a"]
+            derived["p4_final_n_b"] = rec["n_b"]
+            derived["p4_final_cost_yuan"] = round(rec["cost_yuan"], 4)
+            derived["p4_final_validation_p"] = round(val["p"], 6)
+            derived["p4_final_cp995_lower"] = round(val["cp995_one_sided_lo"], 6)
+            derived["p4_saving_vs_626_yuan"] = round(626 * COST_A - rec["cost_yuan"], 4)
+            derived["p4_saving_vs_630_yuan"] = round(630 * COST_A - rec["cost_yuan"], 4)
         be = out.get("p4_break_even", {})
         if be:
             derived["break_even_cost_per_sphere_1e3_yuan"] = round(

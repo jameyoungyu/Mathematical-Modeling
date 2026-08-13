@@ -37,7 +37,12 @@ def budget_nb(cost: float, n_a: int, *, strict: bool = False) -> int:
 
 def load() -> dict:
     if DST.exists():
-        return json.loads(DST.read_text(encoding="utf-8"))
+        state = json.loads(DST.read_text(encoding="utf-8"))
+        # 早期结果文件只保存 screening/finalists，没有 probes。
+        # 新的命令行增量审计应能在这类文件上继续，而不是
+        # 因 KeyError 中断。
+        state.setdefault("probes", {})
+        return state
     return {
         "target": TARGET,
         "geometry": "finite flat-ended cylinder after the stated centerline truncation rule",
