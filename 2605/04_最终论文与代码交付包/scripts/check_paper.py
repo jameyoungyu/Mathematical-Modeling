@@ -442,17 +442,33 @@ def check_references(text: str, sections: dict[str, str], report: Report) -> Non
 
 def check_figures_tables(text: str, report: Report) -> None:
     """图题在图下方、表题在表上方，且图表都被正文引用。"""
+    fig_mark_re = r"图\s*(?:\d+|[一二三四五六七八九十百]+)"
+
+    def parse_fig_num(token: str) -> int:
+        if token.isdigit():
+            return int(token)
+        digit = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5,
+                 "六": 6, "七": 7, "八": 8, "九": 9}
+        if token == "十":
+            return 10
+        if "十" in token:
+            left, right = token.split("十", 1)
+            return (digit.get(left, 1) * 10) + digit.get(right, 0)
+        return digit[token]
+
     lines = text.split("\n")
     for i, line in enumerate(lines):
         if re.match(r"\s*!\[.*\]\(.+\)", line):
             after = "\n".join(lines[i + 1 : i + 4])
             before = "\n".join(lines[max(0, i - 3) : i])
-            if re.search(r"图\s*\d+", before) and not re.search(r"图\s*\d+", after):
+            if re.search(fig_mark_re, before) and not re.search(fig_mark_re, after):
                 report.add(HINT, "图表", "图题似乎在图上方，学术惯例是图题在图下方。", i + 1)
-            elif not re.search(r"图\s*\d+", after):
-                report.add(HINT, "图表", "这张图下方没有找到「图 N」形式的图题。", i + 1)
+            elif not re.search(fig_mark_re, after):
+                report.add(HINT, "图表", "这张图下方没有找到统一格式的图题。", i + 1)
 
-    fig_nums = {int(n) for n in re.findall(r"图\s*(\d+)", text)}
+    fig_nums = {parse_fig_num(n) for n in re.findall(
+        r"图\s*(\d+|[一二三四五六七八九十百]+)", text
+    )}
     tbl_nums = {int(n) for n in re.findall(r"表\s*(\d+)", text)}
     for label, nums in (("图", fig_nums), ("表", tbl_nums)):
         if nums and max(nums) != len(nums):
@@ -460,8 +476,8 @@ def check_figures_tables(text: str, report: Report) -> None:
             if missing:
                 report.add(HINT, "图表", f"{label}编号不连续，缺少：{', '.join(map(str, missing))}。")
 
-    if re.search(r"图\s*\d+", text) and not re.search(r"(如|见)图\s*\d+", text):
-        report.add(HINT, "图表", "正文中没有出现「如图 N 所示」形式的引用，图表应在正文中被引用。")
+    if re.search(fig_mark_re, text) and not re.search(rf"(如|见){fig_mark_re}", text):
+        report.add(HINT, "图表", "正文中没有出现图号引用，图表应在正文中被引用。")
 
 
 def check_leftovers(text: str, report: Report) -> None:

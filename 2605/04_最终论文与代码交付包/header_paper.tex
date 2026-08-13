@@ -36,16 +36,17 @@
 \renewcommand{\figurename}{图}
 \renewcommand{\tablename}{表}
 
-% 段落：小四号、1.5 倍行距、首行缩进两字。
+% 段落：普通字与加粗字均为 15pt，行距适度收紧，首行缩进两字。
 % 正文中文使用宋体，英文与数字使用 Times New Roman（字体配置见构建脚本）。
 % 行距按数模论文的常规取 1.5 倍：早先为压页数收到 1.0，版面过密、与样例不符；
 % 正文压到 23 页后已有余量，恢复到常规行距仍在 30 页上限内。
 \setlength{\parindent}{2em}
-\setstretch{1.4}
+\setstretch{1.10}
 \setlength{\parskip}{0pt}
+\AtBeginDocument{\fontsize{16pt}{20pt}\selectfont}
 
 % 正文重点统一使用黑体粗体；若重点中含数学量，同时启用 \boldmath。
-% 这比宋体粗体具有更清楚的层级，又不会放大字号。
+% 不在此命令中改变字号，保证普通字与加粗字始终使用同一字号。
 \DeclareTextFontCommand{\textbf}{\bfseries\sffamily\boldmath}
 
 % 页脚居中页码，无页眉横线（页眉不得出现任何身份信息）
@@ -56,29 +57,29 @@
 \fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\thepage}\renewcommand{\headrulewidth}{0pt}}
 
 % 标题层级。pandoc 以 --top-level-division=section 转换：
-%   Markdown #   -> \section      论文主标题
-%   Markdown ##  -> \subsection   一级标题（摘要 / 1 问题重述 / 2 数据审计 …）
-%   Markdown ### -> \subsubsection 二级标题（1.1、1.2 …）
-% 论文主标题为三号黑体；“一、问题重述”一类一级标题为小三黑体居中；
-% “1.1 ……”二级标题为四号黑体左对齐。编号已经写在 Markdown 标题文本中，故不另生成编号。
-\titleformat{\section}[block]{\centering\fontsize{16pt}{18pt}\selectfont\bfseries\sffamily}{}{0pt}{}
+%   Markdown #   -> \section      论文主标题 (26pt)
+%   Markdown ##  -> \subsection   一级标题 (22pt)
+%   Markdown ### -> \subsubsection 二级标题 (20pt)
+%   Markdown ####-> \paragraph     三级标题 (18pt)
+% 规则：正文16pt，每加一级标题加一号字。
+\titleformat{\section}[block]{\centering\fontsize{26pt}{30pt}\selectfont\bfseries\sffamily}{}{0pt}{}
 \titlespacing*{\section}{0pt}{8pt}{10pt}
-\titleformat{\subsection}[block]{\centering\fontsize{15pt}{20pt}\selectfont\bfseries\sffamily}{}{0pt}{}
+\titleformat{\subsection}[block]{\centering\fontsize{22pt}{26pt}\selectfont\bfseries\sffamily}{}{0pt}{}
 \titlespacing*{\subsection}{0pt}{10pt}{6pt}
-\titleformat{\subsubsection}[block]{\fontsize{14pt}{18pt}\selectfont\bfseries\sffamily}{}{0pt}{}
+\titleformat{\subsubsection}[block]{\fontsize{20pt}{24pt}\selectfont\bfseries\sffamily}{}{0pt}{}
 \titlespacing*{\subsubsection}{0pt}{7pt}{3pt}
-\titleformat{\paragraph}[block]{\fontsize{12pt}{16pt}\selectfont\bfseries\sffamily}{}{0pt}{}
+\titleformat{\paragraph}[block]{\fontsize{18pt}{22pt}\selectfont\bfseries\sffamily}{}{0pt}{}
 \titlespacing*{\paragraph}{0pt}{5pt}{2pt}
 
-% 图表题注：五号宋体/Times New Roman 加粗、居中、无缩进；图题在图下、表题在表上。
-\captionsetup{justification=centering, font={small,bf}, labelfont=bf,
+% 图表题注：小一号字（14pt），加粗、居中、无缩进。
+\captionsetup{justification=centering, font={bf}, labelfont=bf,
   singlelinecheck=true, skip=5pt}
 
-% 摘要标题：三号黑体加粗，字间空一格，段前、段后各一行。
+% 摘要标题：一级标题同级（22pt 黑体加粗）；摘要正文按 16pt 单倍行距排版。
 \newcommand{\paperabstractheading}{%
-  \par\vspace{\baselineskip}%
-  \begin{center}\fontsize{16pt}{16pt}\selectfont\bfseries\sffamily 摘\hspace{1em}要\end{center}%
-  \vspace{\baselineskip}\par}
+  \par\vspace{0pt}%
+  \begin{center}\fontsize{22pt}{26pt}\selectfont\bfseries\sffamily 摘\hspace{1em}要\end{center}%
+  \vspace{2pt}\par}
 
 % 公式编号右对齐
 \makeatletter
