@@ -87,7 +87,7 @@ def fig_orientation() -> None:
     ax.legend(fontsize=8)
     ax.set_title("介质明显偏向带电面法向（X）", fontsize=9)
     fig.tight_layout()
-    emit(fig, "03_orientation_audit",
+    emit(fig, "07_orientation_audit",
          "组 3 介质方向的经验分布与两种候选分布")
 
 
@@ -114,7 +114,7 @@ def fig_fragments() -> None:
     ax.set_ylabel("碎片数")
     ax.legend(fontsize=8)
     fig.tight_layout()
-    emit(fig, "02_fragment_audit",
+    emit(fig, "06_fragment_audit",
          "附件保留碎片与反推出的缺失碎片的长度分布")
 
 
@@ -197,7 +197,7 @@ def fig_p1() -> None:
     fig.legend(handles=handles, fontsize=7.5, ncol=2, loc="lower center",
                bbox_to_anchor=(0.5, -0.005), frameon=False)
     fig.tight_layout(rect=(0, 0.075, 1, 1))
-    emit(fig, "05_p1_connectivity",
+    emit(fig, "09_p1_connectivity",
          "三个微构体的接触图在 X–Y 平面的投影（按真实棒—棒团簇着色）")
 
 
@@ -247,7 +247,7 @@ def fig_p2p3() -> None:
     ax.set_ylim(-0.03, 1.05)
     ax.legend(fontsize=8, loc="lower right")
     fig.tight_layout()
-    emit(fig, "06_p2_probability_curve",
+    emit(fig, "10_p2_probability_curve",
          "导通概率随介质 A 体积分数的变化")
 
 
@@ -312,7 +312,7 @@ def fig_p4() -> None:
     ax.set_ylim(-140, ub.max() + 80)
     ax.grid(False)
     fig.tight_layout()
-    emit(fig, "08_p4_cost_optimum",
+    emit(fig, "12_p4_cost_optimum",
          "$(N_A,N_B)$ 平面上的导通概率、可行边界与等成本线")
 
 
@@ -360,7 +360,7 @@ def fig_sensitivity() -> None:
         ax.set_xlim(0, 1.05)
         ax.set_title("建模口径对结论的影响（同一 φ=0.70%）", fontsize=9)
     fig.tight_layout()
-    emit(fig, "11_sensitivity",
+    emit(fig, "15_sensitivity",
          "导通概率对判据阈值与建模口径的敏感性")
 
 
@@ -530,7 +530,7 @@ def fig_schematic() -> None:
     ax.set_xlim(-5, 5); ax.set_ylim(-1.9, 2.1); ax.set_aspect("equal"); ax.axis("off")
     ax.set_title("(c) 介质 B 充当棒间的桥", fontsize=9.5)
 
-    emit(fig, "04_schematic", "边界截断规则与导通判据示意")
+    emit(fig, "08_schematic", "边界截断规则与导通判据示意")
 
 
 # ------------------------------------------------------------------ 图9 收敛性
@@ -568,7 +568,7 @@ def fig_convergence() -> None:
     ax.legend(fontsize=8)
     ax.set_title("半宽按 1/√T 收窄", fontsize=9)
     fig.tight_layout()
-    emit(fig, "12_convergence", "蒙特卡洛估计的收敛性")
+    emit(fig, "16_convergence", "蒙特卡洛估计的收敛性")
 
 
 # ------------------------------------------------------------------ 图10 团簇结构
@@ -618,7 +618,7 @@ def fig_clusters() -> None:
             "P 已近 1，\n最大团簇仍只占约 %.0f%%" % (smax[-1] * 100),
             fontsize=8.5, ha="right", va="center", color="#52514e")
     fig.tight_layout()
-    emit(fig, "07_cluster_structure", "最大团簇占比与导通概率随体积分数的变化")
+    emit(fig, "11_cluster_structure", "最大团簇占比与导通概率随体积分数的变化")
 
 
 # --------------------------------------------------- 图9 两种介质的边际效率
@@ -671,7 +671,7 @@ def fig_marginal() -> None:
     ax.set_ylim(bottom=0)
     ax.legend(fontsize=8.5, loc="upper left")
     fig.tight_layout()
-    emit(fig, "09_marginal_efficiency", "两种介质每元钱的边际效率及其交叉点")
+    emit(fig, "13_marginal_efficiency", "两种介质每元钱的边际效率及其交叉点")
 
 
 # ------------------------------------------------- 图10 预算线审计的证据链
@@ -718,7 +718,7 @@ def fig_budget_audit() -> None:
         ax.set_ylim(min(0.895, lo - 0.003), max(0.925, hi + 0.006))
         ax.set_title("99.5% Clopper--Pearson 单侧确认", fontsize=9.5)
         fig.tight_layout()
-        emit(fig, "10_budget_audit", "全局成本边界与推荐配比的独立置信确认")
+        emit(fig, "14_budget_audit", "全局成本边界与推荐配比的独立置信确认")
         return
 
     # 兼容尚未生成全局证书的历史结果。
@@ -752,7 +752,7 @@ def fig_budget_audit() -> None:
     ax.set_title("历史平端圆柱候选终核（全局 SAA 证书生成前）",
                  fontsize=9.5, color="#52514e")
     fig.tight_layout()
-    emit(fig, "10_budget_audit", "平端圆柱候选的 99% Wilson 终核")
+    emit(fig, "14_budget_audit", "平端圆柱候选的 99% Wilson 终核")
 
 
 # ------------------------------------------------- 图13 球柱体近似的双侧界
@@ -797,7 +797,119 @@ def fig_bracket() -> None:
     ax.set_xlim(x.min() - 0.005, x.max() + 0.005)
     ax.legend(fontsize=8, loc="lower right")
     fig.tight_layout()
-    emit(fig, "13_geometry_bracket", "球柱体近似的严格双侧界与问题三答案的夹逼")
+    emit(fig, "17_geometry_bracket", "球柱体近似的严格双侧界与问题三答案的夹逼")
+
+
+# --------------------------------------------------- 图2-图5 四问分析流程图
+def _flow_chart(name, title, bands, caption):
+    """通用的纵向泳道流程图：bands = [(泳道名, [步骤, ...]), ...]。
+
+    与图 1 同一套黑白语言（白底、黑框、实线主流程），避免正文出现两种图风。
+    每条泳道内横向排列步骤并以箭头相连，泳道之间用虚线箭头串起来。
+    """
+    from matplotlib.patches import FancyArrowPatch, Rectangle
+
+    ink, mid, pale = "#111111", "#6f6f6f", "#f2f2f2"
+    n_band = len(bands)
+    band_h, gap, top = 12.5, 3.6, 8.6
+    total_h = n_band * band_h + (n_band - 1) * gap + top
+    fig, ax = plt.subplots(figsize=(7.1, total_h * 0.073))
+    ax.set_xlim(0, 100); ax.set_ylim(0, total_h); ax.axis("off")
+    ax.text(50, total_h - 4.2, title, ha="center", va="center",
+            fontsize=9.0, fontweight="bold", color=ink)
+
+    lane_x, lane_w = 12.0, 86.0
+    for bi, (lane, steps) in enumerate(bands):
+        y = total_h - top - bi * (band_h + gap) - band_h
+        ax.add_patch(Rectangle((1.2, y), 9.6, band_h, facecolor=pale,
+                               edgecolor=ink, linewidth=0.9))
+        ax.text(6.0, y + band_h / 2, lane, ha="center", va="center",
+                fontsize=8.0, fontweight="bold", color=ink, linespacing=1.2)
+        k = len(steps)
+        pad, aw = 1.8, 3.6
+        w = (lane_w - (k - 1) * aw - 2 * pad) / k
+        for si, step in enumerate(steps):
+            x = lane_x + pad + si * (w + aw)
+            ax.add_patch(Rectangle((x, y + 2.4), w, band_h - 4.8,
+                                   facecolor="#ffffff", edgecolor=ink, linewidth=0.95))
+            ax.text(x + w / 2, y + band_h / 2, step, ha="center", va="center",
+                    fontsize=6.6, color=ink, linespacing=1.28)
+            if si < k - 1:
+                ax.add_patch(FancyArrowPatch(
+                    (x + w, y + band_h / 2), (x + w + aw, y + band_h / 2),
+                    arrowstyle="-|>", mutation_scale=8, linewidth=0.9,
+                    color=ink, shrinkA=0, shrinkB=0))
+        if bi < n_band - 1:
+            ax.add_patch(FancyArrowPatch(
+                (lane_x + lane_w / 2, y), (lane_x + lane_w / 2, y - gap),
+                arrowstyle="-|>", mutation_scale=8, linewidth=0.9,
+                color=mid, linestyle="--", shrinkA=0, shrinkB=0))
+    fig.tight_layout()
+    emit(fig, name, caption)
+
+
+def fig_flow_p1() -> None:
+    _flow_chart("02_flow_p1", "问题一：三个微构体的导通性判定流程", [
+        ("数据\n还原", ["读入附件三组\n介质 A 端点坐标",
+                        "按方向归组、首尾\n相接还原母介质",
+                        "由端点精确命中\n判读周期盒尺寸",
+                        "还原后重新截断\n与附件逐坐标比对"]),
+        ("几何\n判据", ["球柱体近似：表面距离\n= 轴线距离 $-\\,2r$",
+                        "线段—线段最短距离\n（有界二次规划）",
+                        "介质—带电面距离\n由 $x$ 向极值减半径",
+                        "距离 $\\leq 1.8$ nm\n判为接触"]),
+        ("连通\n判定", ["建接触图并加入\n左右带电面虚拟节点",
+                        "并查集求连通分量",
+                        "判断 L 与 R 是否\n落入同一分量",
+                        "输出三组判定\n并作稳健性检验"]),
+    ], "问题一的分析流程：数据还原 → 几何判据 → 连通性判定")
+
+
+def fig_flow_p2() -> None:
+    _flow_chart("03_flow_p2", "问题二：给定体积分数下导通概率的估计流程", [
+        ("参数\n与生成", ["由体积分数换算根数\n$N_A=\\mathrm{round}(\\varphi L^3/V_A)$",
+                          "按假设 A4 随机生成\n位置与方向",
+                          "边界截断折回\n得到碎片集合"]),
+        ("单次\n判定", ["两两计算表面\n最短距离",
+                        "距离 $\\leq\\delta$ 连边，\n并查集求连通分量",
+                        "记录本次是否导通\n（1 / 0）"]),
+        ("统计\n估计", ["重复 $T=8000$ 次\n独立试验",
+                        "频率估计 $\\hat{P}=X/T$\n与 Wilson 95% 区间",
+                        "输出四档体积分数\n对应的导通概率"]),
+    ], "问题二的分析流程：参数换算 → 随机生成 → 判定 → 频率估计与区间")
+
+
+def fig_flow_p3() -> None:
+    _flow_chart("04_flow_p3", "问题三：使导通概率不低于 90% 的最低体积分数", [
+        ("粗\n定位", ["在 $[0.60\\%,1.00\\%]$ 上\n取 6 点各 2000 次",
+                      "二项似然拟合\n$\\mathrm{logit}P=a+bN_A$",
+                      "反解 $P=0.90$ 得\n穿越点 $N_A^{\\star}$"]),
+        ("网格\n复算", ["穿越点附近取 5 个\n0.01% 网格点",
+                        "每点 $T=4000$ 次\n（半宽约 0.009）",
+                        "取最小的达标网格点",
+                        "独立种子 12000 次\n复核"]),
+        ("双侧界\n夹逼", ["内界 $K^-$：轴长 $h-2r$",
+                          "外界 $K^+$：轴长 $h$",
+                          "$P(K^-)\\leq P\\leq P(K^+)$\n夹出答案区间",
+                          "给出可证达标的\n最小体积分数"]),
+    ], "问题三的分析流程：粗定位 → 网格复算 → 双侧界夹逼")
+
+
+def fig_flow_p4() -> None:
+    _flow_chart("05_flow_p4", "问题四：导通概率不低于 90% 前提下的最低成本配比", [
+        ("模型\n与降维", ["成本 $C=c_AN_A+c_BN_B$\n约束 $P\\geq 0.90$",
+                          "证明 $P$ 对 $N_A,N_B$\n单调不减（耦合法）",
+                          "可行域右上封闭，\n最优解落在边界",
+                          "二维整数搜索\n降为一维"]),
+        ("边界\n搜索", ["网格取样 + logit\n代理模型定位边界",
+                        "按成本排序取候选点",
+                        "候选点 6000 次\n直接仿真验证",
+                        "Wilson 下界 $\\geq 0.90$\n方确认可行"]),
+        ("成本\n审计", ["逐列在预算线上取点\n（充要判据）",
+                        "角点支配批量排除\n整段区间",
+                        "擦边点加样本至\n$T=20000$ 复核",
+                        "报告推荐配比与\n成本的证据边界"]),
+    ], "问题四的分析流程：单调性降维 → 边界搜索 → 大样本验证与成本审计")
 
 
 def main() -> int:
@@ -812,7 +924,8 @@ def main() -> int:
     print(f"中文字体：{font}")
     # 顺序 = 正文中出现的先后。文件名前缀即图号，改动顺序时两者一起改，
     # 避免出现"图 10 排在图 7 前面"这类编号与出现次序不一致的问题。
-    for f in (fig_roadmap, fig_orientation, fig_fragments, fig_schematic,
+    for f in (fig_roadmap, fig_flow_p1, fig_flow_p2, fig_flow_p3, fig_flow_p4,
+              fig_orientation, fig_fragments, fig_schematic,
               fig_p1, fig_p2p3, fig_clusters, fig_p4, fig_marginal,
               fig_budget_audit, fig_sensitivity, fig_convergence, fig_bracket):
         try:
